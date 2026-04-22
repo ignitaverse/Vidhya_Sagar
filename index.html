@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="विद्यासागर — भारत का सबसे बड़ा हिंदी Quiz Platform. गणित, English, GK, राज्य परीक्षाएं और बहुत कुछ।">
+  <meta name="theme-color" content="#0d1b3e">
+  <title>विद्यासागर — Advanced Quiz Platform</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ── BACKGROUND ── -->
+<div class="bg-pattern"></div>
+<div class="mandala mandala-1"></div>
+<div class="mandala mandala-2"></div>
+
+<!-- ══════════════════════════════════
+     SCREEN 1: LOADING
+══════════════════════════════════ -->
+<div class="screen active" id="screen-loading">
+  <div class="loader-wrap">
+    <div class="lotus-loader">
+      <div class="lotus-petal"></div>
+      <div class="lotus-petal"></div>
+      <div class="lotus-petal"></div>
+      <div class="lotus-petal"></div>
+      <div class="lotus-petal"></div>
+      <div class="lotus-petal"></div>
+      <div class="lotus-petal"></div>
+      <div class="lotus-petal"></div>
+    </div>
+    <div class="loader-brand">विद्यासागर</div>
+    <div class="loader-sub">ज्ञान की असीम गहराई...</div>
+    <div class="loader-bar"><div class="loader-fill"></div></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     SCREEN 2: LOGIN / SIGNUP
+══════════════════════════════════ -->
+<div class="screen" id="screen-login">
+  <div class="auth-card">
+
+    <div class="brand-block">
+      <span class="brand-icon">📚</span>
+      <div class="brand-name">विद्यासागर</div>
+      <div class="brand-tagline">Advanced Quiz Platform • सर्वश्रेष्ठ शिक्षा</div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login"  onclick="switchAuthTab('login')">लॉगिन</button>
+      <button class="auth-tab"        id="tab-signup" onclick="switchAuthTab('signup')">पंजीकरण</button>
+    </div>
+
+    <!-- Messages -->
+    <div id="auth-msg" class="auth-error"></div>
+
+    <!-- LOGIN FORM -->
+    <div id="form-login">
+      <div class="form-group">
+        <label class="form-label">ईमेल पता</label>
+        <input class="form-input" type="email" id="login-email" placeholder="your@email.com"
+               onkeydown="if(event.key==='Enter') doLogin()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">पासवर्ड</label>
+        <input class="form-input" type="password" id="login-pass" placeholder="••••••••"
+               onkeydown="if(event.key==='Enter') doLogin()">
+      </div>
+      <button class="btn-primary" id="btn-login" onclick="doLogin()">लॉगिन करें →</button>
+    </div>
+
+    <!-- SIGNUP FORM -->
+    <div id="form-signup" style="display:none">
+      <div class="form-group">
+        <label class="form-label">पूरा नाम</label>
+        <input class="form-input" type="text" id="signup-name" placeholder="आपका नाम">
+      </div>
+      <div class="form-group">
+        <label class="form-label">ईमेल पता</label>
+        <input class="form-input" type="email" id="signup-email" placeholder="your@email.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">पासवर्ड (कम से कम 6 अक्षर)</label>
+        <input class="form-input" type="password" id="signup-pass" placeholder="••••••••"
+               onkeydown="if(event.key==='Enter') doSignup()">
+      </div>
+      <button class="btn-primary" id="btn-signup" onclick="doSignup()">Account बनाएं →</button>
+    </div>
+
+    <div class="divider">या</div>
+    <button class="btn-skip" onclick="skipLogin()">⚡ Skip करें — बिना Login के जारी रखें</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     SCREEN 3: MAIN APP
+══════════════════════════════════ -->
+<div class="screen" id="screen-main">
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="nav-brand" onclick="switchTab('home')">📚 विद्यासागर</div>
+
+    <div class="nav-links">
+      <button class="nav-link active" id="nav-home"    onclick="switchTab('home')">🏠 होम</button>
+      <button class="nav-link"        id="nav-quiz"    onclick="switchTab('quiz')">🎯 क्विज़</button>
+      <button class="nav-link"        id="nav-history" onclick="switchTab('history')">📋 इतिहास</button>
+    </div>
+
+    <div class="nav-right">
+      <div class="nav-avatar" id="nav-avatar" title="Logout" onclick="doLogout()" style="cursor:pointer">?</div>
+      <span class="nav-username" id="nav-username">अतिथि</span>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+
+    <!-- ── HOME PANEL ── -->
+    <div class="tab-panel active" id="panel-home">
+
+      <!-- Hero -->
+      <div class="home-hero">
+        <div class="hero-title">ज्ञान का सागर<br>आपके हाथों में</div>
+        <div class="hero-sub">सभी विषयों, सभी राज्यों और सरकारी परीक्षाओं के लिए भारत का सबसे बड़ा हिंदी Quiz Platform</div>
+        <div class="hero-stats">
+          <div class="stat-item"><div class="stat-num">5,000+</div><div class="stat-label">प्रश्न</div></div>
+          <div class="stat-item"><div class="stat-num">28</div><div class="stat-label">राज्य</div></div>
+          <div class="stat-item"><div class="stat-num">8+</div><div class="stat-label">विषय</div></div>
+          <div class="stat-item"><div class="stat-num">100%</div><div class="stat-label">निशुल्क</div></div>
+        </div>
+      </div>
+
+      <!-- Features -->
+      <div class="features-section">
+        <div class="section-title">विशेषताएं</div>
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon">🎯</div>
+            <div class="feature-title">विषयवार क्विज़</div>
+            <div class="feature-desc">गणित, English, हिंदी, विज्ञान, GK — हर विषय के उप-भागों के साथ smart quiz।</div>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🗺️</div>
+            <div class="feature-title">राज्य विशेष</div>
+            <div class="feature-desc">28 राज्यों की अलग-अलग GK, इतिहास और करंट अफेयर्स quiz।</div>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">💻</div>
+            <div class="feature-title">Computer Exams</div>
+            <div class="feature-desc">O Level, CCC, NIELIT — Theory और Practical दोनों के साथ exam-ready questions।</div>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">📊</div>
+            <div class="feature-title">Progress Tracking</div>
+            <div class="feature-desc">हर quiz का record — score, grade, समय और सही/गलत का पूरा analysis।</div>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🏆</div>
+            <div class="feature-title">Grading System</div>
+            <div class="feature-desc">80%+ पर A Grade, 60%+ पर B Grade — अपनी तैयारी जांचें।</div>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🔄</div>
+            <div class="feature-title">Random Shuffle</div>
+            <div class="feature-desc">हर बार नए क्रम में प्रश्न — practice करते रहें, bore न हों।</div>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">📱</div>
+            <div class="feature-title">Mobile Friendly</div>
+            <div class="feature-desc">Mobile, tablet और desktop — सभी devices पर perfect experience।</div>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">☁️</div>
+            <div class="feature-title">Cloud Save</div>
+            <div class="feature-desc">Account बनाकर login करें — आपकी history सुरक्षित रहेगी।</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Start -->
+      <div class="features-section" style="padding-top:0">
+        <div class="section-title">जल्दी शुरू करें</div>
+        <div class="features-grid" style="grid-template-columns: repeat(auto-fill, minmax(160px, 1fr))">
+          <button class="feature-card" style="cursor:pointer;border:none;text-align:left" onclick="switchTab('quiz')">
+            <div class="feature-icon">🚀</div>
+            <div class="feature-title">Quiz शुरू करें</div>
+            <div class="feature-desc" style="color:var(--saffron)">विषय चुनें और शुरू →</div>
+          </button>
+          <button class="feature-card" style="cursor:pointer;border:none;text-align:left" onclick="switchTab('history')">
+            <div class="feature-icon">📋</div>
+            <div class="feature-title">इतिहास देखें</div>
+            <div class="feature-desc" style="color:var(--saffron)">पिछले results →</div>
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- END HOME PANEL -->
+
+    <!-- ── QUIZ PANEL ── -->
+    <div class="tab-panel" id="panel-quiz">
+      <div class="quiz-section">
+
+        <!-- Subjects -->
+        <div class="section-title">विषय चुनें</div>
+        <div class="subject-grid" id="subject-grid">
+          <!-- Rendered by JS -->
+        </div>
+
+        <!-- Sub-categories (shown after subject selection) -->
+        <div id="subcategory-area" style="display:none"></div>
+
+        <!-- States -->
+        <div class="states-section">
+          <div class="section-title">राज्य Quiz</div>
+          <div class="states-grid" id="states-grid">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <!-- Start Button -->
+        <button class="btn-start" id="btn-start" onclick="startQuiz()" disabled>
+          ▶ क्विज़ शुरू करें
+        </button>
+
+      </div>
+    </div>
+    <!-- END QUIZ PANEL -->
+
+    <!-- ── HISTORY PANEL ── -->
+    <div class="tab-panel" id="panel-history">
+      <div class="history-section">
+
+        <!-- User Card -->
+        <div class="user-card">
+          <div class="user-avatar-lg" id="hist-avatar">?</div>
+          <div class="user-info">
+            <h3 id="hist-name">उपयोगकर्ता</h3>
+            <p id="hist-joined">लोड हो रहा है...</p>
+          </div>
+          <div class="user-stats">
+            <div class="user-stat">
+              <div class="user-stat-num" id="hist-total">0</div>
+              <div class="user-stat-label">कुल Quiz</div>
+            </div>
+            <div class="user-stat">
+              <div class="user-stat-num" id="hist-correct" style="color:#7fffa0">0</div>
+              <div class="user-stat-label">सही</div>
+            </div>
+            <div class="user-stat">
+              <div class="user-stat-num" id="hist-wrong" style="color:#ff9090">0</div>
+              <div class="user-stat-label">गलत</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-title">पिछली Quiz</div>
+        <div id="history-list">
+          <div class="empty-state">
+            <div class="empty-icon">📭</div>
+            <div class="empty-title">अभी कोई Quiz नहीं खेली</div>
+            <div class="empty-desc">Quiz सेक्शन में जाएं और शुरुआत करें!</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <!-- END HISTORY PANEL -->
+
+  </div>
+  <!-- END MAIN CONTENT -->
+
+</div>
+<!-- END SCREEN-MAIN -->
+
+<!-- ══════════════════════════════════
+     SCREEN 4: QUIZ GAME
+══════════════════════════════════ -->
+<div class="screen" id="screen-quiz">
+
+  <!-- Quiz Header -->
+  <div class="quiz-header">
+    <div class="quiz-meta">
+      <span class="quiz-topic" id="quiz-topic-label">क्विज़</span>
+      <span class="quiz-counter" id="quiz-counter">प्रश्न 1/10</span>
+    </div>
+    <div class="quiz-progress">
+      <div class="quiz-progress-bar" id="quiz-progress-bar" style="width:10%"></div>
+    </div>
+  </div>
+
+  <!-- Quiz Body (rendered by JS) -->
+  <div class="quiz-body" id="quiz-body"></div>
+
+</div>
+<!-- END SCREEN-QUIZ -->
+
+<script src="js/app.js"></script>
+</body>
+</html>
