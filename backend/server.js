@@ -62,28 +62,25 @@ app.get('/api/quiz-data/:subject', async (req, res) => {
     // Turso se saare questions fetch karo
     // 'category' column se sub-categories group ki jaayengi
         // Turso se saare questions fetch karo
-    const result = await turso.execute({
-      sql: `SELECT question, options, answer, category FROM \`${tableName}\``,
-      args: []
-    });
+    // Query mein AS use karein taaki key ka naam fix ho jaye
+const result = await turso.execute({
+  sql: `SELECT question AS q, options AS opts, answer AS ans, category AS cat FROM \`${tableName}\``,
+  args: []
+});
 
-    if (!result.rows.length) {
-      return res.status(404).json({ success: false, message: 'Is subject ka data nahi mila' });
-    }
-
-    const categories = {};
-    for (const row of result.rows) {
-      // Schema ke naye names use karein
-      const catKey = row.category || subject;
-      if (!categories[catKey]) categories[catKey] = [];
-      
-      categories[catKey].push({
-        q:    row.question,
-        // Options agar string mein hain to parse karein, warna direct use karein
-        opts: typeof row.options === 'string' ? JSON.parse(row.options) : row.options,
-        ans:  row.answer,
-      });
-    }
+const categories = {};
+for (const row of result.rows) {
+  // Yahan ab 'cat' hi use hoga kyunki humne AS cat likha hai
+  const catKey = row.cat || subject;
+  
+  if (!categories[catKey]) categories[catKey] = [];
+  
+  categories[catKey].push({
+    q:    row.q,
+    opts: typeof row.opts === 'string' ? JSON.parse(row.opts) : row.opts,
+    ans:  row.ans,
+  });
+}
 
     // States subject ke liye alag format
     if (subject === 'states') {
