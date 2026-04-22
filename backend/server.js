@@ -37,7 +37,11 @@ mongoose.connect(process.env.MONGODB_URI)
 const PORT = process.env.PORT || 5000;
 
 // ─── MIDDLEWARE ───
-app.use(cors({ origin: process.env.FRONTEND_URL || '*', credentials: true }));
+// server.js mein is line ko dhundo aur replace karo:
+app.use(cors({ 
+  origin: ['https://ignitaverse.github.io', 'http://localhost:5500'], 
+  credentials: true 
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
