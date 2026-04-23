@@ -1,6 +1,5 @@
 /* ═══════════════════════════════════════════
-   विद्यासागर — Main App JS
-   JSON से questions + Resume Progress
+   विद्यासागर — Main App JS (Turso DB + Full Auth)
    ═══════════════════════════════════════════ */
 
 const API_BASE = 'https://vidhya-sagar.onrender.com';
@@ -30,138 +29,77 @@ const App = {
   selectedSubject: null, selectedSub: null, selectedState: null,
   quizQuestions: [], quizIdx: 0, score: 0,
   quizLabel: '', quizEmoji: '📝',
-  historyData: [], quizStartTime: null,
-  loadedJSON: {}
+  historyData: [], quizStartTime: null
 };
 
-// ─── SERVER SE QUESTIONS LANEY KA LOGIC ───
+/* ═══ SERVER SE CATEGORIES + QUESTIONS ═══ */
+async function fetchCategoriesFromServer(subjectId) {
+  try {
+    const res = await fetch(`${API_BASE}/quiz/${subjectId}/categories`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    return data.success && Array.isArray(data.categories) ? data.categories : [];
+  } catch (err) {
+    console.error("Categories fetch error:", err);
+    showToast("Subcategories server se nahi aa rahi. Backend check karein.", "error");
+    return [];
+  }
+}
+
 async function fetchQuestionsFromServer(subjectId, subCategory = 'all') {
   try {
     let url = `${API_BASE}/quiz/${subjectId}`;
     if (subCategory && subCategory !== 'all') {
       url += `?category=${encodeURIComponent(subCategory)}`;
     }
-
-    const response = await fetch(url);
-    const data = await response.json();
-
-    if (data.success) {
-      return data.data;
-    } else {
-      showToast(data.message, 'error');
+    const res = await fetch(url);
+    if (!res.ok) {
+      const text = await res.text();
+      if (text.startsWith('<!DOCTYPE')) throw new Error("Server returned HTML - maybe down");
+      throw new Error(`HTTP ${res.status}`);
+    }
+    const data = await res.json();
+    if (data.success) return data.data;
+    else {
+      showToast(data.message || "Questions load nahi hue", "error");
       return [];
     }
-  } catch (error) {
-    console.error("Fetch Error:", error);
-    showToast("सर्वर से कनेक्ट नहीं हो पा रहा है", "error");
+  } catch (err) {
+    console.error("Fetch Error:", err);
+    showToast(err.message.includes("HTML") ? "❌ Server spin down hai. Kuch der baad try karein." : "सर्वर से कनेक्ट नहीं हो पा रहा", "error");
     return [];
   }
 }
 
-// ─── CATEGORIES FETCH KARNE KA LOGIC (SUBJECT KE LIYE) ───
-async function loadJSON(subjectId) {
-  // Try to fetch categories from server, fallback to static mapping
-  try {
-    const response = await fetch(`${API_BASE}/quiz/${subjectId}/categories`);
-    const data = await response.json();
-    if (data.success && data.categories) {
-      return { categories: data.categories };
-    } else {
-      throw new Error('No categories from server');
-    }
-  } catch (err) {
-    // Static fallback categories per subject
-    const fallbackCategories = {
-      math: ['बीजगणित', 'ज्यामिति', 'अंकगणित', 'त्रिकोणमिति'],
-      english: ['Grammar', 'Vocabulary', 'Comprehension'],
-      hindi: ['व्याकरण', 'साहित्य', 'मुहावरे'],
-      science: ['भौतिकी', 'रसायन', 'जीवविज्ञान'],
-      gk: ['इतिहास', 'भूगोल', 'संविधान'],
-      computer: ['हार्डवेयर', 'सॉफ्टवेयर', 'नेटवर्किंग'],
-      sanskrit: ['व्याकरण', 'श्लोक', 'साहित्य'],
-      current: ['राष्ट्रीय', 'अंतरराष्ट्रीय', 'विज्ञान']
-    };
-    const cats = fallbackCategories[subjectId] || ['सामान्य', 'उन्नत'];
-    const catsObj = {};
-    cats.forEach(c => { catsObj[c] = []; });
-    return { categories: catsObj };
-  }
-}
-
-// ══ PROGRESS ══
+/* ═══ PROGRESS ═══ */
 function getProgressKey() {
   if (App.selectedState) return 'vs_prog__state__' + App.selectedState;
   return 'vs_prog__' + App.selectedSubject + '__' + App.selectedSub;
 }
-
 function saveProgress() {
   try {
     localStorage.setItem(getProgressKey(), JSON.stringify({
       quizIdx: App.quizIdx, score: App.score,
       questions: App.quizQuestions, savedAt: Date.now()
     }));
-  } catch (e) {}
+  } catch(e){}
 }
-
 function loadProgress() {
-  try {
-    const s = localStorage.getItem(getProgressKey());
-    return s ? JSON.parse(s) : null;
-  } catch (e) { return null; }
+  try { const s=localStorage.getItem(getProgressKey()); return s?JSON.parse(s):null; } catch(e){ return null; }
 }
+function clearProgress() { try { localStorage.removeItem(getProgressKey()); } catch(e){} }
 
-function clearProgress() {
-  try {
-    localStorage.removeItem(getProgressKey());
-  } catch (e) {}
-}
-
-// ══ INIT ══
-document.addEventListener('DOMContentLoaded', () => {
-  const t = localStorage.getItem('vidyasagar_token');
-  const u = localStorage.getItem('vidyasagar_user');
-  if (t && u) {
-    App.token = t;
-    App.user = JSON.parse(u);
-  }
-  setTimeout(() => {
-    if (App.token && App.user) {
-      enterApp(App.user, false);
-    } else {
-      showScreen('screen-login');
-    }
-  }, 100);
-});
-
-// ══ SCREEN ══
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  setTimeout(() => {
-    const scr = document.getElementById(id);
-    if (scr) scr.scrollTop = 0;
-  }, 50);
-}
-
-// ══ AUTH ══
-function switchAuthTab(tab) {
+/* ═══ AUTH (FULL FUNCTIONS) ═══ */
+function switchAuthTab(tab){
   document.getElementById('form-login').style.display = tab === 'login' ? 'block' : 'none';
   document.getElementById('form-signup').style.display = tab === 'signup' ? 'block' : 'none';
   document.getElementById('tab-login').classList.toggle('active', tab === 'login');
   document.getElementById('tab-signup').classList.toggle('active', tab === 'signup');
   const el = document.getElementById('auth-msg');
-  if (el) { el.className = 'auth-error'; el.textContent = ''; }
+  if(el) { el.className = 'auth-error'; el.textContent = ''; }
 }
-
-function showAuthError(msg) {
-  const el = document.getElementById('auth-msg');
-  if (el) { el.className = 'auth-error show'; el.textContent = '⚠️ ' + msg; }
-}
-
-function showAuthSuccess(msg) {
-  const el = document.getElementById('auth-msg');
-  if (el) { el.className = 'auth-success show'; el.textContent = '✅ ' + msg; }
-}
+function showAuthError(msg){ const el = document.getElementById('auth-msg'); if(el){ el.className='auth-error show'; el.textContent='⚠️ '+msg; } }
+function showAuthSuccess(msg){ const el = document.getElementById('auth-msg'); if(el){ el.className='auth-success show'; el.textContent='✅ '+msg; } }
 
 async function loginUser(email, password) {
   try {
@@ -171,7 +109,6 @@ async function loginUser(email, password) {
       body: JSON.stringify({ email, password })
     });
     const data = await res.json();
-
     if (data.success) {
       localStorage.setItem('vidyasagar_token', data.token);
       localStorage.setItem('vidyasagar_user', JSON.stringify(data.user));
@@ -230,7 +167,28 @@ function doLogout() {
   showToast('लॉगआउट हो गए', 'success');
 }
 
-// ══ ENTER APP ══
+/* ═══ INIT ═══ */
+document.addEventListener('DOMContentLoaded', () => {
+  const t = localStorage.getItem('vidyasagar_token');
+  const u = localStorage.getItem('vidyasagar_user');
+  if (t && u) {
+    App.token = t;
+    App.user = JSON.parse(u);
+  }
+  setTimeout(() => {
+    if (App.token && App.user) enterApp(App.user, false);
+    else showScreen('screen-login');
+  }, 100);
+});
+
+/* ═══ SCREEN ═══ */
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  setTimeout(() => { const scr = document.getElementById(id); if(scr) scr.scrollTop = 0; }, 50);
+}
+
+/* ═══ ENTER APP ═══ */
 function enterApp(user, fetchHistory) {
   App.user = user;
   const i = user.name.charAt(0).toUpperCase();
@@ -251,7 +209,6 @@ function enterApp(user, fetchHistory) {
   if (fetchHistory && App.token) loadHistory();
 }
 
-// ══ TABS ══
 function switchTab(tab) {
   document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
@@ -262,7 +219,7 @@ function switchTab(tab) {
   if (tab === 'history') renderHistory();
 }
 
-// ══ SUBJECT GRID ══
+/* ═══ SUBJECT GRID & SUBCATEGORIES (ONLY SERVER) ═══ */
 function renderSubjectGrid() {
   document.getElementById('subject-grid').innerHTML = SUBJECTS.map(s => `
     <button class="subject-card" id="subj-${s.id}" onclick="selectSubject('${s.id}')" style="--card-color:${s.color}">
@@ -285,16 +242,15 @@ async function selectSubject(id) {
   area.style.display = 'block';
   area.innerHTML = '<div class="subcategory-box"><div class="subcategory-label">⏳ लोड हो रहा है...</div></div>';
 
-  const data = await loadJSON(id);
+  const categories = await fetchCategoriesFromServer(id);
   const subj = SUBJECTS.find(s => s.id === id);
-  const cats = data?.categories ? Object.keys(data.categories) : [];
 
-  if (cats.length) {
+  if (categories && categories.length) {
     area.innerHTML = `
       <div class="subcategory-box">
         <div class="subcategory-label">${subj?.emoji || ''} ${subj?.name || id} — भाग चुनें:</div>
         <div class="sub-chips">
-          ${cats.map(c => {
+          ${categories.map(c => {
             App.selectedSub = c;
             const prog = loadProgress();
             App.selectedSub = null;
@@ -305,7 +261,7 @@ async function selectSubject(id) {
         </div>
       </div>`;
   } else {
-    area.innerHTML = '<div class="subcategory-box"><div class="subcategory-label" style="color:#ff9090">⚠️ Subcategories उपलब्ध नहीं हैं।</div></div>';
+    area.innerHTML = `<div class="subcategory-box"><div class="subcategory-label" style="color:#ff9090">⚠️ Server से कोई subcategory नहीं मिली।<br><small>Check backend /quiz/${id}/categories endpoint</small></div></div>`;
   }
   checkCanStart();
 }
@@ -320,7 +276,7 @@ function selectSub(name, safeid) {
   checkCanStart();
 }
 
-// ══ STATES GRID ══
+/* ═══ STATES GRID ═══ */
 function renderStatesGrid() {
   document.getElementById('states-grid').innerHTML = STATES.map(s => `
     <button class="state-chip" id="state-${safeId(s)}" onclick="selectState('${s.replace(/'/g, "\\'")}','${safeId(s)}')">${s}</button>
@@ -357,11 +313,10 @@ function checkCanStart() {
   }
 }
 
-// ══ START QUIZ (UNIFIED) ══
+/* ═══ START QUIZ (UNIFIED) ═══ */
 async function startQuiz() {
   let subjectId, subCategory = 'all', stateName = null;
   let quizLabel = '', quizEmoji = '📝';
-
   if (App.selectedState) {
     stateName = App.selectedState;
     subjectId = 'states';
@@ -380,31 +335,29 @@ async function startQuiz() {
 
   showToast("प्रश्न लोड हो रहे हैं...", "info");
   let questions = [];
-  
   if (stateName) {
-    // For states, we need to fetch state-specific quizzes
     try {
       const res = await fetch(`${API_BASE}/quiz/states?state=${encodeURIComponent(stateName)}`);
+      if (!res.ok) throw new Error("State API error");
       const data = await res.json();
       if (data.success) questions = data.data;
       else showToast(data.message, 'error');
     } catch (err) {
-      showToast("State questions load नहीं हुए", "error");
+      showToast("State questions load nahi hue", "error");
+      return;
     }
   } else {
     questions = await fetchQuestionsFromServer(subjectId, subCategory);
   }
 
   if (!questions || questions.length === 0) {
-    showToast("प्रश्न उपलब्ध नहीं हैं", "warning");
+    showToast("प्रश्न उपलब्ध नहीं हैं। Server / Turso connection check karein.", "warning");
     return;
   }
 
-  // Check for saved progress
   const prog = loadProgress();
-  const canResume = prog && prog.quizIdx > 0 && prog.quizIdx < prog.questions.length;
-
-  if (canResume && prog.questions && prog.questions.length === questions.length) {
+  const canResume = prog && prog.quizIdx > 0 && prog.quizIdx < prog.questions.length && prog.questions.length === questions.length;
+  if (canResume) {
     App.quizQuestions = prog.questions;
     App.quizIdx = prog.quizIdx;
     App.score = prog.score;
@@ -415,17 +368,15 @@ async function startQuiz() {
     App.score = 0;
     clearProgress();
   }
-
   App.quizLabel = quizLabel;
   App.quizEmoji = quizEmoji;
   App.quizStartTime = Date.now();
-
   document.getElementById('quiz-topic-label').textContent = App.quizLabel;
   showScreen('screen-quiz');
   renderQuestion();
 }
 
-// ══ QUIZ ENGINE ══
+/* ═══ QUIZ ENGINE ═══ */
 function renderQuestion() {
   const total = App.quizQuestions.length;
   const q = App.quizQuestions[App.quizIdx];
@@ -558,7 +509,7 @@ function goBackHome() {
   switchTab('home');
 }
 
-// ══ HISTORY ══
+/* ═══ HISTORY ═══ */
 async function loadHistory() {
   if (!App.token) return;
   try {
@@ -603,7 +554,7 @@ function updateLocalHistoryStats() {
   document.getElementById('hist-wrong').textContent = tw;
 }
 
-// ══ TOAST ══
+/* ═══ TOAST & UTILS ═══ */
 function showToast(msg, type = 'info') {
   const icons = { success: '✅', error: '❌', info: 'ℹ️', warning: '⚠️' };
   const t = document.createElement('div');
@@ -616,7 +567,6 @@ function showToast(msg, type = 'info') {
   }, 3000);
 }
 
-// ══ UTILS ══
 function safeId(s) {
   return s.replace(/[^a-zA-Z0-9\u0900-\u097F]/g, '_');
 }
@@ -652,5 +602,5 @@ function escapeHtml(str) {
     if (m === '<') return '&lt;';
     if (m === '>') return '&gt;';
     return m;
-  });
+  })
 }
