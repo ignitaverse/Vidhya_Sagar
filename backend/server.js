@@ -15,8 +15,7 @@ const turso = createClient({
   authToken: process.env.TURSO_AUTH_TOKEN,
 });
 
-// ─── CONFIRMED TABLE NAMES ───
-// Schema: question TEXT, options TEXT (JSON), answer INTEGER, category TEXT
+// ─── TABLE NAMES ───
 const TABLE_MAP = {
   math:     'math_quiz',
   english:  'english_quiz',
@@ -28,40 +27,111 @@ const TABLE_MAP = {
   current:  'current_quiz',
   states:   'states_quiz',
 };
-// ─── FETCH QUIZ QUESTIONS ───
-// GET /api/quiz/:subject?category=optional_subcategory
-app.get('/api/quiz/:subject', async (req, res) => {
+
+// ========== MIDDLEWARE ==========
+app.use(cors({ 
+  origin: ['https://ignitaverse.github.io', 'http://localhost:5500', 'https://vidhya-sagar.onrender.com'], 
+  credentials: true 
+}));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// ========== FRONTEND-FACING ENDPOINTS (without /api prefix) ==========
+// GET /quiz/:subject?category=...
+app.get('/quiz/:subject', async (req, res) => {
   try {
     const { subject } = req.params;
-    const { category } = req.query; 
-    
+    const { category } = req.query;
     const table = TABLE_MAP[subject];
     if (!table) {
-      return res.status(400).json({ success: false, message: 'Invalid subject selected' });
+      return res.status(400).json({ success: false, message: 'Invalid subject' });
     }
-
-    let query = `SELECT * FROM "${table}"`;
-    let args = [];
-
-    // Subcategory routing logic
+    let query = `SELECT question, options, answer FROM "${table}"`;
+    const args = [];
     if (category && category !== 'all') {
       query += ` WHERE category = ?`;
       args.push(category);
     }
-    
-    // Randomize and limit to 10 questions per round
     query += ` ORDER BY RANDOM() LIMIT 10`;
-
     const result = await turso.execute({ sql: query, args });
+    const questions = result.rows.map(row => ({
+      q: row.question,
+      opts: typeof row.options === 'string' ? JSON.parse(row.options) : row.options,
+      ans: Number(row.answer)
+    }));
+    res.json({ success: true, data: questions });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
 
-    // Ensure the JSON string in the options column is properly formatted for the frontend
+// GET /quiz/:subject/categories
+app.get('/quiz/:subject/categories', async (req, res) => {
+  try {
+    const { subject } = req.params;
+    const table = TABLE_MAP[subject];
+    if (!table) {
+      return res.status(400).json({ success: false, message: 'Invalid subject' });
+    }
+    const result = await turso.execute({
+      sql: `SELECT DISTINCT category FROM "${table}" WHERE category IS NOT NULL AND category != '' ORDER BY category`
+    });
+    const categories = result.rows.map(row => row.category);
+    res.json({ success: true, categories });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// GET /quiz/states?state=...
+app.get('/quiz/states', async (req, res) => {
+  try {
+    const { state } = req.query;
+    if (!state) {
+      return res.status(400).json({ success: false, message: 'State query param required' });
+    }
+    const table = 'states_quiz';
+    const result = await turso.execute({
+      sql: `SELECT question, options, answer FROM "${table}" WHERE category = ? ORDER BY RANDOM() LIMIT 10`,
+      args: [state]
+    });
+    const questions = result.rows.map(row => ({
+      q: row.question,
+      opts: typeof row.options === 'string' ? JSON.parse(row.options) : row.options,
+      ans: Number(row.answer)
+    }));
+    res.json({ success: true, data: questions });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ========== ORIGINAL /api/quiz ENDPOINT (keep as is) ==========
+app.get('/api/quiz/:subject', async (req, res) => {
+  try {
+    const { subject } = req.params;
+    const { category } = req.query; 
+    const table = TABLE_MAP[subject];
+    if (!table) {
+      return res.status(400).json({ success: false, message: 'Invalid subject selected' });
+    }
+    let query = `SELECT * FROM "${table}"`;
+    let args = [];
+    if (category && category !== 'all') {
+      query += ` WHERE category = ?`;
+      args.push(category);
+    }
+    query += ` ORDER BY RANDOM() LIMIT 10`;
+    const result = await turso.execute({ sql: query, args });
     const questions = result.rows.map(row => ({
       question: row.question,
       options: typeof row.options === 'string' ? JSON.parse(row.options) : row.options,
       answer: row.answer,
       category: row.category
     }));
-
     res.json({ success: true, data: questions });
   } catch (error) {
     console.error('Quiz Fetch Error:', error);
@@ -69,116 +139,61 @@ app.get('/api/quiz/:subject', async (req, res) => {
   }
 });
 
-// ─── MONGODB CONNECTION ───
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('✅ MongoDB Connected!'))
-  .catch(err => console.error('❌ MongoDB Error:', err.message));
-
-const PORT = process.env.PORT || 5000;
-
-// ─── MIDDLEWARE ───
-// server.js mein is line ko dhundo aur replace karo:
-app.use(cors({ 
-  origin: ['https://ignitaverse.github.io', 'http://localhost:5500'], 
-  credentials: true 
-}));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// ─── ROUTES ───
-app.use('/api/auth',    authRoutes);
-app.use('/api/history', historyRoutes);
-
-// ════════════════════════════════════════════════════
-// QUIZ DATA ROUTE
-// GET /api/quiz-data/:subject
-//
-// Table schema (confirmed):
-//   question  TEXT   — question text
-//   options   TEXT   — JSON string e.g. ["A","B","C","D"]
-//   answer    INTEGER — correct option index (0-based)
-//   category  TEXT   — subcategory name (e.g. "Algebra", "Grammar")
-// ════════════════════════════════════════════════════
+// ========== ORIGINAL QUIZ-DATA ROUTE (full categories) ==========
 app.get('/api/quiz-data/:subject', async (req, res) => {
   try {
     const { subject } = req.params;
     const table = TABLE_MAP[subject];
-
     if (!table) {
       return res.status(400).json({
         success: false,
         message: `Subject '${subject}' nahi mila. Valid subjects: ${Object.keys(TABLE_MAP).join(', ')}`
       });
     }
-
-    // Saari rows ek saath fetch karo
     const result = await turso.execute({
       sql:  `SELECT question, options, answer, category FROM "${table}"`,
       args: []
     });
-
     if (!result.rows.length) {
       return res.status(404).json({
         success: false,
         message: `Table '${table}' mein koi data nahi hai.`
       });
     }
-
-    // Category ke hisaab se group karo
     const categories = {};
-
     for (const row of result.rows) {
-      // Category key — agar null/empty ho to subject naam use karo
-      const catKey = (row.category && String(row.category).trim())
-        ? String(row.category).trim()
-        : subject;
-
+      const catKey = (row.category && String(row.category).trim()) ? String(row.category).trim() : subject;
       if (!categories[catKey]) categories[catKey] = [];
-
-      // Options: TEXT mein JSON string save hai — parse karein
       let opts = [];
       try {
         opts = JSON.parse(row.options);
       } catch {
-        // Fallback: comma-separated string
         opts = String(row.options).split(',').map(s => s.trim());
       }
-
       categories[catKey].push({
         q:    row.question,
         opts: opts,
-        ans:  Number(row.answer), // 0-based index
+        ans:  Number(row.answer),
       });
     }
-
-    // States ke liye frontend expects: { states: { "UP": [...], "MP": [...] } }
     if (subject === 'states') {
       return res.json({ states: categories });
     }
-
-    // Baaki subjects ke liye: { categories: { "Algebra": [...], ... } }
     res.json({ categories });
-
   } catch (err) {
     console.error(`[quiz-data/${req.params.subject}] Error:`, err.message);
-    res.status(500).json({
-      success: false,
-      message: 'Database Error: ' + err.message
-    });
+    res.status(500).json({ success: false, message: 'Database Error: ' + err.message });
   }
 });
 
-// ─── DEBUG ROUTE (production mein bhi safe hai — sirf read) ───
-// https://your-api.onrender.com/api/debug/computer
+// ========== ORIGINAL DEBUG ROUTES ==========
 app.get('/api/debug/:subject', async (req, res) => {
   try {
     const { subject } = req.params;
     const table = TABLE_MAP[subject] || subject;
-
     const cnt     = await turso.execute({ sql: `SELECT COUNT(*) AS total FROM "${table}"`, args: [] });
     const cats    = await turso.execute({ sql: `SELECT DISTINCT category FROM "${table}" ORDER BY category`, args: [] });
     const sample  = await turso.execute({ sql: `SELECT * FROM "${table}" LIMIT 2`, args: [] });
-
     res.json({
       table,
       totalRows:   cnt.rows[0]?.total ?? cnt.rows[0]?.[0],
@@ -199,7 +214,16 @@ app.get('/api/debug', async (req, res) => {
   }
 });
 
-// ─── HEALTH CHECK ───
+// ========== MONGO DB CONNECTION ==========
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => console.log('✅ MongoDB Connected!'))
+  .catch(err => console.error('❌ MongoDB Error:', err.message));
+
+// ========== AUTH & HISTORY ROUTES ==========
+app.use('/api/auth', authRoutes);
+app.use('/api/history', historyRoutes);
+
+// ========== HEALTH CHECK ==========
 app.get('/', (req, res) => {
   res.json({
     status:  '✅ Running',
@@ -208,9 +232,14 @@ app.get('/', (req, res) => {
   });
 });
 
+// ========== 404 & ERROR HANDLERS ==========
+app.use((req, res) => {
+  res.status(404).json({ success: false, message: 'Route not found' });
+});
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ success: false, message: 'Server error!' });
 });
 
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Vidyasagar server on port ${PORT}`));
