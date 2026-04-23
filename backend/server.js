@@ -28,6 +28,46 @@ const TABLE_MAP = {
   current:  'current_quiz',
   states:   'states_quiz',
 };
+// ─── FETCH QUIZ QUESTIONS ───
+// GET /api/quiz/:subject?category=optional_subcategory
+app.get('/api/quiz/:subject', async (req, res) => {
+  try {
+    const { subject } = req.params;
+    const { category } = req.query; 
+    
+    const table = TABLE_MAP[subject];
+    if (!table) {
+      return res.status(400).json({ success: false, message: 'Invalid subject selected' });
+    }
+
+    let query = `SELECT * FROM "${table}"`;
+    let args = [];
+
+    // Subcategory routing logic
+    if (category && category !== 'all') {
+      query += ` WHERE category = ?`;
+      args.push(category);
+    }
+    
+    // Randomize and limit to 10 questions per round
+    query += ` ORDER BY RANDOM() LIMIT 10`;
+
+    const result = await turso.execute({ sql: query, args });
+
+    // Ensure the JSON string in the options column is properly formatted for the frontend
+    const questions = result.rows.map(row => ({
+      question: row.question,
+      options: typeof row.options === 'string' ? JSON.parse(row.options) : row.options,
+      answer: row.answer,
+      category: row.category
+    }));
+
+    res.json({ success: true, data: questions });
+  } catch (error) {
+    console.error('Quiz Fetch Error:', error);
+    res.status(500).json({ success: false, message: 'Questions लोड करने में समस्या' });
+  }
+});
 
 // ─── MONGODB CONNECTION ───
 mongoose.connect(process.env.MONGODB_URI)
