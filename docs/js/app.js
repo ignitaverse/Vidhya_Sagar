@@ -3,7 +3,7 @@
    JSON से questions + Resume Progress
    ═══════════════════════════════════════════ */
 
-const API_BASE = 'https://gamvidyasagar-backende.onrender.com/api';
+const API_BASE = 'https://vidhya-sagar.onrender.com';
 
 const SUBJECTS = [
   { id:'math',    emoji:'🔢', name:'गणित',          count:'850+', color:'#f4820a' },
@@ -15,6 +15,30 @@ const SUBJECTS = [
   { id:'sanskrit',emoji:'🕉️', name:'संस्कृत',        count:'280+', color:'#f59e0b' },
   { id:'current', emoji:'📰', name:'करंट अफेयर्स',  count:'320+', color:'#ec4899' }
 ];
+
+// ─── SERVER SE QUESTIONS LANEY KA LOGIC ───
+async function fetchQuestionsFromServer(subjectId, subCategory = 'all') {
+  try {
+    // API URL banayein (Subcategory ke saath)
+    let url = `${API_BASE}/quiz/${subjectId}`;
+    if (subCategory && subCategory !== 'all') {
+      url += `?category=${encodeURIComponent(subCategory)}`;
+    }
+
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data.success) {
+      return data.data; // Questions array return karega
+    } else {
+      showToast(data.message, 'error');
+      return [];
+    }
+  } catch (error) {
+    console.error("Fetch Error:", error);
+    showToast("सर्वर से कनेक्ट नहीं हो पा रहा है", "error");
+    return [];
+  }
 
 const STATES = [
   'उत्तर प्रदेश','मध्य प्रदेश','राजस्थान','बिहार','महाराष्ट्र',
@@ -72,27 +96,29 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* ══ JSON LOAD ══ */
-async function loadJSON(id) {
-  if(App.loadedJSON[id]) return App.loadedJSON[id];
-  
-  const url = `${API_BASE}/quiz-data/${id}`;
+async function startQuiz(subjectId, subCategory = 'all') {
+  // 1. Loader dikhayein (Optional)
+  showToast("प्रश्न लोड हो रहे हैं...", "info");
 
-  try {
-    const r = await fetch(url);
-    const d = await r.json();
-    if(r.ok && (d.categories || d.states)){
-      App.loadedJSON[id] = d; 
-      return d;
-    }
-    // Server se error message show karo
-    console.error(`API Error [${id}]:`, d?.message || r.status);
-    showToast(`API Error: ${d?.message || 'Server se data nahi mila'}`, 'error');
-    return null;
-  } catch(e) { 
-    console.error("Network error:", e);
-    showToast('Network error — Internet check karein', 'error');
-    return null;
+  // 2. Database se questions mangwayein
+  const questions = await fetchQuestionsFromServer(subjectId, subCategory);
+
+  if (!questions || questions.length === 0) {
+    showToast("इस विषय में अभी प्रश्न उपलब्ध नहीं हैं", "warning");
+    return;
   }
+
+  // 3. Quiz State set karein
+  App.currentQuestions = questions;
+  App.currentSubject = SUBJECTS.find(s => s.id === subjectId);
+  App.score = 0;
+  App.currentIndex = 0;
+  App.userAnswers = [];
+  App.startTime = Date.now();
+
+  // 4. Screen change karein aur pehla sawal dikhayein
+  showScreen('screen-quiz');
+  renderQuestion();
 }
 
 /* ══ SCREEN ══ */
