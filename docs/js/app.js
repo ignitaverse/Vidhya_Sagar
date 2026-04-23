@@ -139,20 +139,26 @@ function switchAuthTab(tab){
 function showAuthError(msg){const el=document.getElementById('auth-msg'); el.className='auth-error show'; el.textContent='⚠️ '+msg;}
 function showAuthSuccess(msg){const el=document.getElementById('auth-msg'); el.className='auth-success show'; el.textContent='✅ '+msg;}
 
-async function doLogin(){
-  const email=document.getElementById('login-email').value.trim();
-  const password=document.getElementById('login-pass').value.trim();
-  if(!email||!password) return showAuthError('ईमेल और पासवर्ड दर्ज करें');
-  const btn=document.getElementById('btn-login');
-  btn.textContent='लॉगिन हो रहा है...'; btn.disabled=true;
-  try{
-    const r=await fetch(API_BASE+'/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});
-    const d=await r.json(); if(!d.success) throw new Error(d.message);
-    App.token=d.token; App.user=d.user;
-    localStorage.setItem('vs_token',d.token); localStorage.setItem('vs_user',JSON.stringify(d.user));
-    showAuthSuccess('लॉगिन सफल! 🎉');
-    setTimeout(()=>enterApp(d.user,true),800);
-  }catch(e){showAuthError(e.message||'Server से जुड़ नहीं पाए। Skip करके जारी रखें।'); btn.textContent='लॉगिन करें →'; btn.disabled=false;}
+async function loginUser(email, password) {
+  try {
+    const res = await fetch(`${API_BASE}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      localStorage.setItem('vidyasagar_token', data.token); // Token save karna zaroori hai
+      localStorage.setItem('vidyasagar_user', JSON.stringify(data.user));
+      showToast("लॉगिन सफल!", "success");
+      location.reload(); // Page refresh karke user stats dikhayein
+    } else {
+      showToast(data.message, "error");
+    }
+  } catch (err) {
+    showToast("सर्वर एरर", "error");
+  }
 }
 
 async function doSignup(){
@@ -297,20 +303,30 @@ function checkCanStart(){
 }
 
 /* ══ START QUIZ ══ */
-async function startQuiz(){
-  const btn=document.getElementById('btn-start');
-  btn.textContent='⏳ लोड हो रहा है...'; btn.disabled=true;
-  let all=[];
+async function startQuiz(subjectId, subCategory = 'all') {
+  // 1. Loader dikhayein (Optional)
+  showToast("प्रश्न लोड हो रहे हैं...", "info");
 
-  if(App.selectedState){
-    App.quizLabel=App.selectedState+' — राज्य GK'; App.quizEmoji='🗺️';
-    const d=await loadJSON('states'); all=d?.states?.[App.selectedState]||[];
-  } else {
-    const subj=SUBJECTS.find(s=>s.id===App.selectedSubject);
-    App.quizLabel=(subj?.name||App.selectedSubject)+' — '+App.selectedSub;
-    App.quizEmoji=subj?.emoji||'📝';
-    const d=await loadJSON(App.selectedSubject); all=d?.categories?.[App.selectedSub]||[];
+  // 2. Database se questions mangwayein
+  const questions = await fetchQuestionsFromServer(subjectId, subCategory);
+
+  if (!questions || questions.length === 0) {
+    showToast("इस विषय में अभी प्रश्न उपलब्ध नहीं हैं", "warning");
+    return;
   }
+
+  // 3. Quiz State set karein
+  App.currentQuestions = questions;
+  App.currentSubject = SUBJECTS.find(s => s.id === subjectId);
+  App.score = 0;
+  App.currentIndex = 0;
+  App.userAnswers = [];
+  App.startTime = Date.now();
+
+  // 4. Screen change karein aur pehla sawal dikhayein
+  showScreen('screen-quiz');
+  renderQuestion();
+}
 
   if(!all.length){
     showToast('Questions load नहीं हुए। Internet check करें!','error');
