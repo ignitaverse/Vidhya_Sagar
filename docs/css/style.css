@@ -242,7 +242,7 @@ body{
 }
 .subj-card:hover::after{opacity:1}
 .subj-emoji{font-size:2rem;position:relative;z-index:1}
-.subj-name{font-family:var(--fs);font-size:1rem;font-weight:700;position:relative;z-index:1;color:navy}
+.subj-name{font-family:var(--fs);font-size:1rem;font-weight:700;position:relative;z-index:1;color:#22d3ee}
 .subj-count{font-size:.75rem;color:var(--tx2);position:relative;z-index:1}
 .subj-arrow{
   margin-top:auto;font-size:.75rem;font-weight:700;
