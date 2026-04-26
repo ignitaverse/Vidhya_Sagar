@@ -1,0 +1,117 @@
+{
+  "id": "computer",
+  "name": "Computer",
+  "emoji": "💻",
+  "categories": [
+    {
+      "name": "O Level",
+      "icon": "🎓",
+      "color": "#3b82f6",
+      "children": [
+        {
+          "name": "Practical",
+          "icon": "💻",
+          "color": "#10b981",
+          "books": [
+            { "name": "M1-R5 — IT Tools & Business Systems",   "dbCategory": "O Level Practical M1-R5" },
+            { "name": "M2-R5 — Web Designing & Publishing",    "dbCategory": "O Level Practical M2-R5" },
+            { "name": "M3-R5 — Programming & Problem Solving", "dbCategory": "O Level Practical M3-R5" },
+            { "name": "M4-R5 — Internet & Web Technology",     "dbCategory": "O Level Practical M4-R5" }
+          ]
+        },
+        {
+          "name": "Theory",
+          "icon": "📖",
+          "color": "#a855f7",
+          "books": [
+            { "name": "M1-R5 — IT Tools & Business Systems",   "dbCategory": "O Level Theory M1-R5" },
+            { "name": "M2-R5 — Web Designing & Publishing",    "dbCategory": "O Level Theory M2-R5" },
+            { "name": "M3-R5 — Programming & Problem Solving", "dbCategory": "O Level Theory M3-R5" },
+            { "name": "M4-R5 — Internet & Web Technology",     "dbCategory": "O Level Theory M4-R5" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "CCC",
+      "icon": "📜",
+      "color": "#f59e0b",
+      "children": [
+        {
+          "name": "Theory",
+          "icon": "📖",
+          "color": "#a855f7",
+          "books": [
+            { "name": "Introduction to Computers",    "dbCategory": "CCC Theory Intro" },
+            { "name": "MS Office (Word, Excel, PPT)", "dbCategory": "CCC Theory MS Office" },
+            { "name": "Internet & E-Commerce",        "dbCategory": "CCC Theory Internet" },
+            { "name": "Financial Applications",       "dbCategory": "CCC Theory Finance" }
+          ]
+        },
+        {
+          "name": "Practical",
+          "icon": "💻",
+          "color": "#10b981",
+          "books": [
+            { "name": "MS Word Practice",   "dbCategory": "CCC Practical Word" },
+            { "name": "MS Excel Practice",  "dbCategory": "CCC Practical Excel" },
+            { "name": "PowerPoint Practice","dbCategory": "CCC Practical PPT" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "MS Office",
+      "icon": "📊",
+      "color": "#22d3ee",
+      "children": [
+        {
+          "name": "MS Word",
+          "icon": "📝",
+          "color": "#3b82f6",
+          "books": [
+            { "name": "Basic Formatting",       "dbCategory": "MS Word Basic" },
+            { "name": "Advanced Features",      "dbCategory": "MS Word Advanced" },
+            { "name": "Tables & Mail Merge",    "dbCategory": "MS Word Tables" }
+          ]
+        },
+        {
+          "name": "MS Excel",
+          "icon": "📈",
+          "color": "#10b981",
+          "books": [
+            { "name": "Formulas & Functions",   "dbCategory": "MS Excel Formulas" },
+            { "name": "Charts & Graphs",        "dbCategory": "MS Excel Charts" },
+            { "name": "Pivot Tables",           "dbCategory": "MS Excel Pivot" }
+          ]
+        },
+        {
+          "name": "MS PowerPoint",
+          "icon": "🎞️",
+          "color": "#f43f5e",
+          "books": [
+            { "name": "Slide Design",           "dbCategory": "MS PPT Design" },
+            { "name": "Animations & Transitions","dbCategory": "MS PPT Animation" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "NIELIT",
+      "icon": "🏛️",
+      "color": "#f43f5e",
+      "children": [
+        {
+          "name": "Theory",
+          "icon": "📖",
+          "color": "#a855f7",
+          "books": [
+            { "name": "Computer Fundamentals", "dbCategory": "NIELIT Fundamentals" },
+            { "name": "Operating Systems",     "dbCategory": "NIELIT OS" },
+            { "name": "Networking Basics",     "dbCategory": "NIELIT Network" }
+          ]
+        }
+      ]
+    }
+  ]
+}
