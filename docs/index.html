@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VidyaSagar — Advanced Quiz Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════
+     LOADING SCREEN
+═══════════════════════════════════════ -->
+<div id="screen-loading">
+  <div class="load-center">
+    <!-- Animated book stack -->
+    <div class="book-stack">
+      <div class="book b1"></div>
+      <div class="book b2"></div>
+      <div class="book b3"></div>
+      <div class="book-shine"></div>
+    </div>
+    <div class="load-rings">
+      <div class="lr lr1"></div>
+      <div class="lr lr2"></div>
+      <div class="lr lr3"></div>
+    </div>
+    <p class="load-brand">VidyaSagar</p>
+    <p class="load-sub">Preparing your quiz arena…</p>
+    <div class="load-dots">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     POST-SIGNUP CELEBRATION OVERLAY
+═══════════════════════════════════════ -->
+<div id="celebrate-overlay" class="hidden">
+  <div class="aurora"></div>
+  <div class="float-particles" id="float-particles"></div>
+  <div class="celebrate-msg">
+    <div class="cel-icon">🎓</div>
+    <h2 class="cel-title">Welcome aboard!</h2>
+    <p class="cel-sub">Your learning journey starts now</p>
+    <div class="cel-wave">
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     MAIN APP
+═══════════════════════════════════════ -->
+<div id="app" class="app-hidden">
+
+  <!-- ── LIVE STATS TICKER STRIP ── -->
+  <div class="ticker-strip">
+    <div class="ticker-inner">
+      <div class="ticker-item">
+        <span class="ti-dot dot-blue"></span>
+        <span class="ti-label">Registered Students</span>
+        <span class="ti-val" id="stat-users">loading…</span>
+      </div>
+      <div class="ticker-sep">·</div>
+      <div class="ticker-item">
+        <span class="ti-dot dot-green pulse-dot"></span>
+        <span class="ti-label">Live on Platform</span>
+        <span class="ti-val" id="stat-guests">loading…</span>
+      </div>
+      <div class="ticker-sep">·</div>
+      <div class="ticker-item">
+        <span class="ti-dot dot-amber"></span>
+        <span class="ti-label">Questions Solved Today</span>
+        <span class="ti-val" id="stat-qs">loading…</span>
+      </div>
+      <span class="ticker-scroll">🎓 India's fastest growing quiz platform &nbsp;·&nbsp; Start your prep today &nbsp;·&nbsp; Free forever 🚀</span>
+    </div>
+  </div>
+
+    <!-- NAV -->
+  <nav class="nav">
+    <div class="nav-left">
+      <div class="nav-logo">
+        <!-- SVG Logo: Flame + Wave + Icons -->
+        <svg class="site-logo-svg" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+          <!-- Flame body -->
+          <path d="M20 38 C10 38 6 30 8 22 C10 16 14 12 16 8 C17 14 15 18 18 20 C18 14 22 10 24 4 C28 10 30 16 28 22 C26 28 24 34 20 38Z" fill="url(#flameGrad)"/>
+          <!-- Inner blue flame -->
+          <path d="M20 36 C15 36 13 30 14 24 C16 20 18 18 20 16 C20 20 19 24 22 26 C24 22 24 18 26 22 C26 28 24 34 20 36Z" fill="url(#innerGrad)"/>
+          <!-- Book icon inside -->
+          <rect x="16" y="23" width="8" height="6" rx="1" fill="rgba(255,255,255,0.6)"/>
+          <line x1="20" y1="23" x2="20" y2="29" stroke="rgba(255,255,255,0.9)" stroke-width="0.8"/>
+          <!-- Star spark -->
+          <circle cx="14" cy="18" r="1.2" fill="#fbbf24"/>
+          <circle cx="26" cy="15" r="0.9" fill="#fbbf24"/>
+          <!-- Wave arc -->
+          <path d="M6 30 Q13 24 20 30 Q27 36 34 30" stroke="url(#waveGrad)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <defs>
+            <linearGradient id="flameGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#f97316"/>
+              <stop offset="100%" stop-color="#dc2626"/>
+            </linearGradient>
+            <linearGradient id="innerGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#22d3ee"/>
+              <stop offset="100%" stop-color="#3b82f6"/>
+            </linearGradient>
+            <linearGradient id="waveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#22d3ee"/>
+              <stop offset="100%" stop-color="#3b82f6"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <span>VidyaSagar</span>
+      </div>
+    </div>
+    <div class="nav-right">
+      <div id="user-chip" class="user-chip hidden">
+        <span id="user-avatar" class="u-av">A</span>
+        <span id="user-name-display">User</span>
+      </div>
+      <button class="nav-ghost" id="btn-history">History</button>
+      <button class="nav-cta" id="btn-auth">Sign In</button>
+      <button class="nav-out hidden" id="btn-logout">Log Out</button>
+    </div>
+  </nav>
+
+  <!-- ════ SCREEN: HOME ════ -->
+  <div class="screen active" id="screen-home">
+
+    <!-- HERO -->
+    <section class="hero">
+      <div class="hero-orb ho1"></div>
+      <div class="hero-orb ho2"></div>
+      <div class="hero-orb ho3"></div>
+      <div class="hero-text">
+        <div class="hero-tag">🇮🇳 India's Premier Quiz Platform</div>
+        <h1>Ace Every <span class="ht-grad">Government Exam</span><br>with Confidence</h1>
+        <p>4,700+ questions · 8 subjects · 28+ state exams — all free, forever.</p>
+        <div class="hero-pills">
+          <div class="hpill"><span class="hpill-n">4,700+</span><span>Questions</span></div>
+          <div class="hpill-sep"></div>
+          <div class="hpill"><span class="hpill-n" style="color:#10b981">8</span><span>Subjects</span></div>
+          <div class="hpill-sep"></div>
+          <div class="hpill"><span class="hpill-n" style="color:#f59e0b">28+</span><span>States</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AD BANNER -->
+    <section class="ad-section">
+      <div class="ad-frame">
+        <div class="ad-left">
+          <div class="ad-icon">📢</div>
+          <div class="ad-copy">
+            <span class="ad-label">Advertisement</span>
+            <p class="ad-text">Want to reach <strong>1000s of students</strong> daily? Place your ad here.</p>
+          </div>
+        </div>
+        <a href="mailto:ignitaverse@gmail.com" class="ad-cta">
+          Contact Us →
+          <span class="ad-email">ignitaverse@gmail.com</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- SUBJECTS -->
+    <section class="home-sec">
+      <div class="sec-head">
+        <h2>Choose a Subject</h2>
+        <span class="sec-pill blue-pill">8 Subjects</span>
+      </div>
+      <div class="subj-grid" id="subject-grid"></div>
+    </section>
+
+    <!-- STATES -->
+    <section class="home-sec">
+      <div class="sec-head">
+        <h2>State Exams</h2>
+        <span class="sec-pill green-pill">28+ States</span>
+      </div>
+      <div class="states-cloud" id="states-scroll"></div>
+    </section>
+
+
+    <!-- FEEDBACK SECTION -->
+    <section class="home-sec feedback-sec">
+      <div class="sec-head">
+        <h2>Student Feedback</h2>
+        <span class="sec-pill purple-pill">Community</span>
+      </div>
+
+      <!-- Submit Form -->
+      <div class="fb-form-wrap">
+        <div class="fb-form-head">
+          <span class="fb-form-icon">✍️</span>
+          <div>
+            <h3>Share Your Experience</h3>
+            <p>Help us improve — your feedback matters!</p>
+          </div>
+        </div>
+        <!-- Star Rating -->
+        <div class="star-row" id="star-row">
+          <button class="star-btn active" data-val="1">★</button>
+          <button class="star-btn active" data-val="2">★</button>
+          <button class="star-btn active" data-val="3">★</button>
+          <button class="star-btn active" data-val="4">★</button>
+          <button class="star-btn active" data-val="5">★</button>
+        </div>
+        <input type="text" id="fb-name" class="fb-input" placeholder="Your name (optional)">
+        <textarea id="fb-msg" class="fb-textarea" placeholder="Write your feedback here…" rows="3" maxlength="400"></textarea>
+        <div class="fb-foot">
+          <span class="fb-char-count"><span id="fb-char">0</span>/400</span>
+          <button class="btn-primary" id="fb-submit">Submit Feedback</button>
+        </div>
+        <p class="fb-status hidden" id="fb-status"></p>
+      </div>
+
+      <!-- Reviews List -->
+      <div class="fb-list" id="fb-list">
+        <p class="empty-state">Loading reviews…</p>
+      </div>
+    </section>
+
+    <!-- AD BANNER 2 — above feedback -->
+    <section class="ad-section" style="margin-top:0">
+      <div class="ad-frame ad-frame-2">
+        <div class="ad-left">
+          <div class="ad-icon">🎯</div>
+          <div class="ad-copy">
+            <span class="ad-label">Promote Your Coaching / App</span>
+            <p class="ad-text">Reach <strong>motivated students</strong> preparing for Govt Exams. Book your spot today.</p>
+          </div>
+        </div>
+        <a href="mailto:ignitaverse@gmail.com" class="ad-cta ad-cta-2">
+          Get Featured →
+          <span class="ad-email">ignitaverse@gmail.com</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- FOOTER / CONTACT INFO -->
+    <footer class="site-footer">
+      <div class="footer-logo">
+        <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" width="36" height="36">
+          <path d="M20 38 C10 38 6 30 8 22 C10 16 14 12 16 8 C17 14 15 18 18 20 C18 14 22 10 24 4 C28 10 30 16 28 22 C26 28 24 34 20 38Z" fill="url(#fFlame)"/>
+          <path d="M20 36 C15 36 13 30 14 24 C16 20 18 18 20 16 C20 20 19 24 22 26 C24 22 24 18 26 22 C26 28 24 34 20 36Z" fill="url(#fInner)"/>
+          <path d="M6 30 Q13 24 20 30 Q27 36 34 30" stroke="url(#fWave)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <defs>
+            <linearGradient id="fFlame" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#f97316"/><stop offset="100%" stop-color="#dc2626"/></linearGradient>
+            <linearGradient id="fInner" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#22d3ee"/><stop offset="100%" stop-color="#3b82f6"/></linearGradient>
+            <linearGradient id="fWave" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#22d3ee"/><stop offset="100%" stop-color="#3b82f6"/></linearGradient>
+          </defs>
+        </svg>
+        <div>
+          <span class="footer-brand">VidyaSagar</span>
+          <span class="footer-tagline">by Ignitaverse</span>
+        </div>
+      </div>
+      <p class="footer-desc">India's premier Hindi quiz platform for government exam preparation. Free, forever.</p>
+
+      <div class="footer-links">
+        <a href="https://instagram.com/ignitaverse" target="_blank" class="flink flink-insta">
+          <span class="flink-icon">📷</span>
+          <span>Instagram</span>
+        </a>
+        <a href="https://wa.me/ignitaverse" target="_blank" class="flink flink-wa">
+          <span class="flink-icon">💬</span>
+          <span>WhatsApp</span>
+        </a>
+        <a href="https://t.me/ignitaverse" target="_blank" class="flink flink-tg">
+          <span class="flink-icon">✈️</span>
+          <span>Telegram</span>
+        </a>
+        <a href="mailto:ignitaverse@gmail.com" class="flink flink-mail">
+          <span class="flink-icon">📧</span>
+          <span>Gmail</span>
+        </a>
+        <a href="https://ignitaverse.github.io" target="_blank" class="flink flink-web">
+          <span class="flink-icon">🌐</span>
+          <span>Website</span>
+        </a>
+      </div>
+
+      <div class="footer-info">
+        <div class="footer-info-item">
+          <span>📧</span> ignitaverse@gmail.com
+        </div>
+        <div class="footer-info-item">
+          <span>📱</span> WhatsApp / Telegram: @ignitaverse
+        </div>
+        <div class="footer-info-item">
+          <span>📸</span> Instagram: @ignitaverse
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <span>© 2025 VidyaSagar · Ignitaverse. All rights reserved.</span>
+        <span class="footer-love">Made with ❤️ for Students of India</span>
+      </div>
+    </footer>
+
+  </div><!-- /screen-home -->
+
+  <!-- ════ SCREEN: CATEGORY ════ -->
+  <div class="screen" id="screen-category">
+    <div class="page-wrap">
+      <button class="back-btn" id="cat-back">← Back</button>
+      <div class="breadcrumb" id="breadcrumb"></div>
+      <div class="page-head">
+        <span class="page-emoji" id="cat-emoji">📚</span>
+        <div>
+          <h2 id="cat-subject-name">Subject</h2>
+          <p id="cat-sub-hint">Pick a category to continue</p>
+        </div>
+      </div>
+      <div class="level-chip hidden" id="level-indicator">
+        <span class="lc-dot"></span>
+        <span id="level-label">Select Category</span>
+      </div>
+      <!-- RESUME CARD — shown if saved progress exists -->
+      <div class="resume-card hidden" id="resume-card">
+        <div class="resume-info">
+          <span class="resume-icon">⏸️</span>
+          <div>
+            <p class="resume-title">Resume where you left off</p>
+            <p class="resume-stats" id="resume-stats">0 questions done</p>
+          </div>
+        </div>
+        <div class="resume-btns">
+          <button class="btn-resume" id="btn-resume">▶ Continue</button>
+          <button class="btn-restart" id="btn-restart">🔄 Restart</button>
+        </div>
+      </div>
+
+      <div id="cat-grid" class="cat-list"></div>
+      <button class="btn-all hidden" id="btn-all-cat">⚡ All Questions</button>
+    </div>
+  </div>
+
+  <!-- ════ SCREEN: QUIZ ════ -->
+  <div class="screen" id="screen-quiz">
+    <div class="qbar">
+      <button class="qexit" id="quiz-back">✕</button>
+      <button class="qsubmit" id="btn-submit-quiz">Submit</button>
+      <div class="qbar-mid">
+        <span class="qbadge" id="quiz-subject-badge">Quiz</span>
+        <span class="qprog" id="quiz-progress-text">1 / 10</span>
+      </div>
+      <div class="qtimer" id="quiz-timer">00:00</div>
+    </div>
+    <div class="qtrack"><div class="qfill" id="progress-bar-fill"></div></div>
+
+    <div class="quiz-body">
+      <div class="qcard" id="question-card">
+        <span class="qnum" id="q-number">Q1</span>
+        <p class="qtext" id="q-text">Loading…</p>
+      </div>
+
+      <div class="opts-grid" id="options-grid">
+        <button class="opt" data-idx="0"><span class="opt-lbl la">A</span><span id="opt-0">—</span></button>
+        <button class="opt" data-idx="1"><span class="opt-lbl lb">B</span><span id="opt-1">—</span></button>
+        <button class="opt" data-idx="2"><span class="opt-lbl lc">C</span><span id="opt-2">—</span></button>
+        <button class="opt" data-idx="3"><span class="opt-lbl ld">D</span><span id="opt-3">—</span></button>
+      </div>
+
+      <!-- EXPLANATION BOX — hidden until user clicks Show -->
+      <div class="desc-box hidden" id="desc-box">
+        <div class="desc-header">
+          <span>💡</span>
+          <span>Explanation</span>
+        </div>
+        <p id="desc-text"></p>
+      </div>
+
+      <!-- SHOW EXPLANATION BUTTON — appears after answering -->
+      <button class="btn-explain hidden" id="btn-explain">💡 Show Explanation</button>
+
+      <button class="btn-next hidden" id="btn-next">Next →</button>
+    </div>
+
+    <div class="sbar">
+      <span class="sb sc">✅ <b id="score-correct">0</b></span>
+      <span class="sb sw">❌ <b id="score-wrong">0</b></span>
+      <span class="sb sl">📋 <b id="score-left">10</b></span>
+    </div>
+  </div>
+
+  <!-- ════ SCREEN: RESULT ════ -->
+  <div class="screen" id="screen-result">
+    <div class="result-wrap">
+      <span class="r-emoji" id="result-emoji">🏆</span>
+      <h2 class="r-title" id="result-title">Well Done!</h2>
+      <div class="ring-wrap">
+        <svg viewBox="0 0 140 140">
+          <circle cx="70" cy="70" r="56" fill="none" stroke="#1a2540" stroke-width="10"/>
+          <circle cx="70" cy="70" r="56" fill="none" stroke="url(#rg)" stroke-width="10"
+                  stroke-linecap="round" stroke-dasharray="352" stroke-dashoffset="352"
+                  id="ring-circle" style="transform:rotate(-90deg);transform-origin:center"/>
+          <defs>
+            <linearGradient id="rg" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#3b82f6"/>
+              <stop offset="100%" stop-color="#a855f7"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <div class="ring-in">
+          <span class="ring-pct" id="ring-pct">0%</span>
+          <span class="ring-sub">Score</span>
+        </div>
+      </div>
+      <div class="r-stats">
+        <div class="rs rc"><b id="rs-correct">0</b><span>Correct</span></div>
+        <div class="rs rw"><b id="rs-wrong">0</b><span>Wrong</span></div>
+        <div class="rs rt"><b id="rs-time">0s</b><span>Time</span></div>
+        <div class="rs ra"><b id="rs-total">0</b><span>Attempted</span></div>
+      </div>
+      <div class="r-btns">
+        <button class="btn-primary" id="btn-retry">▶ Continue</button>
+        <button class="btn-ghost" id="btn-restart-result">🔄 Restart</button>
+        <button class="btn-ghost" id="btn-home-from-result">🏠 Home</button>
+      </div>
+      <p class="save-note" id="save-msg"></p>
+      <div class="seen-badge hidden" id="seen-count-badge">0 questions done so far</div>
+      <button class="btn-reset-seen" id="btn-reset-seen">🔄 Reset & Start from Q1</button>
+    </div>
+  </div>
+
+  <!-- ════ SCREEN: HISTORY ════ -->
+  <div class="screen" id="screen-history">
+    <div class="page-wrap">
+      <button class="back-btn" id="hist-back">← Back</button>
+      <div class="sec-head" style="margin-bottom:20px"><h2>My History</h2></div>
+      <div id="history-list" class="hist-list"><p class="empty-state">Loading…</p></div>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<!-- ═══════════════════════════════════════
+     AUTH MODAL — with signup animation
+═══════════════════════════════════════ -->
+<div class="modal-ov hidden" id="auth-modal">
+  <div class="modal-box">
+    <button class="modal-x" id="modal-close">✕</button>
+
+    <!-- TAB SWITCHER -->
+    <div class="atabs">
+      <button class="atab active" id="tab-login">Log In</button>
+      <button class="atab" id="tab-signup">Sign Up</button>
+    </div>
+
+    <!-- ── LOGIN PANEL ── -->
+    <div id="login-panel">
+      <div class="auth-icon-wrap">
+        <div class="auth-icon-bg">🔑</div>
+      </div>
+      <h3>Welcome back!</h3>
+      <form id="login-form" class="aform">
+        <div class="field">
+          <label>Email</label>
+          <input type="email" id="login-email" placeholder="you@example.com" required>
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <input type="password" id="login-password" placeholder="Password" required>
+        </div>
+        <p class="aerr hidden" id="login-error"></p>
+        <button type="submit" class="btn-primary w100" id="login-btn">Log In</button>
+      </form>
+    </div>
+
+    <!-- ── SIGNUP PANEL ── -->
+    <div id="signup-panel" class="hidden">
+
+      <!-- Phase A: Boy walking in with box (shown first) -->
+      <div class="signup-scene" id="signup-scene">
+        <div class="scene-title">Create your account</div>
+        <!-- Boy SVG character carrying a box -->
+        <div class="boy-stage" id="boy-stage">
+          <svg class="boy-svg" id="boy-svg" viewBox="0 0 220 160" xmlns="http://www.w3.org/2000/svg">
+            <!-- Ground shadow -->
+            <ellipse cx="110" cy="155" rx="70" ry="6" fill="rgba(0,0,0,0.2)"/>
+
+            <!-- ── BOX ── -->
+            <g id="box-group">
+              <!-- Box body -->
+              <rect id="box-body" x="70" y="90" width="50" height="44" rx="4" fill="#f59e0b"/>
+              <!-- Box shine -->
+              <rect x="74" y="94" width="10" height="6" rx="2" fill="rgba(255,255,255,0.3)"/>
+              <!-- Box stripe -->
+              <line x1="95" y1="90" x2="95" y2="134" stroke="#d97706" stroke-width="2"/>
+              <line x1="70" y1="112" x2="120" y2="112" stroke="#d97706" stroke-width="2"/>
+              <!-- Box lid -->
+              <g id="box-lid">
+                <rect x="68" y="84" width="54" height="12" rx="3" fill="#fbbf24"/>
+                <rect x="68" y="84" width="54" height="4" rx="2" fill="#fcd34d"/>
+              </g>
+            </g>
+
+            <!-- ── BOY ── -->
+            <g id="boy-group">
+              <!-- Back arm (left) -->
+              <rect id="arm-left" x="68" y="60" width="10" height="28" rx="5" fill="#fbbf24" transform-origin="73 60"/>
+              <!-- Body -->
+              <rect x="73" y="52" width="30" height="42" rx="12" fill="#3b82f6"/>
+              <!-- Collar -->
+              <path d="M82 52 Q88 58 94 52" fill="#2563eb"/>
+              <!-- Shirt detail -->
+              <rect x="80" y="62" width="3" height="10" rx="1.5" fill="#2563eb"/>
+              <!-- Front arm (right) -->
+              <rect id="arm-right" x="98" y="60" width="10" height="28" rx="5" fill="#fbbf24" transform-origin="103 60"/>
+              <!-- Head -->
+              <circle cx="88" cy="38" r="18" fill="#fbbf24"/>
+              <!-- Hair -->
+              <path d="M70 32 Q88 16 106 32 Q106 22 88 18 Q70 22 70 32Z" fill="#1c1917"/>
+              <!-- Hair side -->
+              <path d="M70 32 Q68 38 70 44" stroke="#1c1917" stroke-width="3" fill="none" stroke-linecap="round"/>
+              <!-- Eye left -->
+              <circle cx="81" cy="36" r="3.5" fill="#1c1917"/>
+              <circle cx="82" cy="35" r="1" fill="white"/>
+              <!-- Eye right -->
+              <circle cx="95" cy="36" r="3.5" fill="#1c1917"/>
+              <circle cx="96" cy="35" r="1" fill="white"/>
+              <!-- Eyebrow left -->
+              <path d="M78 30 Q81 28 84 30" stroke="#1c1917" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+              <!-- Eyebrow right -->
+              <path d="M92 30 Q95 28 98 30" stroke="#1c1917" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+              <!-- Smile -->
+              <path id="boy-mouth" d="M83 44 Q88 48 93 44" stroke="#c2410c" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+              <!-- Legs -->
+              <rect id="leg-left" x="76" y="92" width="12" height="36" rx="6" fill="#1e40af" transform-origin="82 92"/>
+              <rect id="leg-right" x="88" y="92" width="12" height="36" rx="6" fill="#1e40af" transform-origin="94 92"/>
+              <!-- Shoes -->
+              <ellipse id="shoe-left" cx="82" cy="128" rx="9" ry="5" fill="#1c1917"/>
+              <ellipse id="shoe-right" cx="94" cy="128" rx="9" ry="5" fill="#1c1917"/>
+            </g>
+
+            <!-- Sparkles (hidden, shown after box opens) -->
+            <g id="sparkles" opacity="0">
+              <text x="30" y="50" font-size="16">✨</text>
+              <text x="160" y="40" font-size="14">⭐</text>
+              <text x="20" y="100" font-size="12">💫</text>
+              <text x="170" y="90" font-size="16">✨</text>
+            </g>
+
+            <!-- Speech bubble (hidden) -->
+            <g id="speech-bubble" opacity="0">
+              <rect x="110" y="10" width="90" height="32" rx="10" fill="white"/>
+              <path d="M120 42 L115 52 L130 42Z" fill="white"/>
+              <text x="118" y="31" font-size="11" fill="#1e293b" font-weight="600">Fill this form! 📝</text>
+            </g>
+          </svg>
+        </div>
+        <button class="open-box-btn" id="open-box-btn">📦 Open the Box</button>
+      </div>
+
+      <!-- Phase B: Signup form (hidden, revealed after animation) -->
+      <form id="signup-form" class="aform signup-form-hidden">
+        <div class="signup-form-header">
+          <div class="sfh-avatar">🎓</div>
+          <div>
+            <h3>Create Account</h3>
+            <p>Join thousands of students</p>
+          </div>
+        </div>
+        <div class="field">
+          <label>Full Name</label>
+          <input type="text" id="signup-name" placeholder="Your name" required>
+        </div>
+        <div class="field">
+          <label>Email</label>
+          <input type="email" id="signup-email" placeholder="you@example.com" required>
+        </div>
+        <div class="field">
+          <label>Password <span class="field-hint">(min 6 chars)</span></label>
+          <input type="password" id="signup-password" placeholder="Password" required minlength="6">
+        </div>
+        <p class="aerr hidden" id="signup-error"></p>
+        <button type="submit" class="btn-primary w100" id="signup-btn">🚀 Create My Account</button>
+      </form>
+
+    </div><!-- /signup-panel -->
+  </div>
+</div>
+
+<div class="toast hidden" id="toast"></div>
+<script src="js/app.js"></script>
+</body>
+</html>
