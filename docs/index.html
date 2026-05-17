@@ -791,62 +791,143 @@
     </div>
 
     <!-- SIGNUP -->
-    <div id="signup-panel" class="hidden">
-      <!-- Ghibli Scene -->
-      <div class="ghibli-stage" id="ghibli-stage">
-        <div class="g-stars" id="g-stars"></div>
-        <div class="g-ground"></div>
-        <div class="g-road"></div>
-        <div class="g-boy-wrap" id="g-boy">
-          <svg class="g-boy-svg" viewBox="0 0 80 120" xmlns="http://www.w3.org/2000/svg">
-            <!-- Body group with bob animation -->
-            <g class="g-body-g">
-              <!-- Head -->
-              <circle cx="40" cy="22" r="14" fill="#fbbf24"/>
-              <!-- Hair -->
-              <path d="M26 16 Q40 6 54 16 Q54 10 40 8 Q26 10 26 16Z" fill="#1c1917"/>
-              <!-- Eyes -->
-              <circle cx="35" cy="20" r="2.5" fill="#1c1917"/><circle cx="36" cy="19" r=".8" fill="white"/>
-              <circle cx="45" cy="20" r="2.5" fill="#1c1917"/><circle cx="46" cy="19" r=".8" fill="white"/>
-              <!-- Eyebrows -->
-              <path d="M33 16 Q35 14.5 37 16" stroke="#1c1917" stroke-width="1.2" fill="none" stroke-linecap="round"/>
-              <path d="M43 16 Q45 14.5 47 16" stroke="#1c1917" stroke-width="1.2" fill="none" stroke-linecap="round"/>
-              <!-- Smile -->
-              <path d="M35 27 Q40 31 45 27" stroke="#c2410c" stroke-width="1.3" fill="none" stroke-linecap="round"/>
-              <!-- Ears -->
-              <ellipse cx="26" cy="22" rx="2.5" ry="3" fill="#f59e0b"/>
-              <ellipse cx="54" cy="22" rx="2.5" ry="3" fill="#f59e0b"/>
-              <!-- School uniform body -->
-              <rect x="28" y="36" width="24" height="32" rx="8" fill="#1e40af"/>
-              <!-- Collar -->
-              <path d="M36 36 L40 42 L44 36" fill="white" opacity=".9"/>
-              <!-- Arm Left (walking animation) -->
-              <rect class="g-arm-l" x="21" y="38" width="8" height="22" rx="4" fill="#fbbf24"/>
-              <!-- Arm Right (briefcase arm - stays somewhat still) -->
-              <g class="g-arm-r">
-                <rect x="51" y="38" width="8" height="22" rx="4" fill="#fbbf24"/>
-                <!-- Briefcase -->
-                <g class="g-briefcase-g">
-                  <rect x="53" y="58" width="18" height="14" rx="3" fill="#92400e"/>
-                  <rect x="58" y="54" width="8" height="6" rx="2" fill="none" stroke="#92400e" stroke-width="2"/>
-                  <rect x="53" y="64" width="18" height="1.5" fill="#78350f"/>
-                  <rect x="60" y="58" width="4" height="8" fill="#d97706"/>
-                  <!-- Papers flying out when opened -->
-                  <g class="g-confetti">
-                    <rect x="56" y="48" width="6" height="8" rx="1" fill="white" opacity=".9" transform="rotate(-15 59 52)"/>
-                    <rect x="64" y="46" width="5" height="7" rx="1" fill="#bfdbfe" opacity=".9" transform="rotate(10 66 50)"/>
-                    <rect x="50" y="50" width="4" height="6" rx="1" fill="#fde68a" opacity=".9" transform="rotate(-20 52 53)"/>
-                  </g>
-                </g>
-              </g>
-              <!-- Legs -->
-              <g class="g-leg-l"><rect x="29" y="67" width="10" height="28" rx="5" fill="#1e3a8a"/><ellipse cx="34" cy="95" rx="7" ry="4" fill="#1c1917"/></g>
-              <g class="g-leg-r"><rect x="41" y="67" width="10" height="28" rx="5" fill="#1e3a8a"/><ellipse cx="46" cy="95" rx="7" ry="4" fill="#1c1917"/></g>
+<div id="signup-panel" class="hidden">
+  <!-- Ghibli Stage -->
+  <div class="ghibli-stage" id="ghibli-stage">
+    <div class="g-stars" id="g-stars"></div>
+    <!-- Decorative trees -->
+    <div class="g-tree" style="left:8%"></div>
+    <div class="g-tree" style="right:10%;transform:scaleX(-1)"></div>
+    <div class="g-ground"></div>
+    <div class="g-path"></div>
+    <!-- Walking boy with briefcase -->
+    <div class="g-boy-wrap" id="g-boy">
+      <svg class="g-boy-svg" width="84" height="130" viewBox="0 0 84 130" xmlns="http://www.w3.org/2000/svg">
+        <g class="g-body-g">
+          <!-- Shadow -->
+          <ellipse cx="42" cy="127" rx="22" ry="5" fill="rgba(0,0,0,.25)"/>
+          <!-- â”€â”€ Papers flying out (initially hidden) â”€â”€ -->
+          <g class="g-paper-1" style="transform-origin:65px 90px">
+            <rect x="58" y="68" width="14" height="18" rx="2" fill="white" opacity=".9"/>
+            <line x1="61" y1="72" x2="70" y2="72" stroke="#3b82f6" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="61" y1="76" x2="70" y2="76" stroke="#3b82f6" stroke-width="1"/>
+            <line x1="61" y1="80" x2="68" y2="80" stroke="#94a3b8" stroke-width="1"/>
+          </g>
+          <g class="g-paper-2" style="transform-origin:62px 88px">
+            <rect x="56" y="72" width="12" height="16" rx="2" fill="#dbeafe" opacity=".9"/>
+            <line x1="59" y1="76" x2="66" y2="76" stroke="#2563eb" stroke-width="1.5" stroke-linecap="round"/>
+          </g>
+          <g class="g-paper-3" style="transform-origin:60px 92px">
+            <rect x="55" y="76" width="11" height="14" rx="2" fill="#fde68a" opacity=".9"/>
+            <line x1="57" y1="80" x2="64" y2="80" stroke="#d97706" stroke-width="1.5" stroke-linecap="round"/>
+          </g>
+          <!-- â”€â”€ Legs â”€â”€ -->
+          <g class="g-leg-l" style="transform-origin:33px 90px">
+            <rect x="27" y="88" width="12" height="28" rx="6" fill="#1e3a8a"/>
+            <ellipse cx="33" cy="116" rx="9" ry="5" fill="#1c1917"/>
+          </g>
+          <g class="g-leg-r" style="transform-origin:51px 90px">
+            <rect x="45" y="88" width="12" height="28" rx="6" fill="#1e3a8a"/>
+            <ellipse cx="51" cy="116" rx="9" ry="5" fill="#1c1917"/>
+          </g>
+          <!-- â”€â”€ Body â”€â”€ -->
+          <rect x="25" y="52" width="34" height="42" rx="12" fill="#3b82f6"/>
+          <!-- Shirt pocket -->
+          <rect x="29" y="58" width="8" height="7" rx="2" fill="rgba(255,255,255,.25)"/>
+          <!-- Badge/ID -->
+          <rect x="38" y="59" width="10" height="14" rx="2" fill="white" opacity=".3"/>
+          <!-- Collar/tie -->
+          <path d="M39 52 L42 60 L45 52" fill="white" opacity=".6"/>
+          <!-- â”€â”€ Arms â”€â”€ -->
+          <g class="g-arm-l" style="transform-origin:27px 58px">
+            <rect x="14" y="56" width="14" height="22" rx="7" fill="#fbbf24"/>
+            <!-- Hand wave -->
+            <circle cx="19" cy="80" r="6" fill="#fbbf24"/>
+            <rect x="16" y="75" width="3" height="7" rx="2" fill="#fbbf24"/>
+            <rect x="20" y="74" width="3" height="7" rx="2" fill="#fbbf24"/>
+          </g>
+          <g class="g-arm-r" style="transform-origin:57px 58px">
+            <rect x="56" y="56" width="12" height="22" rx="6" fill="#fbbf24"/>
+            <!-- â”€â”€ Briefcase â”€â”€ -->
+            <g class="g-briefcase-g">
+              <!-- Handle -->
+              <rect x="61" y="74" width="10" height="5" rx="2.5" fill="none" stroke="#92400e" stroke-width="2"/>
+              <!-- Body -->
+              <rect x="57" y="78" width="20" height="16" rx="4" fill="#92400e"/>
+              <!-- Latch line -->
+              <line x1="57" y1="85" x2="77" y2="85" stroke="#78350f" stroke-width="1.5"/>
+              <!-- Center divider -->
+              <line x1="67" y1="78" x2="67" y2="94" stroke="#78350f" stroke-width="1.5"/>
+              <!-- Clasp -->
+              <rect x="63" y="83" width="8" height="4" rx="2" fill="#d97706"/>
             </g>
-          </svg>
-        </div>
-        <div class="g-scene-hint" id="g-scene-hint">Tap to open briefcase ✨</div>
+          </g>
+          <!-- â”€â”€ Head â”€â”€ -->
+          <circle cx="42" cy="28" r="18" fill="#fbbf24"/>
+          <!-- Hair with style -->
+          <path d="M24 22 Q26 8 42 6 Q58 8 60 22 Q56 12 42 12 Q28 12 24 22Z" fill="#1c1917"/>
+          <!-- Side hair -->
+          <path d="M24 22 Q20 26 22 32" stroke="#1c1917" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+          <path d="M60 22 Q64 26 62 32" stroke="#1c1917" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+          <!-- Ear left -->
+          <ellipse cx="24" cy="28" rx="3" ry="4" fill="#f59e0b"/>
+          <!-- Ear right -->
+          <ellipse cx="60" cy="28" rx="3" ry="4" fill="#f59e0b"/>
+          <!-- Eye left -->
+          <circle cx="35" cy="26" r="4" fill="white"/>
+          <circle cx="35" cy="27" r="2.5" fill="#1c1917"/>
+          <circle cx="36" cy="26" r="1" fill="white"/>
+          <!-- Eye right -->
+          <circle cx="49" cy="26" r="4" fill="white"/>
+          <circle cx="49" cy="27" r="2.5" fill="#1c1917"/>
+          <circle cx="50" cy="26" r="1" fill="white"/>
+          <!-- Eyebrows -->
+          <path d="M32 20 Q35 18 38 20" stroke="#1c1917" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+          <path d="M46 20 Q49 18 52 20" stroke="#1c1917" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+          <!-- Smile -->
+          <path d="M36 35 Q42 41 48 35" stroke="#c2410c" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <!-- Cheek blush -->
+          <circle cx="30" cy="33" r="4" fill="#fca5a5" opacity=".4"/>
+          <circle cx="54" cy="33" r="4" fill="#fca5a5" opacity=".4"/>
+          <!-- School bag on back (subtle) -->
+          <rect x="21" y="55" width="8" height="18" rx="4" fill="#1d4ed8" opacity=".5"/>
+        </g>
+      </svg>
+    </div>
+    <!-- Click hint -->
+    <div class="g-scene-hint" id="g-scene-hint">âœ¨ Click to open briefcase</div>
+  </div>
+
+  <!-- Open button -->
+  <button class="g-open-btn" id="g-open-btn">ðŸ“¦ Open Briefcase</button>
+
+  <!-- Signup form (appears after briefcase opens) -->
+  <div class="signup-form-inner" id="signup-form-inner">
+    <div class="sfh">
+      <div class="sfh-av">ðŸŽ“</div>
+      <div class="sfh-info">
+        <h3>Create Account</h3>
+        <p>Join thousands of students preparing for Govt Exams!</p>
       </div>
+    </div>
+    <form id="signup-form">
+      <div class="field">
+        <label>Full Name</label>
+        <input type="text" id="s-name" placeholder="Your name" required>
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="s-email" placeholder="you@example.com" required>
+      </div>
+      <div class="field">
+        <label>Password <span style="font-size:.72rem;color:var(--text3)">(min 6 characters)</span></label>
+        <input type="password" id="s-pass" placeholder="Create password" required minlength="6">
+      </div>
+      <p class="aerr hidden" id="s-err"></p>
+      <button type="submit" class="btn-primary w100" id="s-btn">ðŸš€ Create My Account</button>
+    </form>
+  </div>
+</div>
       <button class="g-open-btn" id="g-open-btn">📦 Open Briefcase</button>
 
       <!-- Signup form (hidden until briefcase opened) -->
