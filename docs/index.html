@@ -65,21 +65,44 @@
   <div class="screens">
 
     <!-- ══ TAB: HOME ══ -->
-    <div class="tab-screen active" id="screen-home">
-      <div class="home-hero">
-        <div class="home-hero-grid"></div>
-        <div class="hero-orbs"><div class="hero-orb ho1"></div><div class="hero-orb ho2"></div></div>
-        <div style="position:relative;z-index:2">
-          <div class="hero-badge">🇮🇳 India's Premier Learning Platform</div>
-          <h1 class="hero-h1">Quiz करो, Type करो,<br><span class="hero-grad">Exam Crack करो</span></h1>
-          <p class="hero-sub">4,700+ quiz questions · 50+ typing exams · Real-time results — सब free!</p>
-          <div class="hero-stats">
-            <div class="hstat"><b id="stat-users">—</b><span>Students</span></div>
-            <div class="hstat"><b id="stat-quizzes">—</b><span>Quizzes</span></div>
-            <div class="hstat"><b style="color:#22d3ee" id="stat-live">—</b><span>Live Now</span></div>
-          </div>
-        </div>
+<div class="tab-screen" id="screen-typing">
+  <div class="typing-home">
+
+    <!-- Hero header -->
+    <div class="typing-home-header">
+      <h2>âŒ¨ï¸ Typing Practice Platform</h2>
+      <p>50+ Government Exams Â· Live WPM Tracker Â· Exam-wise Passages</p>
+      <div class="typing-home-stats">
+        <div class="ths"><b>50+</b><span>Exams</span></div>
+        <div class="ths"><b>200+</b><span>Passages</span></div>
+        <div class="ths"><b>Free</b><span>Forever</span></div>
       </div>
+    </div>
+
+    <!-- Search bar -->
+    <div class="exam-search-wrap">
+      <span class="search-icon">ðŸ”</span>
+      <input type="text" id="exam-search-inp" placeholder="Exam search à¤•à¤°à¥‡à¤‚â€¦ (SSC, UP Police, AHCâ€¦)">
+      <button class="search-clear" onclick="document.getElementById('exam-search-inp').value='';document.getElementById('exam-search-inp').dispatchEvent(new Event('input'))">âœ•</button>
+    </div>
+
+    <!-- Category tabs -->
+    <div class="exam-cat-tabs" id="exam-cat-tabs">
+      <button class="exam-cat-btn active" data-cat="all">ðŸŒ All</button>
+      <button class="exam-cat-btn" data-cat="central">ðŸ›ï¸ Central Govt</button>
+      <button class="exam-cat-btn" data-cat="defence">ðŸ›¡ï¸ Defence &amp; Police</button>
+      <button class="exam-cat-btn" data-cat="court">âš–ï¸ Courts</button>
+      <button class="exam-cat-btn" data-cat="state">ðŸ—ºï¸ State Level</button>
+      <button class="exam-cat-btn" data-cat="psu">ðŸ”¬ PSU &amp; Autonomous</button>
+    </div>
+
+    <!-- Exam grid (AR-style cards) -->
+    <div class="exam-grid-v2" id="exam-grid">
+      <div class="vs-loading-text" style="grid-column:1/-1">Loading examsâ€¦</div>
+    </div>
+
+  </div>
+</div>
 
       <!-- Ad Banner -->
       <div class="ad-banner">
