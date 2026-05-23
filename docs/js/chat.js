@@ -1,28 +1,22 @@
-/* ═══════════════════════════════════════════
-   VidyaSagar v3 — chat.js
-   Firebase Group Chat + AI Chat
-═══════════════════════════════════════════ */
+/* VidyaSagar v4 — chat.js (IMPROVED) */
 const ChatModule = (() => {
-  let db = null, groupUnsubscribe = null, pollInterval = null;
+  let db = null, pollInterval = null;
   let chatBgUrl = localStorage.getItem('vs_chat_bg_custom') || null;
+  let replyingTo = null; // { id, text, sender }
 
   function init() {
-    // Init Firebase
     try {
       if (VS_CONFIG.FIREBASE.apiKey !== 'YOUR_FIREBASE_API_KEY') {
         if (!firebase.apps.length) firebase.initializeApp(VS_CONFIG.FIREBASE);
         db = firebase.firestore();
-        // Auto-delete messages older than 3 months handled by querying
       }
     } catch(e) { console.warn('Firebase not configured:', e.message); }
-    // Apply saved chat background
+
     if (chatBgUrl) {
       const msgs = document.getElementById('group-msgs');
-      if (msgs) msgs.style.background = `url(${chatBgUrl}) center/cover no-repeat`;
+      if (msgs) msgs.style.backgroundImage = `url(${chatBgUrl})`;
     }
-    // Bind AI chat
     bindAIChat();
-    // Bind group chat swipe
     bindGroupChatSwipe();
   }
 
@@ -32,13 +26,17 @@ const ChatModule = (() => {
     openSubScreen('screen-group-chat');
     loadGroupMessages();
     startPolling();
+    // Auto-focus keyboard on mobile
+    setTimeout(() => {
+      const inp = document.getElementById('group-inp');
+      if (inp && window.innerWidth < 768) inp.focus();
+    }, 500);
   }
 
   function loadGroupMessages() {
     const container = document.getElementById('group-msgs');
     if (!container) return;
     if (!db) { loadGroupFromBackend(container); return; }
-    // Firebase version
     const threeMonthsAgo = new Date();
     threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
     db.collection('group_chat')
@@ -57,13 +55,18 @@ const ChatModule = (() => {
     try {
       const d = await apiFetch('/api/chat');
       renderGroupMessages(container, d.messages || []);
-    } catch(e) { container.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text3)">${e.message}</div>`; }
+    } catch(e) {
+      container.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text3)">${e.message}</div>`;
+    }
   }
 
   function renderGroupMessages(container, msgs) {
     const wasAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 80;
     container.innerHTML = '';
-    if (!msgs.length) { container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3)">पहले message भेजें! 💬</div>'; return; }
+    if (!msgs.length) {
+      container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3)">पहले message भेजें! 💬</div>';
+      return;
+    }
     let lastDate = '';
     msgs.forEach(msg => {
       const createdAt = msg.createdAt?.toDate ? msg.createdAt.toDate() : new Date(msg.createdAt);
@@ -78,8 +81,7 @@ const ChatModule = (() => {
       container.appendChild(buildGroupBubble(msg, createdAt));
     });
     if (wasAtBottom) container.scrollTop = container.scrollHeight;
-    // Apply chat bg
-    if (chatBgUrl) container.style.background = `url(${chatBgUrl}) center/cover no-repeat`;
+    if (chatBgUrl) container.style.backgroundImage = `url(${chatBgUrl})`;
   }
 
   function buildGroupBubble(msg, date) {
@@ -88,42 +90,110 @@ const ChatModule = (() => {
     const time = date.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
     const row = document.createElement('div');
     row.className = `chat-row ${isMe ? 'sent' : 'recv'}`;
+    row.dataset.msgId = msg.id || '';
+    row.dataset.msgText = (msg.message || msg.text || '').substring(0, 80);
+    row.dataset.msgSender = isMe ? 'You' : (msg.userName || 'User');
+
+    const replyHtml = msg.replyTo ?
+      `<div class="reply-preview">↩️ ${escHtml(msg.replyTo.sender)}: ${escHtml(msg.replyTo.text)}</div>` : '';
+
     if (isMe) {
-      row.innerHTML = `<div class="chat-bub"><div class="chat-txt">${escHtml(msg.message || msg.text || '')}</div><div class="chat-meta-row"><span class="chat-tm">${time}</span><span class="chat-tks">✓✓</span></div></div>`;
+      row.innerHTML = `<div class="chat-bub">${replyHtml}<div class="chat-txt">${escHtml(msg.message || msg.text || '')}</div><div class="chat-meta-row"><span class="chat-tm">${time}</span><span class="chat-tks">✓✓</span></div></div>`;
     } else {
-      row.innerHTML = `<div class="chat-av">${msg.userAvatar || '🎓'}</div><div class="chat-bub"><span class="chat-sender">${msg.userName || 'User'}</span><div class="chat-txt">${escHtml(msg.message || msg.text || '')}</div><div class="chat-meta-row"><span class="chat-tm">${time}</span></div></div>`;
+      row.innerHTML = `<div class="chat-av">${msg.userAvatar || '🎓'}</div><div class="chat-bub">${replyHtml}<span class="chat-sender">${msg.userName || 'User'}</span><div class="chat-txt">${escHtml(msg.message || msg.text || '')}</div><div class="chat-meta-row"><span class="chat-tm">${time}</span></div></div>`;
     }
+
+    // Swipe to reply
+    addSwipeReply(row);
     return row;
   }
+
+  /* ── Swipe to Reply ── */
+  function addSwipeReply(row) {
+    let startX = 0, startY = 0, swiping = false;
+    row.addEventListener('touchstart', e => {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      swiping = false;
+    }, { passive: true });
+
+    row.addEventListener('touchmove', e => {
+      const dx = e.touches[0].clientX - startX;
+      const dy = Math.abs(e.touches[0].clientY - startY);
+      if (dx > 40 && dy < 30) {
+        swiping = true;
+        row.style.transform = `translateX(${Math.min(dx * 0.5, 60)}px)`;
+        row.style.transition = 'none';
+      }
+    }, { passive: true });
+
+    row.addEventListener('touchend', e => {
+      const dx = e.changedTouches[0].clientX - startX;
+      row.style.transform = '';
+      row.style.transition = 'transform .2s ease';
+      setTimeout(() => { row.style.transition = ''; }, 250);
+      if (swiping && dx > 55) {
+        setReply({
+          text: row.dataset.msgText,
+          sender: row.dataset.msgSender
+        });
+      }
+      swiping = false;
+    }, { passive: true });
+  }
+
+  function setReply(msg) {
+    replyingTo = msg;
+    const bar = document.getElementById('reply-preview-bar');
+    const txt = document.getElementById('reply-preview-text');
+    if (bar) bar.classList.add('show');
+    if (txt) txt.textContent = `${msg.sender}: ${msg.text}`;
+    document.getElementById('group-inp')?.focus();
+  }
+
+  window.clearReply = function() {
+    replyingTo = null;
+    const bar = document.getElementById('reply-preview-bar');
+    if (bar) bar.classList.remove('show');
+  };
 
   async function sendGroupMessage() {
     if (!token || !userData) { openAuth('login'); return; }
     const inp = document.getElementById('group-inp');
     const text = inp?.value.trim();
     if (!text) return;
-    const orig = text; inp.value = ''; inp.style.height = 'auto';
+    const orig = text;
+    inp.value = '';
+    inp.style.height = 'auto';
+    const reply = replyingTo ? { ...replyingTo } : null;
+    window.clearReply();
+
     try {
       if (db) {
-        await db.collection('group_chat').add({
-          userId: userData.id || userData._id, user: userData.id || userData._id,
-          userName: userData.name, userAvatar: userData.avatar || '🎓',
-          text, message: text, createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        const msgData = {
+          userId: userData.id || userData._id,
+          user: userData.id || userData._id,
+          userName: userData.name,
+          userAvatar: userData.avatar || '🎓',
+          text, message: text,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        if (reply) msgData.replyTo = reply;
+        await db.collection('group_chat').add(msgData);
       } else {
-        await apiFetch('/api/chat', { method:'POST', body: JSON.stringify({ message: text }) });
+        await apiFetch('/api/chat', { method: 'POST', body: JSON.stringify({ message: text }) });
       }
       loadGroupMessages();
-    } catch(e) { showToast('Message नहीं गया: ' + e.message, 'error'); inp.value = orig; }
+    } catch(e) {
+      showToast('Message नहीं गया: ' + e.message, 'error');
+      inp.value = orig;
+    }
   }
 
-  function startPolling() {
-    stopPolling();
-    pollInterval = setInterval(loadGroupMessages, 5000);
-  }
-
+  function startPolling() { stopPolling(); pollInterval = setInterval(loadGroupMessages, 5000); }
   function stopPolling() { clearInterval(pollInterval); pollInterval = null; }
 
-  /* ── Swipe to send (group chat) ── */
+  /* ── Group Chat Input Bindings ── */
   function bindGroupChatSwipe() {
     const wrap = document.getElementById('group-inp-box');
     const sendBtn = document.getElementById('group-send-btn');
@@ -136,35 +206,51 @@ const ChatModule = (() => {
       inp.style.height = Math.min(inp.scrollHeight, 120) + 'px';
     });
 
-    // Enter to send
+    // Enter to send (desktop), Shift+Enter for newline
     inp.addEventListener('keydown', e => {
-      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendGroupMessage(); }
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendGroupMessage();
+      }
     });
 
     sendBtn.addEventListener('click', sendGroupMessage);
 
-    // Swipe right to send
+    // Swipe right on the send button area to send
     let tx = 0, ty = 0;
-    wrap.addEventListener('touchstart', e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, { passive:true });
+    wrap.addEventListener('touchstart', e => {
+      tx = e.touches[0].clientX;
+      ty = e.touches[0].clientY;
+    }, { passive: true });
+
     wrap.addEventListener('touchmove', e => {
       const dx = e.touches[0].clientX - tx;
       const dy = Math.abs(e.touches[0].clientY - ty);
-      if (dx > 22 && dy < 30) { wrap.classList.add('swipe-ready'); sendBtn.classList.add('ready'); }
-      else { wrap.classList.remove('swipe-ready'); sendBtn.classList.remove('ready'); }
-    }, { passive:true });
+      if (dx > 22 && dy < 30) {
+        wrap.classList.add('swipe-ready');
+        sendBtn.classList.add('ready');
+      } else {
+        wrap.classList.remove('swipe-ready');
+        sendBtn.classList.remove('ready');
+      }
+    }, { passive: true });
+
     wrap.addEventListener('touchend', e => {
       const dx = e.changedTouches[0].clientX - tx;
       const dy = Math.abs(e.changedTouches[0].clientY - ty);
-      wrap.classList.remove('swipe-ready'); sendBtn.classList.remove('ready');
+      wrap.classList.remove('swipe-ready');
+      sendBtn.classList.remove('ready');
       if (dx > 60 && dy < 40) {
         sendBtn.classList.add('sending');
         sendGroupMessage();
         setTimeout(() => sendBtn.classList.remove('sending'), 350);
       }
-    }, { passive:true });
+    }, { passive: true });
   }
 
   /* ── AI Chat ── */
+  const aiHistory = [];
+
   function bindAIChat() {
     const inp = document.getElementById('ai-inp');
     const btn = document.getElementById('ai-send-btn');
@@ -180,28 +266,39 @@ const ChatModule = (() => {
     if (!text) return;
     inp.value = '';
     const container = document.getElementById('ai-msgs');
-    // Add user bubble
+
+    // User bubble
     const userRow = document.createElement('div');
     userRow.className = 'ai-msg-wrap user';
     userRow.innerHTML = `<div class="ai-bub">${escHtml(text)}</div>`;
     container.appendChild(userRow);
     container.scrollTop = container.scrollHeight;
-    // Show typing indicator
+
+    // Typing indicator
     const typingRow = document.createElement('div');
-    typingRow.className = 'ai-msg-wrap'; typingRow.id = 'ai-typing-ind';
+    typingRow.className = 'ai-msg-wrap';
+    typingRow.id = 'ai-typing-ind';
     typingRow.innerHTML = `<div class="ai-av">🤖</div><div class="ai-bub" style="padding:10px 14px"><div class="ai-typing-ind"><div class="ai-td"></div><div class="ai-td"></div><div class="ai-td"></div></div></div>`;
     container.appendChild(typingRow);
     container.scrollTop = container.scrollHeight;
+
     try {
-      const d = await apiFetch('/api/ai/chat', { method:'POST', body: JSON.stringify({ message: text }) });
-      typingRow.remove();
+      const d = await apiFetch('/api/ai/chat', {
+        method: 'POST',
+        body: JSON.stringify({ message: text, sessionId: 'ai_' + (userData?.id || 'guest') })
+      });
+      document.getElementById('ai-typing-ind')?.remove();
       const aiRow = document.createElement('div');
       aiRow.className = 'ai-msg-wrap';
-      aiRow.innerHTML = `<div class="ai-av">🤖</div><div class="ai-bub">${escHtml(d.reply || 'Sorry, could not get response.')}</div>`;
+      // Format reply — convert **bold** and line breaks
+      const formatted = escHtml(d.reply || 'Sorry, could not get response.')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\n/g, '<br>');
+      aiRow.innerHTML = `<div class="ai-av">🤖</div><div class="ai-bub">${formatted}</div>`;
       container.appendChild(aiRow);
       container.scrollTop = container.scrollHeight;
     } catch(e) {
-      typingRow.remove();
+      document.getElementById('ai-typing-ind')?.remove();
       const errRow = document.createElement('div');
       errRow.className = 'ai-msg-wrap';
       errRow.innerHTML = `<div class="ai-av">🤖</div><div class="ai-bub" style="color:var(--rose)">Error: ${e.message}</div>`;
@@ -209,15 +306,21 @@ const ChatModule = (() => {
     }
   }
 
-  function openAIChat() { openSubScreen('screen-ai-chat'); document.getElementById('ai-inp')?.focus(); }
+  function openAIChat() {
+    openSubScreen('screen-ai-chat');
+    setTimeout(() => document.getElementById('ai-inp')?.focus(), 300);
+  }
+
   function openGroupChat_ext() { openGroupChat(); }
 
   function escHtml(str) {
-    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/\n/g,'<br>');
+    return String(str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/\n/g,'<br>');
   }
 
-  // expose
-  window.openAIChat = openAIChat;
-  window.openGroupChat = openGroupChat_ext;
+  window.openAIChat   = openAIChat;
+  window.openGroupChat= openGroupChat_ext;
+
   return { init, stopPolling };
 })();
