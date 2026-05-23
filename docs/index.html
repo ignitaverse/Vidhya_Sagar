@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/style_additions.css">
 </head>
 <body>
 
@@ -91,6 +92,15 @@
             <div class="hstat"><b id="stat-live">—</b><span>Live Now</span></div>
           </div>
         </div>
+      </div>
+      
+      <!-- HOME SEARCH -->
+      <div class="home-search-wrap" style="padding:0 14px 16px;margin-top:-8px">
+        <div class="home-search-box">
+          <span class="si">🔍</span>
+          <input type="text" id="user-search-inp" placeholder="Search students by name…" autocomplete="off">
+        </div>
+        <div class="search-results-dropdown" id="search-results-dropdown"></div>
       </div>
       <div class="ticker-strip">
         <div class="ticker-inner">
@@ -413,6 +423,10 @@
     <div class="sub-screen no-bot" id="screen-group-chat" style="display:flex;flex-direction:column">
       <div class="wa-header"><button class="wa-back" onclick="closeSubScreen('screen-group-chat')">←</button><div class="wa-avatar">💬</div><div class="wa-info"><div class="wa-name">VidyaSagar Community</div><div class="wa-status"><span class="wa-online-dot"></span>3 months auto-delete</div></div></div>
       <div class="chat-msgs-area" id="group-msgs"></div>
+      <div class="reply-strip" id="reply-preview-bar">
+        <span>↩️ Replying to: </span><span id="reply-preview-text" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+        <button class="reply-strip-close" onclick="clearReply()">✕</button>
+      </div>
       <div class="swipe-hint-bar">💡 Swipe right to send · Enter to send</div>
       <div class="chat-inp-bar"><div class="chat-inp-box" id="group-inp-box"><textarea class="chat-ta" id="group-inp" placeholder="Message लिखें…" rows="1" maxlength="500"></textarea></div><button class="chat-send-btn" id="group-send-btn">➤</button></div>
     </div>
@@ -445,9 +459,9 @@
     <div class="sub-screen" id="screen-change-password">
       <div class="ss-header"><button class="ss-back" onclick="closeSubScreen('screen-change-password')">←</button><div class="ss-title">🔑 Change Password</div></div>
       <div style="padding:16px">
-        <div class="field"><label>पुराना Password</label><input type="password" id="cp-old" placeholder="Current password"></div>
-        <div class="field"><label>नया Password</label><input type="password" id="cp-new" placeholder="Min 6 characters"></div>
-        <div class="field"><label>Confirm नया Password</label><input type="password" id="cp-confirm" placeholder="Repeat new password"></div>
+        <div class="field"><label>पुराना Password</label><div class="pw-wrap"><input type="password" id="cp-old" placeholder="Current password"><button type="button" class="pw-eye" title="Show/Hide">👁️</button></div></div>
+        <div class="field"><label>नया Password</label><div class="pw-wrap"><input type="password" id="cp-new" placeholder="Min 6 characters"><button type="button" class="pw-eye" title="Show/Hide">👁️</button></div></div>
+        <div class="field"><label>Confirm नया Password</label><div class="pw-wrap"><input type="password" id="cp-confirm" placeholder="Repeat new password"><button type="button" class="pw-eye" title="Show/Hide">👁️</button></div></div>
         <button class="btn-primary w100" id="btn-change-pw">🔒 Change Password</button>
         <p class="hidden" id="cp-msg" style="font-size:.82rem;margin-top:8px;text-align:center"></p>
       </div>
@@ -507,7 +521,7 @@
     <div class="atabs"><button class="atab active" id="tab-login" onclick="switchAuthTab('login')">Log In</button><button class="atab" id="tab-signup" onclick="switchAuthTab('signup')">Sign Up</button></div>
     <div id="login-panel">
       <div style="text-align:center;font-size:2.2rem;margin-bottom:12px">🔑</div>
-      <form id="login-form"><div class="field"><label>Email</label><input type="email" id="l-email" placeholder="you@example.com" required></div><div class="field"><label>Password</label><input type="password" id="l-pass" placeholder="Password" required></div><p class="aerr hidden" id="l-err"></p><button type="submit" class="btn-primary w100" id="l-btn">Log In</button></form>
+      <form id="login-form"><div class="field"><label>Email</label><input type="email" id="l-email" placeholder="you@example.com" required></div><div class="field"><label>Password</label><div class="pw-wrap"><input type="password" id="l-pass" placeholder="Password" required><button type="button" class="pw-eye" title="Show/Hide">👁️</button></div></div><p class="aerr hidden" id="l-err"></p><button type="submit" class="btn-primary w100" id="l-btn">Log In</button></form>
     </div>
     <div id="signup-panel" class="hidden">
       <div class="ghibli-stage" id="ghibli-stage">
@@ -560,7 +574,7 @@
         <form id="signup-form">
           <div class="field"><label>Full Name</label><input type="text" id="s-name" placeholder="Your name" required></div>
           <div class="field"><label>Email</label><input type="email" id="s-email" placeholder="you@example.com" required></div>
-          <div class="field"><label>Password <span style="font-size:.72rem;color:var(--text3)">(min 6 chars)</span></label><input type="password" id="s-pass" placeholder="Password" required minlength="6"></div>
+          <div class="field"><label>Password <span style="font-size:.72rem;color:var(--text3)">(min 6 chars)</span></label><div class="pw-wrap"><input type="password" id="s-pass" placeholder="Password" required minlength="6"><button type="button" class="pw-eye" title="Show/Hide">👁️</button></div></div>
           <p class="aerr hidden" id="s-err"></p>
           <button type="submit" class="btn-primary w100" id="s-btn">🚀 Create Account</button>
         </form>
