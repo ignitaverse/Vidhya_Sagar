@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#04080f">
+<meta name="description" content="VidyaSagar — India's Premier Quiz, Typing & AI Learning Platform for Govt Exam aspirants">
+<title>VidyaSagar — Quiz · Typing · Games</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style_futuristic.css">
+</head>
+<body>
+
+<!-- ═══════════════════════════════
+     LOADING SCREEN
+═══════════════════════════════ -->
+<div id="vs-loading">
+  <div class="ld-bg"></div>
+  <div class="ld-particles" id="ld-particles-wrap"></div>
+  <div class="ld-logo-wrap">
+    <div class="ld-logo-icon">
+      <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="fl1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#f97316"/><stop offset="100%" stop-color="#dc2626"/></linearGradient>
+          <linearGradient id="fl2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#22d3ee"/><stop offset="100%" stop-color="#3b82f6"/></linearGradient>
+          <linearGradient id="fl3" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#22d3ee"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient>
+        </defs>
+        <path d="M40 76C20 76 12 60 16 44C20 32 28 24 32 16C34 28 30 36 36 40C36 28 44 20 48 8C56 20 60 32 56 44C52 56 48 68 40 76Z" fill="url(#fl1)"/>
+        <path d="M40 72C30 72 26 60 28 48C32 40 36 36 40 32C40 40 38 48 44 52C48 44 48 36 52 44C52 56 48 68 40 72Z" fill="url(#fl2)"/>
+        <path d="M12 60Q26 48 40 60Q54 72 68 60" stroke="url(#fl3)" stroke-width="5" fill="none" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="ld-logo-text">VidyaSagar</div>
+    <div class="ld-tagline">Quiz · Typing · Games · AI</div>
+  </div>
+  <div class="ld-bar-wrap"><div class="ld-bar-bg"><div class="ld-bar-fill"></div></div></div>
+  <div class="ld-dots">
+    <div class="ld-dot"></div><div class="ld-dot"></div>
+    <div class="ld-dot"></div><div class="ld-dot"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════
+     LOGOUT OVERLAY
+═══════════════════════════════ -->
+<div id="logout-overlay">
+  <span class="lo-wave">👋</span>
+  <div class="lo-title">See You Soon!</div>
+  <p class="lo-sub">आपकी progress safe है। जल्दी वापस आएं! 🎓</p>
+  <div class="lo-dots"><div class="lo-dot"></div><div class="lo-dot"></div><div class="lo-dot"></div></div>
+</div>
+
+<!-- ═══════════════════════════════
+     CELEBRATE
+═══════════════════════════════ -->
+<div id="celebrate-ov" class="hidden">
+  <div class="fp-wrap" id="fp-wrap"></div>
+  <div class="cel-wrap">
+    <span class="cel-icon">🎓</span>
+    <h2 class="cel-title">Welcome aboard!</h2>
+    <p class="cel-sub">Your journey starts now 🚀</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════
+     APP SHELL
+═══════════════════════════════ -->
+<div id="app">
+
+  <!-- TOP BAR -->
+  <header class="top-bar">
+    <div class="top-logo" onclick="switchTab('home')">
+      <svg width="26" height="26" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="tl1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#f97316"/><stop offset="100%" stop-color="#dc2626"/></linearGradient>
+          <linearGradient id="tl2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#22d3ee"/><stop offset="100%" stop-color="#3b82f6"/></linearGradient>
+        </defs>
+        <path d="M40 76C20 76 12 60 16 44C20 32 28 24 32 16C34 28 30 36 36 40C36 28 44 20 48 8C56 20 60 32 56 44C52 56 48 68 40 76Z" fill="url(#tl1)"/>
+        <path d="M40 72C30 72 26 60 28 48C32 40 36 36 40 32C40 40 38 48 44 52C48 44 48 36 52 44C52 56 48 68 40 72Z" fill="url(#tl2)"/>
+      </svg>
+      VidyaSagar
+    </div>
+    <div class="top-actions">
+      <button class="top-icon-btn" id="btn-notif" title="Notifications">
+        🔔<span class="notif-badge hidden" id="notif-badge">0</span>
+      </button>
+      <button class="top-icon-btn" id="btn-chat-top" title="Chat">💬</button>
+      <div class="top-avatar" id="top-avatar" title="Profile">👤</div>
+    </div>
+  </header>
+
+  <!-- SCREENS CONTAINER -->
+  <div class="screens">
+
+    <!-- ══════════════════════
+         HOME TAB
+    ══════════════════════ -->
+    <div class="tab-screen active" id="screen-home">
+      <!-- Hero -->
+      <div class="home-hero">
+        <div class="hero-grid"></div>
+        <div class="hero-orbs">
+          <div class="hero-orb ho1"></div>
+          <div class="hero-orb ho2"></div>
+          <div class="hero-orb ho3"></div>
+        </div>
+        <div style="position:relative;z-index:2">
+          <div class="hero-badge">🇮🇳 India's Premier Learning Platform</div>
+          <h1 class="hero-h1">Quiz करो, Type करो,<br><span class="hero-grad">Exam Crack करो</span></h1>
+          <p class="hero-sub">4,700+ quiz questions · 50+ typing exams · Fun games — सब free!</p>
+          <div class="hero-stats">
+            <div class="hstat"><b id="stat-users">—</b><span>Students</span></div>
+            <div class="hstat"><b id="stat-quizzes">—</b><span>Quizzes</span></div>
+            <div class="hstat"><b id="stat-live">—</b><span>Live Now</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats Ticker -->
+      <div class="ticker-strip">
+        <div class="ticker-inner">
+          <div class="ticker-item"><span class="ti-dot dot-blue"></span><span class="ti-label">Students</span><span class="ti-val" id="stat-users2">—</span></div>
+          <span class="ticker-sep">·</span>
+          <div class="ticker-item"><span class="ti-dot dot-green pulse-dot"></span><span class="ti-label">Live</span><span class="ti-val" id="stat-live2">—</span></div>
+          <span class="ticker-sep">·</span>
+          <div class="ticker-item"><span class="ti-dot dot-amber"></span><span class="ti-label">Quizzes</span><span class="ti-val" id="stat-q2">—</span></div>
+        </div>
+      </div>
+
+      <!-- Search -->
+      <div style="padding:14px 14px 6px;position:relative">
+        <div id="search-box-wrap">
+          <span style="font-size:.95rem;color:var(--text3)">🔍</span>
+          <input type="text" id="user-search-inp" placeholder="Students search करें…" autocomplete="off">
+          <button id="search-clear-btn" onclick="clearSearch()" style="display:none;background:none;border:none;color:var(--text3);cursor:pointer;font-size:.85rem;padding:0 4px">✕</button>
+        </div>
+        <div id="search-results-dropdown" style="display:none;position:absolute;top:calc(100% - 4px);left:14px;right:14px;z-index:120"></div>
+      </div>
+
+      <!-- Ad Banner -->
+      <div class="ad-banner">
+        <div class="ad-tag">📢 Advertisement</div>
+        <div class="ad-row">
+          <div class="ad-icon">📢</div>
+          <div class="ad-body">
+            <span class="ad-label">Advertise Here — विज्ञापन स्थान</span>
+            <p class="ad-text">Reach <strong>1000s of Govt Exam aspirants</strong>. Contact us to place your banner.</p>
+          </div>
+          <a href="mailto:ignitaverse@gmail.com" class="ad-cta">Contact →<span class="ad-email">ignitaverse@gmail.com</span></a>
+        </div>
+      </div>
+
+      <!-- Features -->
+      <div style="padding:0 14px 10px"><div class="sec-h"><h2>क्या मिलेगा?</h2></div></div>
+      <div class="feature-grid">
+        <div class="feature-card" style="--c:#3b82f6" onclick="switchTab('quiz')">
+          <div class="fc-icon">📝</div><div class="fc-title">Quiz Practice</div><div class="fc-sub">8 subjects · 28+ states</div>
+        </div>
+        <div class="feature-card" style="--c:#06b6d4" onclick="switchTab('typing')">
+          <div class="fc-icon">⌨️</div><div class="fc-title">Typing Platform</div><div class="fc-sub">50+ exams · WPM tracker</div>
+        </div>
+        <div class="feature-card" style="--c:#10b981" onclick="switchTab('games')">
+          <div class="fc-icon">🎮</div><div class="fc-title">Mini Games</div><div class="fc-sub">Number guess · Word scramble</div>
+        </div>
+        <div class="feature-card" style="--c:#8b5cf6" onclick="openChatList()">
+          <div class="fc-icon">🤖</div><div class="fc-title">AI Study Buddy</div><div class="fc-sub">Ask anything anytime</div>
+        </div>
+      </div>
+
+      <!-- About -->
+      <div style="padding:0 14px 10px"><div class="sec-h"><h2>About VidyaSagar</h2></div></div>
+      <div style="padding:0 14px 18px">
+        <div class="vs-card">
+          <p style="font-size:.84rem;color:var(--text2);line-height:1.85">VidyaSagar एक free learning platform है जो Government Exam की तैयारी करने वाले students के लिए बनाया गया है। यहाँ Quiz Practice, Typing Test, AI Study Assistant, Mini Games और Discussion Group सब एक जगह मिलेगा।</p>
+        </div>
+      </div>
+
+      <!-- Social -->
+      <div style="padding:0 14px 8px"><div class="sec-h"><h2>Connect करें</h2></div></div>
+      <div class="social-row">
+        <a href="https://www.instagram.com/vidhyasagar_ignitaverse" target="_blank" class="social-btn">📷 Instagram</a>
+        <a href="https://whatsapp.com/channel/0029Vb80ehD2P59mQjlL8a24" target="_blank" class="social-btn">💬 WhatsApp</a>
+        <a href="https://t.me/+QgVHUy2rYsM2OTQ1" target="_blank" class="social-btn">✈️ Telegram</a>
+        <a href="mailto:ignitaverse@gmail.com" class="social-btn">📧 Email</a>
+      </div>
+      <div style="padding:20px 14px;border-top:1px solid var(--border);margin-top:8px;text-align:center">
+        <p style="font-size:.74rem;color:var(--text3)">© 2025 VidyaSagar · Ignitaverse · Made with ❤️ for Students of India</p>
+      </div>
+    </div>
+
+    <!-- ══════════════════════
+         QUIZ TAB
+    ══════════════════════ -->
+    <div class="tab-screen" id="screen-quiz">
+      <div class="quiz-home-pad">
+        <div class="sec-h"><h2>📝 Quiz Practice</h2><span class="sec-pill pill-blue">4,700+</span></div>
+        <div class="subj-grid" id="subj-grid">
+          <div class="vs-loading-text" style="grid-column:1/-1">Loading subjects…</div>
+        </div>
+        <div style="margin-top:22px">
+          <div class="sec-h"><h2>State Exams</h2><span class="sec-pill pill-green">28+</span></div>
+          <div class="states-section"><div class="states-cloud" id="states-cloud"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════
+         TYPING TAB
+    ══════════════════════ -->
+    <div class="tab-screen" id="screen-typing">
+      <div class="typing-home">
+        <div class="typing-home-header">
+          <h2>⌨️ Typing Practice</h2>
+          <p>Live WPM tracker · Exam-wise passages · Accuracy check</p>
+          <div class="typing-home-stats">
+            <div class="ths"><b>50+</b><span>Exams</span></div>
+            <div class="ths"><b>200+</b><span>Passages</span></div>
+            <div class="ths"><b>Free</b><span>Forever</span></div>
+          </div>
+        </div>
+        <div class="exam-search-wrap">
+          <span class="si">🔍</span>
+          <input type="text" id="exam-search-inp" placeholder="Exam search करें… SSC, UP Police, AHC…">
+          <button onclick="document.getElementById('exam-search-inp').value='';document.getElementById('exam-search-inp').dispatchEvent(new Event('input'))" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:.85rem">✕</button>
+        </div>
+        <div class="exam-cat-tabs" id="exam-cat-tabs">
+          <button class="exam-cat-btn active" data-cat="all">🌐 All</button>
+          <button class="exam-cat-btn" data-cat="central">🏛️ Central</button>
+          <button class="exam-cat-btn" data-cat="defence">🛡️ Defence</button>
+          <button class="exam-cat-btn" data-cat="court">⚖️ Courts</button>
+          <button class="exam-cat-btn" data-cat="state">🗺️ State</button>
+          <button class="exam-cat-btn" data-cat="psu">🔬 PSU</button>
+        </div>
+        <div class="exam-grid-v2" id="exam-grid">
+          <div class="vs-loading-text" style="grid-column:1/-1">Loading exams…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════
+         GAMES TAB
+    ══════════════════════ -->
+    <div class="tab-screen" id="screen-games">
+      <div class="games-home">
+        <div class="games-hero">
+          <h2>🎮 Mini Games</h2>
+          <p>Brain teasers and fun games — study breaks के लिए perfect!</p>
+        </div>
+        <div class="sec-h"><h2>Games चुनें</h2><span class="sec-pill pill-green">2 Games</span></div>
+        <div class="games-grid">
+          <div class="game-card" style="--c:#10b981" onclick="openNumberGame()">
+            <span class="gc-icon">🎯</span>
+            <div class="gc-title">Number Guess</div>
+            <div class="gc-sub">1-100 का number guess करो</div>
+            <span class="gc-badge" style="background:#10b981">10 Tries</span>
+          </div>
+          <div class="game-card" style="--c:#8b5cf6" onclick="openWordGame()">
+            <span class="gc-icon">🔤</span>
+            <div class="gc-title">Word Scramble</div>
+            <div class="gc-sub">Scrambled word unscramble करो</div>
+            <span class="gc-badge" style="background:#8b5cf6">Exam Words</span>
+          </div>
+        </div>
+        <div class="vs-card" style="text-align:center;padding:20px">
+          <div style="font-size:1.6rem;margin-bottom:8px">🚧</div>
+          <p style="font-size:.86rem;font-weight:700;margin-bottom:5px">More Games Coming Soon!</p>
+          <p style="font-size:.78rem;color:var(--text2)">GK Quiz Game, Vocabulary Builder, Math Flash Cards और भी…</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         SUB-SCREENS
+    ══════════════════════════════════════════ -->
+
+    <!-- PROFILE PANEL -->
+    <div class="sub-screen" id="screen-profile-panel">
+      <div class="ss-header">
+        <button class="ss-back" onclick="closeSubScreen('screen-profile-panel')">←</button>
+        <div class="ss-title">👤 My Profile</div>
+      </div>
+      <div class="profile-panel" id="profile-panel-content">
+        <div id="profile-not-logged" style="display:none;padding:64px 22px;text-align:center">
+          <div style="font-size:3.5rem;margin-bottom:16px;filter:drop-shadow(0 0 20px rgba(139,92,246,.4))">👤</div>
+          <h3 style="font-family:var(--ff-head);margin-bottom:10px">Login करें</h3>
+          <p style="font-size:.84rem;color:var(--text2);margin-bottom:22px">Profile देखने के लिए login करें।</p>
+          <button class="btn-primary" onclick="closeSubScreen('screen-profile-panel');openAuth('login')">🔑 Log In</button>
+        </div>
+        <div id="profile-logged">
+          <div class="profile-header-card">
+            <div class="ph-avatar-wrap">
+              <div class="ph-avatar" id="ph-avatar" onclick="openEmojiPicker()">🎓</div>
+              <div class="ph-edit-dot" onclick="openEmojiPicker()">✏️</div>
+            </div>
+            <div class="ph-name" id="ph-name">User</div>
+            <div class="ph-email" id="ph-email">email@example.com</div>
+            <div class="ph-joined" id="ph-joined">Member since —</div>
+            <div class="ph-bio" id="ph-bio"></div>
+          </div>
+          <div class="profile-qstats">
+            <div class="pqs" id="pqs-quizzes-btn" onclick="ProfileModule.loadHistory()">
+              <b id="pqs-quizzes">0</b><span>Quizzes</span>
+            </div>
+            <div class="pqs-div"></div>
+            <div class="pqs" id="pqs-typing-btn" onclick="ProfileModule.loadTypingHistory()">
+              <b id="pqs-typing">0</b><span>Typing</span>
+            </div>
+            <div class="pqs-div"></div>
+            <div class="pqs"><b id="pqs-accuracy">—</b><span>Avg Acc</span></div>
+          </div>
+
+          <div class="settings-section">
+            <div class="settings-section-title">Account</div>
+            <div class="settings-list">
+              <div class="settings-row" onclick="openSubScreen('screen-account-info')">
+                <div class="sr-icon" style="background:rgba(37,99,235,.15)">👤</div>
+                <div class="sr-text"><div class="sr-label">Account Info</div><div class="sr-sub">Name, email, exam target</div></div>
+                <span class="sr-arrow">›</span>
+              </div>
+              <div class="settings-row" onclick="ProfileModule.loadHistory()">
+                <div class="sr-icon" style="background:rgba(16,185,129,.15)">📊</div>
+                <div class="sr-text"><div class="sr-label">Quiz History</div><div class="sr-sub">Past results</div></div>
+                <span class="sr-arrow">›</span>
+              </div>
+              <div class="settings-row" onclick="ProfileModule.loadTypingHistory()">
+                <div class="sr-icon" style="background:rgba(6,182,212,.15)">⌨️</div>
+                <div class="sr-text"><div class="sr-label">Typing History</div><div class="sr-sub">WPM records</div></div>
+                <span class="sr-arrow">›</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <div class="settings-section-title">Privacy</div>
+            <div class="settings-list">
+              <div class="settings-row">
+                <div class="sr-icon" style="background:rgba(139,92,246,.15)">🌐</div>
+                <div class="sr-text"><div class="sr-label">Public Profile</div><div class="sr-sub">Others can see you</div></div>
+                <label class="sr-toggle"><input type="checkbox" id="tog-public" checked><div class="sr-track"></div></label>
+              </div>
+              <div class="settings-row">
+                <div class="sr-icon" style="background:rgba(139,92,246,.15)">👁️</div>
+                <div class="sr-text"><div class="sr-label">Online Status</div></div>
+                <label class="sr-toggle"><input type="checkbox" id="tog-online" checked><div class="sr-track"></div></label>
+              </div>
+              <div class="settings-row">
+                <div class="sr-icon" style="background:rgba(139,92,246,.15)">🕐</div>
+                <div class="sr-text"><div class="sr-label">Last Seen</div></div>
+                <label class="sr-toggle"><input type="checkbox" id="tog-lastseen" checked><div class="sr-track"></div></label>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <div class="settings-section-title">Security</div>
+            <div class="settings-list">
+              <div class="settings-row" onclick="openSubScreen('screen-change-password')">
+                <div class="sr-icon" style="background:rgba(245,158,11,.15)">🔑</div>
+                <div class="sr-text"><div class="sr-label">Change Password</div></div>
+                <span class="sr-arrow">›</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <div class="settings-section-title">Customization</div>
+            <div class="settings-list">
+              <div class="settings-row" onclick="openSubScreen('screen-chat-bg')">
+                <div class="sr-icon" style="background:rgba(37,211,102,.15)">🖼️</div>
+                <div class="sr-text"><div class="sr-label">Chat Background</div></div>
+                <span class="sr-arrow">›</span>
+              </div>
+              <div class="settings-row" onclick="openSubScreen('screen-theme')">
+                <div class="sr-icon" style="background:rgba(99,102,241,.15)">🎨</div>
+                <div class="sr-text"><div class="sr-label">Theme</div><div class="sr-sub" id="sr-theme-val">Dark</div></div>
+                <span class="sr-arrow">›</span>
+              </div>
+              <div class="settings-row" onclick="openSubScreen('screen-font')">
+                <div class="sr-icon" style="background:rgba(99,102,241,.15)">🔤</div>
+                <div class="sr-text"><div class="sr-label">Font</div></div>
+                <span class="sr-arrow">›</span>
+              </div>
+              <div class="settings-row" onclick="openSubScreen('screen-zoom')">
+                <div class="sr-icon" style="background:rgba(99,102,241,.15)">🔍</div>
+                <div class="sr-text"><div class="sr-label">Zoom</div><div class="sr-sub" id="sr-zoom-val">100%</div></div>
+                <span class="sr-arrow">›</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <div class="settings-section-title">Account Actions</div>
+            <div class="settings-list">
+              <div class="settings-row" onclick="doLogout()">
+                <div class="sr-icon" style="background:rgba(244,63,94,.12)">🚪</div>
+                <div class="sr-text"><div class="sr-label" style="color:#f43f5e">Log Out</div></div>
+              </div>
+              <div class="settings-row" onclick="openSubScreen('screen-delete-account')">
+                <div class="sr-icon" style="background:rgba(244,63,94,.12)">🗑️</div>
+                <div class="sr-text"><div class="sr-label" style="color:#f43f5e">Delete Account</div><div class="sr-sub">Permanent</div></div>
+                <span class="sr-arrow">›</span>
+              </div>
+            </div>
+          </div>
+          <div style="height:22px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUIZ: CATEGORY -->
+    <div class="sub-screen" id="screen-quiz-category">
+      <div class="ss-header">
+        <button class="ss-back" onclick="closeSubScreen('screen-quiz-category')">←</button>
+        <div class="ss-title" id="cat-screen-title">Categories</div>
+      </div>
+      <div style="padding:13px">
+        <div class="resume-card hidden" id="resume-card">
+          <div class="resume-info">
+            <span style="font-size:1.4rem">⏸️</span>
+            <div><div class="resume-title">Resume</div><div class="resume-stats" id="resume-stats"></div></div>
+          </div>
+          <div class="resume-btns">
+            <button class="btn-resume" id="btn-resume">▶ Continue</button>
+            <button class="btn-qrestart" id="btn-qrestart">🔄 Restart</button>
+          </div>
+        </div>
+        <div id="cat-list-wrap"></div>
+        <button class="btn-primary w100" id="btn-all-cat" style="margin-top:11px">⚡ All Questions</button>
+      </div>
+    </div>
+
+    <!-- QUIZ: ACTIVE -->
+    <div class="sub-screen no-bot" id="screen-quiz-active">
+      <div class="qbar">
+        <button class="qexit" id="quiz-exit">✕</button>
+        <button id="btn-quiz-submit" style="background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.35);color:#34d399;border-radius:8px;padding:5px 10px;font-size:.76rem;font-weight:700;transition:.2s">Submit</button>
+        <div class="qbar-center">
+          <div class="q-badge" id="q-badge">Quiz</div>
+          <div class="q-prog" id="q-prog">1/10</div>
+        </div>
+        <button class="btn-qpause" id="btn-qpause">⏸</button>
+        <div class="q-timer" id="q-timer">00:00</div>
+      </div>
+      <div class="qtrack"><div class="qtrack-fill" id="qtrack-fill"></div></div>
+      <div class="quiz-body">
+        <div class="q-review-banner" id="q-review-banner">📖 Review Mode</div>
+        <div class="q-card" id="q-card">
+          <div class="q-num" id="q-num">Q1</div>
+          <div class="q-text" id="q-text">Loading…</div>
+        </div>
+        <div class="opts-wrap" id="opts-wrap">
+          <button class="opt-btn" data-i="0"><span class="opt-lbl ola">A</span><span id="opt-0">—</span></button>
+          <button class="opt-btn" data-i="1"><span class="opt-lbl olb">B</span><span id="opt-1">—</span></button>
+          <button class="opt-btn" data-i="2"><span class="opt-lbl olc">C</span><span id="opt-2">—</span></button>
+          <button class="opt-btn" data-i="3"><span class="opt-lbl old">D</span><span id="opt-3">—</span></button>
+        </div>
+        <div class="q-explain hidden" id="q-explain">
+          <div class="explain-head"><span>💡</span><span>Explanation</span></div>
+          <div class="explain-text" id="explain-text"></div>
+        </div>
+        <div class="q-nav">
+          <button class="btn-q-prev" id="btn-q-prev" disabled>← Prev</button>
+          <button class="btn-q-next hidden" id="btn-q-next">Next →</button>
+        </div>
+      </div>
+      <div class="q-sbar">
+        <span class="qsb qsb-c">✅ <b id="qs-correct">0</b></span>
+        <span class="qsb qsb-w">❌ <b id="qs-wrong">0</b></span>
+        <span class="qsb qsb-l">📋 <b id="qs-left">—</b></span>
+      </div>
+    </div>
+
+    <!-- QUIZ: RESULT -->
+    <div class="sub-screen" id="screen-quiz-result">
+      <div class="ss-header">
+        <button class="ss-back" onclick="goHomeFromResult()">← Home</button>
+        <div class="ss-title">Result</div>
+      </div>
+      <div class="result-page">
+        <span class="result-emoji" id="result-emoji">🏆</span>
+        <div class="result-title" id="result-title">Well Done!</div>
+        <div class="ring-wrap">
+          <svg viewBox="0 0 140 140">
+            <circle cx="70" cy="70" r="56" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="10"/>
+            <circle cx="70" cy="70" r="56" fill="none" stroke="url(#rg)" stroke-width="10" stroke-linecap="round" stroke-dasharray="352" stroke-dashoffset="352" id="ring-circle" style="transform:rotate(-90deg);transform-origin:center"/>
+            <defs><linearGradient id="rg" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#a855f7"/></linearGradient></defs>
+          </svg>
+          <div class="ring-inner"><span class="ring-pct" id="ring-pct">0%</span><span class="ring-lbl">Score</span></div>
+        </div>
+        <div class="result-stats">
+          <div class="rstat rsc"><b id="rs-correct">0</b><span>Correct</span></div>
+          <div class="rstat rsw"><b id="rs-wrong">0</b><span>Wrong</span></div>
+          <div class="rstat rst"><b id="rs-time">0s</b><span>Time</span></div>
+          <div class="rstat rsd"><b id="rs-done">0</b><span>Done</span></div>
+        </div>
+        <div class="result-btns">
+          <button class="btn-primary" id="btn-result-continue">▶ Continue</button>
+          <button class="btn-ghost" id="btn-result-restart">🔄 Restart</button>
+        </div>
+        <div class="r-change-btns">
+          <button class="btn-change" id="btn-change-cat">📂 Category बदलें</button>
+          <button class="btn-change" onclick="closeSubScreen('screen-quiz-result');closeSubScreen('screen-quiz-category')">📚 Subject बदलें</button>
+        </div>
+        <p style="font-size:.8rem;color:var(--text2);margin-top:14px" id="result-save-msg"></p>
+      </div>
+    </div>
+
+    <!-- TYPING: EXAM DETAIL -->
+    <div class="sub-screen" id="screen-exam-detail">
+      <div class="ss-header">
+        <button class="ss-back" onclick="closeSubScreen('screen-exam-detail')">←</button>
+        <div class="ss-title" id="exam-detail-title">Exam</div>
+      </div>
+      <div class="exam-detail-pad">
+        <div class="exam-detail-card">
+          <div class="ed-name" id="ed-name">Exam</div>
+          <div class="ed-stats-g">
+            <div class="ed-stat"><div class="ed-stat-val" id="ed-speed">35</div><div class="ed-stat-lbl">Min WPM</div></div>
+            <div class="ed-stat"><div class="ed-stat-val" id="ed-acc">90%</div><div class="ed-stat-lbl">Min Accuracy</div></div>
+            <div class="ed-stat"><div class="ed-stat-val" id="ed-time">10 min</div><div class="ed-stat-lbl">Time</div></div>
+            <div class="ed-stat"><div class="ed-stat-val" id="ed-lang-tag">EN</div><div class="ed-stat-lbl">Language</div></div>
+          </div>
+          <div class="ed-langs" id="ed-langs"></div>
+        </div>
+        <div class="instructions-box">
+          <h4>📋 Instructions</h4>
+          <ul id="ed-instructions">
+            <li>Timer तभी शुरू होगा जब आप type करना शुरू करेंगे</li>
+            <li>Backspace allowed है — errors count होंगी</li>
+            <li>सभी characters (spaces सहित) type करें</li>
+            <li>Caps Lock और auto-correct off रखें</li>
+          </ul>
+        </div>
+        <div class="sec-h"><h2>Passages</h2><span class="sec-pill pill-cyan" id="passage-count-pill">—</span></div>
+        <div class="passages-list" id="passages-list"><div class="vs-loading-text">Loading…</div></div>
+      </div>
+    </div>
+
+    <!-- TYPING: ACTIVE -->
+    <div class="sub-screen no-bot" id="screen-typing-active" style="display:flex;flex-direction:column">
+      <div class="type-header">
+        <div class="type-header-row">
+          <button class="ss-back" onclick="exitTyping()" style="flex-shrink:0">←</button>
+          <div class="type-title" id="type-exam-title">Typing</div>
+          <div class="type-timer" id="type-timer">10:00</div>
+        </div>
+        <div class="type-live-stats">
+          <div class="tls tls-wpm"><div class="tls-val" id="tls-wpm">0</div><div class="tls-lbl">WPM</div></div>
+          <div class="tls tls-acc"><div class="tls-val" id="tls-acc">100%</div><div class="tls-lbl">Accuracy</div></div>
+          <div class="tls tls-err"><div class="tls-val" id="tls-err">0</div><div class="tls-lbl">Errors</div></div>
+          <div class="tls tls-keys"><div class="tls-val" id="tls-keys">0</div><div class="tls-lbl">Keys</div></div>
+        </div>
+        <div class="type-prog-bar" style="margin-top:8px">
+          <div class="type-prog-fill" id="type-prog-fill" style="width:0%"></div>
+        </div>
+      </div>
+      <div style="flex:1;overflow-y:auto">
+        <div class="passage-display" id="passage-display"></div>
+      </div>
+      <div class="typing-inp-area">
+        <textarea class="typing-inp" id="typing-inp" placeholder="यहाँ type करें…" rows="3" spellcheck="false" autocorrect="off" autocapitalize="off" autocomplete="off"></textarea>
+        <div class="typing-inp-hint">Type करें — Timer automatically शुरू होगा · Backspace allowed</div>
+      </div>
+    </div>
+
+    <!-- TYPING: RESULT -->
+    <div class="sub-screen" id="screen-typing-result">
+      <div class="ss-header">
+        <button class="ss-back" onclick="closeSubScreen('screen-typing-result');closeSubScreen('screen-typing-active');closeSubScreen('screen-exam-detail')">← Home</button>
+        <div class="ss-title">Typing Result</div>
+      </div>
+      <div class="typing-result-page">
+        <span class="tr-emoji" id="tr-emoji">🏆</span>
+        <div class="tr-title" id="tr-title">Excellent!</div>
+        <div class="tr-grid">
+          <div class="tr-stat tr-wpm"><b id="tr-wpm">0</b><span>Net WPM</span></div>
+          <div class="tr-stat tr-acc"><b id="tr-acc">0%</b><span>Accuracy</span></div>
+          <div class="tr-stat tr-err"><b id="tr-err">0</b><span>Errors</span></div>
+          <div class="tr-stat tr-keys"><b id="tr-keys">0</b><span>Keystrokes</span></div>
+        </div>
+        <div class="tr-verdict">
+          <div class="tr-verdict-t" id="tr-verdict-t">Result</div>
+          <div class="tr-verdict-d" id="tr-verdict-d"></div>
+        </div>
+        <div style="display:flex;gap:9px;justify-content:center;flex-wrap:wrap">
+          <button class="btn-primary" id="btn-retry-typing">🔄 Try Again</button>
+          <button class="btn-ghost" onclick="closeSubScreen('screen-typing-result');closeSubScreen('screen-typing-active')">📋 More Passages</button>
+        </div>
+        <p style="font-size:.8rem;color:var(--text2);margin-top:14px" id="typing-save-msg"></p>
+      </div>
+    </div>
+
+    <!-- NUMBER GAME -->
+    <div class="sub-screen" id="screen-number-game">
+      <div class="ss-header">
+        <button class="ss-back" onclick="closeSubScreen('screen-number-game')">←</button>
+        <div class="ss-title">🎯 Number Guessing</div>
+      </div>
+      <div class="game-screen-wrap">
+        <div class="game-header">
+          <h2>Number Guess करो!</h2>
+          <p>1 से 100 के बीच एक number सोचा है। 10 tries में guess करो!</p>
+        </div>
+        <div class="ng-win-banner" id="ng-win-banner">
+          <span class="ng-win-emoji">🎉</span>
+          <div class="ng-win-text">सही guess किया!</div>
+          <div class="ng-win-sub" id="ng-win-sub"></div>
+        </div>
+        <div class="game-card-main">
+          <div class="ng-number-display" id="ng-num-display">?</div>
+          <div class="ng-hint" id="ng-hint">1 से 100 के बीच एक number सोचा है</div>
+          <div class="ng-input-row">
+            <input type="number" class="ng-input" id="ng-input" min="1" max="100" placeholder="1-100">
+            <button class="ng-submit" id="ng-submit-btn">Guess!</button>
+          </div>
+          <div class="ng-stats">
+            <div class="ng-stat"><b id="ng-tries">0</b><span>Tries</span></div>
+            <div class="ng-stat"><b id="ng-left">10</b><span>Left</span></div>
+          </div>
+          <div class="ng-history">
+            <div class="ng-history-title">Guess History</div>
+            <div id="ng-history-list"></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:9px;justify-content:center">
+          <button class="btn-primary" id="ng-new-game">🔄 New Game</button>
+          <button class="btn-ghost" onclick="closeSubScreen('screen-number-game')">← Back</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- WORD GAME -->
+    <div class="sub-screen" id="screen-word-game">
+      <div class="ss-header">
+        <button class="ss-back" onclick="closeSubScreen('screen-word-game')">←</button>
+        <div class="ss-title">🔤 Word Scramble</div>
+      </div>
+      <div class="game-screen-wrap">
+        <div class="game-header">
+          <h2>Word Unscramble करो!</h2>
+          <p>Scrambled word को solve करो। Exam-related words!</p>
+        </div>
+        <div class="game-card-main">
+          <div class="ws-word-display">
+            <div class="ws-scrambled" id="ws-scrambled">LOADING</div>
+            <div class="ws-hint-text" id="ws-hint-text">Hint: …</div>
+            <div class="ws-hint-category" id="ws-hint-cat">Category</div>
+          </div>
+          <div class="ws-score-display">
+            <div class="ws-sd"><b id="ws-score">0</b><span>Correct</span></div>
+            <div class="ws-sd"><b id="ws-skipped">0</b><span>Skipped</span></div>
+          </div>
+          <div class="ws-input-row">
+            <input type="text" class="ws-input" id="ws-input" placeholder="Type answer…" maxlength="15">
+            <button class="ws-submit" id="ws-submit-btn">✓ Check</button>
+          </div>
+          <div class="ws-result" id="ws-result"></div>
+          <div class="ws-controls">
+            <button class="ws-ctrl-btn" id="ws-skip-btn">⏭ Skip</button>
+            <button class="ws-ctrl-btn" id="ws-new-btn">🔄 New Game</button>
+          </div>
+        </div>
+        <button class="btn-ghost w100" style="margin-top:13px" onclick="closeSubScreen('screen-word-game')">← Back to Games</button>
+      </div>
+    </div>
+
+    <!-- NOTIFICATIONS -->
+    <div class="sub-screen" id="screen-notifications">
+      <div class="ss-header">
+        <button class="ss-back" onclick="closeSubScreen('screen-notifications')">←</button>
+        <div class="ss-title">🔔 Notifications</div>
+      </div>
+      <div class="notif-list" id="notif-list"><div class="vs-loading-text">Loading…</div></div>
+    </div>
+
+    <!-- CHAT LIST -->
+    <div class="sub-screen" id="screen-chat-list">
+      <div class="ss-header">
+        <button class="ss-back" onclick="closeSubScreen('screen-chat-list')">←</button>
+        <div class="ss-title">💬 Chat</div>
+      </div>
+      <div class="chat-list-pad">
+        <div class="chat-type-card" onclick="openAIChat()">
+          <div class="ctc-icon ai">🤖</div>
+          <div class="ctc-info"><div class="ctc-name">AI Study Buddy</div><div class="ctc-desc">Ask anything — Claude AI powered</div></div>
+          <span class="ctc-arrow">›</span>
+        </div>
+        <div class="chat-type-card" onclick="openGroupChat()">
+          <div class="ctc-icon group">👥</div>
+          <div class="ctc-info"><div class="ctc-name">Discussion Group</div><div class="ctc-desc">Students के साथ discuss करें</div></div>
+          <span class="ctc-arrow">›</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- GROUP CHAT -->
+    <div class="sub-screen no-bot" id="screen-group-chat" style="display:flex;flex-direction:column">
+      <div class="wa-header">
+        <button class="wa-back" onclick="closeSubScreen('screen-group-chat')">←</button>
+        <div class="wa-avatar">💬</div>
+        <div class="wa-info">
+          <div class="wa-name">VidyaSagar Community</div>
+          <div class="wa-status"><span class="wa-online-dot"></span>3 months auto-delete</div>
+        </div>
+      </div>
+      <div class="chat-msgs-area" id="group-msgs"></div>
+      <div id="reply-preview-bar" style="display:none;align-items:center;gap:9px;padding:6px 13px;background:rgba(0,230,118,.07);border-top:1px solid rgba(0,230,118,.18);font-size:.76rem;color:#34d399;flex-shrink:0">
+        <span>↩️ Replying to:</span>
+        <span id="reply-preview-text" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2)"></span>
+        <button onclick="clearReply()" style="background:none;border:none;color:var(--text3);font-size:1rem;cursor:pointer;padding:3px 6px">✕</button>
+      </div>
+      <div class="swipe-hint-bar">💡 Swipe right on message to reply · Enter to send</div>
+      <div class="chat-inp-bar">
+        <div class="chat-inp-box" id="group-inp-box">
+          <textarea class="chat-ta" id="group-inp" placeholder="Message लिखें…" rows="1" maxlength="500"></textarea>
+        </div>
+        <button class="chat-send-btn" id="group-send-btn">➤</button>
+      </div>
+    </div>
+
+    <!-- AI CHAT -->
+    <div class="sub-screen no-bot" id="screen-ai-chat" style="display:flex;flex-direction:column">
+      <div class="ss-header" style="background:rgba(139,92,246,.1);border-color:rgba(139,92,246,.2)">
+        <button class="ss-back" onclick="closeSubScreen('screen-ai-chat')">←</button>
+        <div class="ss-title">🤖 AI Study Buddy</div>
+      </div>
+      <div class="ai-msgs-area" id="ai-msgs">
+        <div class="ai-msg-wrap">
+          <div class="ai-av">🤖</div>
+          <div class="ai-bub">नमस्ते! मैं VidyaSagar AI हूँ। Government Exam prep में कैसे मदद करूँ? 📚</div>
+        </div>
+      </div>
+      <div class="ai-inp-bar">
+        <input class="ai-inp" id="ai-inp" placeholder="कोई भी question पूछें…" maxlength="500">
+        <button class="ai-send-btn" id="ai-send-btn">➤</button>
+      </div>
+    </div>
+
+    <!-- QUIZ / TYPING HISTORY -->
+    <div class="sub-screen" id="screen-history">
+      <div class="ss-header">
+        <button class="ss-back" onclick="closeSubScreen('screen-history')">←</button>
+        <div class="ss-title">📊 Quiz History</div>
+      </div>
+      <div style="padding:13px" id="history-list"></div>
+    </div>
+    <div class="sub-screen" id="screen-typing-history">
+      <div class="ss-header">
+        <button class="ss-back" onclick="closeSubScreen('screen-typing-history')">←</button>
+        <div class="ss-title">⌨️ Typing History</div>
+      </div>
+      <div style="padding:13px" id="typing-history-list"></div>
+    </div>
+
+    <!-- ACCOUNT INFO -->
+    <div class="sub-screen" id="screen-account-info">
+      <div class="ss-header">
+        <button class="ss-back" onclick="closeSubScreen('screen-account-info')">←</button>
+        <div class="ss-title">👤 Account Info</div>
+      </div>
+      <div style="padding:18px">
+        <div class="field">
+          <label>नाम <span id="name-changes-left" style="font-size:.7rem;color:var(--amber);margin-left:6px"></span></label>
+          <input type="text" id="ai-name" placeholder="Full Name">
+        </div>
+        <div class="field"><label>Email</label><input type="email" id="ai-email" disabled style="opacity:.5"></div>
+        <div class="field"><label>Date of Birth</label><input type="date" id="ai-dob"></div>
+        <div class="field"><label>Target Exam</label><input type="text" id="ai-exam" placeholder="e.g. SSC CGL, UP Police…"></div>
+        <div class="field"><label>Bio</label><input type="text" id="ai-bio" placeholder="Short bio…" maxlength="80"></div>
+        <button class="btn-primary w100" id="btn-save-profile">💾 Save Changes</button>
+        <p class="hidden" id="ai-msg" style="font-size:.82rem;margin-top:9px;text-align:center"></p>
+        <div style="margin-top:22px">
+          <div style="font-size:.78rem;color:var(--text3);font-weight:700;margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em">Avatar चुनें</div>
+          <div style="display:flex;flex-wrap:wrap;gap:9px" id="emoji-picker-row"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHANGE PASSWORD -->
+    <div class="sub-screen" id="screen-change-password">
+      <div class="ss-header">
+        <button class="ss-back" onclick="closeSubScreen('screen-change-password')">←</button>
+        <div class="ss-title">🔑 Change Password</div>
+      </div>
+      <div style="padding:18px">
+        <div class="field">
+          <label>पुराना Password</label>
+          <div style="position:relative">
+            <input type="password" id="cp-old" placeholder="Current password" style="padding-right:44px">
+            <button type="button" onclick="togglePw('cp-old',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1rem;color:var(--text3)">👁️</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>नया Password</label>
+          <div style="position:relative">
+            <input type="password" id="cp-new" placeholder="Min 6 characters" style="padding-right:44px">
+            <button type="button" onclick="togglePw('cp-new',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1rem;color:var(--text3)">👁️</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Confirm नया Password</label>
+          <div style="position:relative">
+            <input type="password" id="cp-confirm" placeholder="Repeat new password" style="padding-right:44px">
+            <button type="button" onclick="togglePw('cp-confirm',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1rem;color:var(--text3)">👁️</button>
+          </div>
+        </div>
+        <button class="btn-primary w100" id="btn-change-pw">🔒 Change Password</button>
+        <p class="hidden" id="cp-msg" style="font-size:.82rem;margin-top:9px;text-align:center"></p>
+      </div>
+    </div>
+
+    <!-- THEME -->
+    <div class="sub-screen" id="screen-theme">
+      <div class="ss-header">
+        <button class="ss-back" onclick="closeSubScreen('screen-theme')">←</button>
+        <div class="ss-title">🎨 Theme</div>
+      </div>
+      <div style="padding:16px">
+        <p style="font-size:.82rem;color:var(--text2);margin-bottom:18px">अपना theme चुनें</p>
+        <div class="theme-grid">
+          <div class="theme-card active" data-theme="dark" onclick="applyTheme('dark',this)">
+            <div class="theme-preview tp-dark"></div>
+            <div class="theme-name">🌙 Dark</div>
+          </div>
+          <div class="theme-card" data-theme="light" onclick="applyTheme('light',this)">
+            <div class="theme-preview tp-light"></div>
+            <div class="theme-name">☀️ Light</div>
+          </div>
+          <div class="theme-card" data-theme="system" onclick="applyTheme('system',this)">
+            <div class="theme-preview tp-system"></div>
+            <div class="theme-name">📱 System</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FONT -->
+    <div class="sub-screen" id="screen-font">
+      <div class="ss-header">
+        <button class="ss-back" onclick="closeSubScreen('screen-font')">←</button>
+        <div class="ss-title">🔤 Font</div>
+      </div>
+      <div style="padding:16px">
+        <div style="font-size:.78rem;color:var(--text3);font-weight:700;margin-bottom:9px;text-transform:uppercase;letter-spacing:.06em">Website Font</div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;margin-bottom:18px">
+          <div class="font-opt sel" data-font="default" onclick="applyFont('website','default',this)"><span class="fo-prev" style="font-family:'Plus Jakarta Sans'">Default</span><span class="fo-check">✓</span></div>
+          <div class="font-opt" data-font="syne" onclick="applyFont('website','syne',this)"><span class="fo-prev" style="font-family:'Syne'">Syne (Bold)</span><span class="fo-check">✓</span></div>
+          <div class="font-opt" data-font="arial" onclick="applyFont('website','arial',this)"><span class="fo-prev" style="font-family:Arial">Arial</span><span class="fo-check">✓</span></div>
+          <div class="font-opt" data-font="georgia" onclick="applyFont('website','georgia',this)"><span class="fo-prev" style="font-family:Georgia">Georgia (Serif)</span><span class="fo-check">✓</span></div>
+        </div>
+        <div style="font-size:.78rem;color:var(--text3);font-weight:700;margin-bottom:9px;text-transform:uppercase;letter-spacing:.06em">Chat Font</div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden">
+          <div class="font-opt sel" data-font="default" onclick="applyFont('chat','default',this)"><span class="fo-prev">Default</span><span class="fo-check">✓</span></div>
+          <div class="font-opt" data-font="manga" onclick="applyFont('chat','manga',this)"><span class="fo-prev" style="font-family:'Comic Sans MS'">Manga</span><span class="fo-check">✓</span></div>
+          <div class="font-opt" data-font="arial" onclick="applyFont('chat','arial',this)"><span class="fo-prev" style="font-family:Arial">Arial</span><span class="fo-check">✓</span></div>
+          <div class="font-opt" data-font="mono" onclick="applyFont('chat','mono',this)"><span class="fo-prev" style="font-family:monospace">Monospace</span><span class="fo-check">✓</span></div>
+          <div class="font-opt" data-font="cursive" onclick="applyFont('chat','cursive',this)"><span class="fo-prev" style="font-family:cursive">Cursive</span><span class="fo-check">✓</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ZOOM -->
+    <div class="sub-screen" id="screen-zoom">
+      <div class="ss-header">
+        <button class="ss-back" onclick="closeSubScreen('screen-zoom')">←</button>
+        <div class="ss-title">🔍 Zoom</div>
+      </div>
+      <div class="zoom-wrap">
+        <div style="font-size:.85rem;font-weight:700;margin-bottom:12px">Website Zoom</div>
+        <input type="range" class="zoom-slider" id="zoom-website" min="80" max="130" value="100" oninput="applyZoom('website',this.value)">
+        <div class="zoom-prev-text" id="zoom-website-label">100%</div>
+        <div style="font-size:.85rem;font-weight:700;margin:22px 0 12px">Chat Zoom</div>
+        <input type="range" class="zoom-slider" id="zoom-chat" min="80" max="130" value="100" oninput="applyZoom('chat',this.value)">
+        <div class="zoom-prev-text" id="zoom-chat-label">100%</div>
+      </div>
+    </div>
+
+    <!-- CHAT BG -->
+    <div class="sub-screen" id="screen-chat-bg">
+      <div class="ss-header">
+        <button class="ss-back" onclick="closeSubScreen('screen-chat-bg')">←</button>
+        <div class="ss-title">🖼️ Chat Background</div>
+      </div>
+      <div style="padding:14px">
+        <p style="font-size:.8rem;color:var(--text2);margin-bottom:16px">अपनी device से photo choose करें — सिर्फ आपकी device पर दिखेगी।</p>
+        <div class="cbg-grid">
+          <div class="cbg-card sel" onclick="setChatBg('default',this)" style="background:#020a10">🌑</div>
+          <div class="cbg-card" onclick="setChatBg('nature',this)" style="background:linear-gradient(135deg,#1a4a1a,#0d4a2a)">🌿</div>
+          <div class="cbg-card" onclick="setChatBg('space',this)" style="background:linear-gradient(135deg,#060d1f,#1a0a3a)">🌌</div>
+          <div class="cbg-card" onclick="setChatBg('sunset',this)" style="background:linear-gradient(135deg,#4a1a0d,#2a0a1a)">🌅</div>
+          <div class="cbg-card" onclick="setChatBg('ocean',this)" style="background:linear-gradient(135deg,#0a2a4a,#0a1a3a)">🌊</div>
+          <div class="cbg-card cbg-upload" onclick="document.getElementById('bg-file-inp').click()">
+            <span>📷</span><span style="font-size:.72rem">Upload</span>
+            <input type="file" id="bg-file-inp" accept="image/*" style="display:none" onchange="uploadChatBg(this)">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DELETE ACCOUNT -->
+    <div class="sub-screen" id="screen-delete-account">
+      <div class="ss-header">
+        <button class="ss-back" onclick="closeSubScreen('screen-delete-account')">←</button>
+        <div class="ss-title">🗑️ Delete Account</div>
+      </div>
+      <div style="padding:18px">
+        <div style="background:rgba(244,63,94,.08);border:1.5px solid rgba(244,63,94,.25);border-radius:var(--r2);padding:20px;margin-bottom:20px">
+          <p style="font-weight:700;color:#f43f5e;margin-bottom:9px">⚠️ Permanent Action!</p>
+          <p style="font-size:.82rem;color:var(--text2);line-height:1.75">Account delete करने से सारा data हमेशा के लिए हट जाएगा। यह action undo नहीं किया जा सकता।</p>
+        </div>
+        <div class="field">
+          <label>Confirm करने के लिए "DELETE" type करें</label>
+          <input type="text" id="delete-confirm-inp" placeholder="DELETE">
+        </div>
+        <button class="btn-danger w100" id="btn-confirm-delete">🗑️ Permanently Delete</button>
+      </div>
+    </div>
+
+  </div><!-- /screens -->
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <button class="nav-tab active" data-tab="home" onclick="switchTab('home')">
+      <span class="ni">🏠</span><span>Home</span>
+    </button>
+    <button class="nav-tab" data-tab="quiz" onclick="switchTab('quiz')">
+      <span class="ni">📝</span><span>Quiz</span>
+    </button>
+    <button class="nav-tab" data-tab="typing" onclick="switchTab('typing')">
+      <span class="ni">⌨️</span><span>Typing</span>
+    </button>
+    <button class="nav-tab" data-tab="games" onclick="switchTab('games')">
+      <span class="ni">🎮</span><span>Games</span>
+    </button>
+  </nav>
+
+</div><!-- /app -->
+
+<!-- AUTH MODAL -->
+<div class="modal-ov hidden" id="auth-modal">
+  <div class="modal-sheet">
+    <div class="sheet-handle"></div>
+    <button class="modal-x" onclick="closeAuth()">✕</button>
+    <div class="atabs">
+      <button class="atab active" id="tab-login" onclick="switchAuthTab('login')">Log In</button>
+      <button class="atab" id="tab-signup" onclick="switchAuthTab('signup')">Sign Up</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="login-panel">
+      <div style="text-align:center;font-size:2.4rem;margin-bottom:14px;filter:drop-shadow(0 0 20px rgba(59,130,246,.4))">🔑</div>
+      <form id="login-form">
+        <div class="field"><label>Email</label><input type="email" id="l-email" placeholder="you@example.com" required></div>
+        <div class="field">
+          <label>Password</label>
+          <div style="position:relative">
+            <input type="password" id="l-pass" placeholder="Password" required style="padding-right:44px">
+            <button type="button" onclick="togglePw('l-pass',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1rem;color:var(--text3)">👁️</button>
+          </div>
+        </div>
+        <p class="aerr hidden" id="l-err"></p>
+        <button type="submit" class="btn-primary w100" id="l-btn">Log In</button>
+      </form>
+    </div>
+
+    <!-- SIGNUP -->
+    <div id="signup-panel" class="hidden">
+      <div class="ghibli-stage" id="ghibli-stage">
+        <div class="g-stars" id="g-stars"></div>
+        <div class="g-ground"></div><div class="g-path"></div>
+        <div class="g-boy-wrap" id="g-boy">
+          <svg width="84" height="128" viewBox="0 0 84 128" xmlns="http://www.w3.org/2000/svg">
+            <g class="g-body-g">
+              <ellipse cx="42" cy="125" rx="20" ry="4" fill="rgba(0,0,0,.22)"/>
+              <g class="g-paper-1" style="transform-origin:65px 88px"><rect x="58" y="66" width="13" height="17" rx="2" fill="white" opacity=".92"/><line x1="61" y1="70" x2="69" y2="70" stroke="#3b82f6" stroke-width="1.5" stroke-linecap="round"/><line x1="61" y1="74" x2="69" y2="74" stroke="#3b82f6" stroke-width="1"/><line x1="61" y1="78" x2="67" y2="78" stroke="#94a3b8" stroke-width="1"/></g>
+              <g class="g-paper-2" style="transform-origin:62px 86px"><rect x="56" y="70" width="11" height="15" rx="2" fill="#dbeafe" opacity=".92"/><line x1="59" y1="74" x2="65" y2="74" stroke="#2563eb" stroke-width="1.5" stroke-linecap="round"/></g>
+              <g class="g-paper-3" style="transform-origin:60px 90px"><rect x="55" y="74" width="10" height="13" rx="2" fill="#fde68a" opacity=".92"/><line x1="57" y1="78" x2="63" y2="78" stroke="#d97706" stroke-width="1.5" stroke-linecap="round"/></g>
+              <g class="g-leg-l" style="transform-origin:33px 88px"><rect x="27" y="86" width="12" height="28" rx="6" fill="#1e3a8a"/><ellipse cx="33" cy="114" rx="9" ry="5" fill="#1c1917"/></g>
+              <g class="g-leg-r" style="transform-origin:51px 88px"><rect x="45" y="86" width="12" height="28" rx="6" fill="#1e3a8a"/><ellipse cx="51" cy="114" rx="9" ry="5" fill="#1c1917"/></g>
+              <rect x="25" y="50" width="34" height="42" rx="12" fill="#3b82f6"/>
+              <rect x="29" y="56" width="8" height="7" rx="2" fill="rgba(255,255,255,.25)"/>
+              <path d="M39 50 L42 58 L45 50" fill="white" opacity=".6"/>
+              <g class="g-arm-l" style="transform-origin:27px 56px"><rect x="14" y="54" width="14" height="22" rx="7" fill="#fbbf24"/><circle cx="19" cy="78" r="6" fill="#fbbf24"/></g>
+              <g class="g-arm-r" style="transform-origin:57px 56px">
+                <rect x="56" y="54" width="12" height="22" rx="6" fill="#fbbf24"/>
+                <g class="g-briefcase-g">
+                  <rect x="61" y="72" width="10" height="5" rx="2.5" fill="none" stroke="#92400e" stroke-width="2"/>
+                  <rect x="57" y="76" width="20" height="16" rx="4" fill="#92400e"/>
+                  <line x1="57" y1="83" x2="77" y2="83" stroke="#78350f" stroke-width="1.5"/>
+                  <line x1="67" y1="76" x2="67" y2="92" stroke="#78350f" stroke-width="1.5"/>
+                  <rect x="63" y="81" width="8" height="4" rx="2" fill="#d97706"/>
+                </g>
+              </g>
+              <circle cx="42" cy="26" r="18" fill="#fbbf24"/>
+              <path d="M24 20 Q26 6 42 4 Q58 6 60 20 Q56 10 42 10 Q28 10 24 20Z" fill="#1c1917"/>
+              <ellipse cx="24" cy="26" rx="3" ry="4" fill="#f59e0b"/>
+              <ellipse cx="60" cy="26" rx="3" ry="4" fill="#f59e0b"/>
+              <circle cx="35" cy="24" r="4" fill="white"/><circle cx="35" cy="25" r="2.5" fill="#1c1917"/><circle cx="36" cy="24" r="1" fill="white"/>
+              <circle cx="49" cy="24" r="4" fill="white"/><circle cx="49" cy="25" r="2.5" fill="#1c1917"/><circle cx="50" cy="24" r="1" fill="white"/>
+              <path d="M32 18 Q35 16 38 18" stroke="#1c1917" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+              <path d="M46 18 Q49 16 52 18" stroke="#1c1917" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+              <path d="M36 33 Q42 39 48 33" stroke="#c2410c" stroke-width="2" fill="none" stroke-linecap="round"/>
+              <circle cx="30" cy="31" r="4" fill="#fca5a5" opacity=".4"/>
+              <circle cx="54" cy="31" r="4" fill="#fca5a5" opacity=".4"/>
+            </g>
+          </svg>
+        </div>
+        <div class="g-scene-hint" id="g-scene-hint">✨ Tap to open briefcase</div>
+      </div>
+      <button class="g-open-btn" id="g-open-btn">📦 Open Briefcase</button>
+      <div class="signup-form-inner" id="signup-form-inner">
+        <div class="sfh">
+          <div class="sfh-av">🎓</div>
+          <div class="sfh-info"><h3>Create Account</h3><p>Join thousands of students!</p></div>
+        </div>
+        <form id="signup-form">
+          <div class="field"><label>Full Name</label><input type="text" id="s-name" placeholder="Your name" required></div>
+          <div class="field"><label>Email</label><input type="email" id="s-email" placeholder="you@example.com" required></div>
+          <div class="field">
+            <label>Password <span style="font-size:.72rem;color:var(--text3)">(min 6 chars)</span></label>
+            <div style="position:relative">
+              <input type="password" id="s-pass" placeholder="Password" required minlength="6" style="padding-right:44px">
+              <button type="button" onclick="togglePw('s-pass',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1rem;color:var(--text3)">👁️</button>
+            </div>
+          </div>
+          <p class="aerr hidden" id="s-err"></p>
+          <button type="submit" class="btn-primary w100" id="s-btn">🚀 Create Account</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast hidden" id="toast"></div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<!-- App Scripts -->
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/quiz.js"></script>
+<script src="js/typing.js"></script>
+<script src="js/chat.js"></script>
+<script src="js/profile.js"></script>
+<script src="js/games.js"></script>
+</body>
+</html>
