@@ -375,6 +375,75 @@ async function loadNotifications() {
   } catch (e) { list.innerHTML = `<div class="vs-empty">${e.message}</div>`; }
 }
 
+
+/* ── Game Tab Switcher ── */
+function switchGameTab(panel, btn) {
+  document.querySelectorAll('.gtab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.game-panel').forEach(p => p.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const el = document.getElementById(`gpanel-${panel}`);
+  if (el) el.classList.add('active');
+  if (panel === 'ranks') loadInlineLeaderboard();
+}
+
+function loadInlineLeaderboard() {
+  const list = document.getElementById('inline-leaderboard-list');
+  if (!list) return;
+  const r = JSON.parse(localStorage.getItem('og_rankings') || '{}');
+  const sorted = Object.values(r).sort((a, b) => b.points - a.points);
+  const medals = ['🥇','🥈','🥉'];
+  if (!sorted.length) {
+    list.innerHTML = '<div class="vs-empty" style="padding:30px 0"><span class="ve-icon">🏆</span>कोई ranking नहीं।<br>Online games खेलें!</div>';
+    return;
+  }
+  list.innerHTML = sorted.map((p, i) => `
+    <div class="lb-row ${i < 3 ? 'top3' : ''}">
+      <div class="lb-rank">${medals[i] || '#'+(i+1)}</div>
+      <div class="lb-av">${p.avatar || '🎓'}</div>
+      <div class="lb-info"><div class="lb-name">${p.name}</div><div class="lb-sub">${p.wins}W · ${p.losses}L · ${p.draws}D</div></div>
+      <div class="lb-pts"><span>${p.points}</span><small>pts</small></div>
+    </div>`).join('');
+}
+
+/* ── Search History ── */
+const SEARCH_HIST_KEY = 'vs_search_hist';
+function saveSearchQuery(q) {
+  if (!q || q.length < 2) return;
+  let h = JSON.parse(localStorage.getItem(SEARCH_HIST_KEY) || '[]');
+  h = [q, ...h.filter(x => x !== q)].slice(0, 20);
+  localStorage.setItem(SEARCH_HIST_KEY, JSON.stringify(h));
+}
+window.clearSearchHistory = function() {
+  localStorage.removeItem(SEARCH_HIST_KEY);
+  renderSearchHistory();
+  showToast('Search history cleared', 'info');
+};
+function renderSearchHistory() {
+  const list = document.getElementById('search-hist-list');
+  if (!list) return;
+  const h = JSON.parse(localStorage.getItem(SEARCH_HIST_KEY) || '[]');
+  if (!h.length) {
+    list.innerHTML = '<div class="vs-empty">कोई recent search नहीं</div>';
+    return;
+  }
+  list.innerHTML = h.map(q => `
+    <div class="sh-row" onclick="applySearchFromHistory('${q.replace(/'/g,"\'")}')">
+      <span class="sh-icon">🔍</span>
+      <span class="sh-text">${q}</span>
+      <span class="sh-arrow">→</span>
+    </div>`).join('');
+}
+window.applySearchFromHistory = function(q) {
+  const inp = document.getElementById('user-search-inp');
+  if (inp) { inp.value = q; inp.dispatchEvent(new Event('input')); }
+  closeSubScreen('screen-search-history');
+};
+window.openSearchHistory = function() {
+  openSubScreen('screen-search-history');
+  renderSearchHistory();
+};
+window.switchGameTab = switchGameTab;
+
 /* ── User Search ── */
 let _searchTimer = null;
 function initUserSearch() {
@@ -405,6 +474,7 @@ async function doUserSearch(q) {
   drop.innerHTML = '<div style="padding:14px;text-align:center;color:var(--text3);font-size:.82rem">🔍 Searching…</div>';
   drop.style.display = 'block';
   try {
+    saveSearchQuery(q);
     const d = await apiFetch(`/api/users/search?q=${encodeURIComponent(q)}`);
     const users = d.users || [];
     if (!users.length) { drop.innerHTML = '<div style="padding:14px;text-align:center;color:var(--text3);font-size:.82rem">No students found</div>'; return; }

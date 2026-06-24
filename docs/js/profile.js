@@ -27,6 +27,9 @@ const ProfileModule = (() => {
     document.getElementById('btn-change-pw')?.addEventListener('click', changePassword);
     document.getElementById('pqs-quizzes-btn')?.addEventListener('click', loadHistory);
     document.getElementById('pqs-typing-btn')?.addEventListener('click', loadTypingHistory);
+    document.getElementById('pqs-online-btn')?.addEventListener('click', () => {
+      if (window.OnlineGames) OnlineGames.showOnlineHistory();
+    });
 
     // Re-init password eye toggles for dynamically added fields
     initEyeToggles();

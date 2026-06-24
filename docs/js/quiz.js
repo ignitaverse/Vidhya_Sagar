@@ -150,7 +150,15 @@ const QuizModule = (() => {
     answered=false;
     const q=questions[currentQ];
     document.getElementById('q-num').textContent=`Q${quizState.answered+1}`;
-    document.getElementById('q-text').textContent=q.q||q.question;
+    /* ✅ BILINGUAL: Show question in both Hindi and English if both available */
+    const qEng = q.q_en || q.question_en || '';
+    const qHin = q.q_hi || q.question_hi || q.q || q.question || '';
+    if(qEng && qHin && qEng !== qHin){
+      document.getElementById('q-text').innerHTML=
+        `<span class="q-lang-hi">${qHin}</span><span class="q-lang-divider">—</span><span class="q-lang-en">${qEng}</span>`;
+    } else {
+      document.getElementById('q-text').textContent = qHin || qEng;
+    }
     updateProgressUI();
     const opts=q.opts||q.options||[];
     document.querySelectorAll('.opt-btn').forEach((btn,i)=>{
@@ -171,7 +179,10 @@ const QuizModule = (() => {
     isReviewing=true;
     document.getElementById('q-review-banner').style.display='block';
     document.getElementById('q-num').textContent=`Q${entry.qNum} — Review`;
-    document.getElementById('q-text').textContent=entry.q.q||entry.q.question;
+    const rqEn=entry.q.q_en||entry.q.question_en||'', rqHi=entry.q.q_hi||entry.q.question_hi||entry.q.q||entry.q.question||'';
+    if(rqEn&&rqHi&&rqEn!==rqHi){
+      document.getElementById('q-text').innerHTML=`<span class="q-lang-hi">${rqHi}</span><span class="q-lang-divider">—</span><span class="q-lang-en">${rqEn}</span>`;
+    } else { document.getElementById('q-text').textContent=rqHi||rqEn; }
     const opts=entry.q.opts||entry.q.options||[];
     document.querySelectorAll('.opt-btn').forEach((btn,i)=>{
       btn.className='opt-btn';btn.disabled=true;
