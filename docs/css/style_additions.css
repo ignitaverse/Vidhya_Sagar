@@ -355,3 +355,286 @@
 /* Performance */
 .sub-screen,.hero-orb,.ld-p { will-change:transform;transform:translateZ(0); }
 .top-bar,.bottom-nav { contain:layout style; }
+
+/* ═══════════════════════════════════════════════════════
+   VidyaSagar v5 — Additions CSS
+   Games, Online, Chess, Leaderboard, Search Hist, etc.
+═══════════════════════════════════════════════════════ */
+
+/* ── QUIZ: BILINGUAL QUESTION ── */
+.q-lang-hi { display:block; font-size:1rem; font-weight:700; color:var(--text1); line-height:1.5; }
+.q-lang-divider { display:block; text-align:center; color:var(--text3); font-size:.7rem; margin:4px 0; letter-spacing:.08em; }
+.q-lang-en { display:block; font-size:.88rem; font-weight:500; color:var(--text2); font-style:italic; line-height:1.5; }
+
+/* ── GAMES TAB BAR ── */
+.games-tab-bar {
+  display:flex; gap:6px; padding:14px 14px 0;
+  background:transparent; position:sticky; top:0; z-index:10;
+}
+.gtab {
+  flex:1; padding:9px 4px; border:none; border-radius:12px;
+  background:var(--card); color:var(--text2); font-size:.78rem;
+  font-weight:700; cursor:pointer; transition:.2s;
+  border:1.5px solid var(--border);
+}
+.gtab.active {
+  background:linear-gradient(135deg,var(--blue),var(--purple));
+  color:#fff; border-color:transparent;
+  box-shadow:0 4px 14px rgba(59,130,246,.35);
+}
+.game-panel { display:none; padding:14px; animation:fadeIn .25s ease; }
+.game-panel.active { display:block; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+
+/* ── GAME CARDS V2 ── */
+.games-grid-v2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:14px; }
+.game-card-v2 {
+  position:relative; overflow:hidden;
+  background:var(--card); border:1.5px solid var(--border);
+  border-radius:20px; padding:22px 14px 18px;
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+  cursor:pointer; transition:.25s; text-align:center;
+  box-shadow:0 2px 12px rgba(0,0,0,.25);
+}
+.game-card-v2:hover, .game-card-v2:active { transform:translateY(-3px) scale(1.02); border-color:var(--blue); }
+.gcv2-glow {
+  position:absolute; top:-20px; left:50%; transform:translateX(-50%);
+  width:120px; height:80px; opacity:.18; pointer-events:none;
+}
+.gcv2-icon { font-size:2.4rem; position:relative; z-index:1; }
+.gcv2-title { font-size:.9rem; font-weight:800; color:var(--text1); z-index:1; }
+.gcv2-sub { font-size:.73rem; color:var(--text3); z-index:1; line-height:1.4; }
+.gcv2-tag {
+  margin-top:4px; padding:3px 12px; border-radius:20px;
+  background:rgba(59,130,246,.15); color:var(--blue2);
+  font-size:.68rem; font-weight:700; z-index:1;
+}
+
+/* ── ONLINE HUB ── */
+.games-hero { padding:6px 0 10px; }
+.games-hero h2 { font-size:1.15rem; font-weight:800; margin:0 0 4px; }
+.games-hero p { font-size:.78rem; color:var(--text3); margin:0; }
+
+.og-actions-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:14px 0; }
+.og-action-btn {
+  background:linear-gradient(135deg,rgba(34,211,238,.12),rgba(59,130,246,.12));
+  border:1.5px solid rgba(34,211,238,.3); border-radius:18px;
+  padding:20px 12px; display:flex; flex-direction:column;
+  align-items:center; gap:6px; cursor:pointer; transition:.2s;
+  color:var(--text1);
+}
+.og-action-btn.chess { background:linear-gradient(135deg,rgba(139,92,246,.12),rgba(236,72,153,.12)); border-color:rgba(139,92,246,.3); }
+.og-action-btn:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,0,0,.3); }
+.og-action-btn div { font-weight:800; font-size:.88rem; }
+.og-action-btn small { font-size:.7rem; color:var(--text3); }
+
+.og-join-box { background:var(--card); border:1.5px solid var(--border); border-radius:16px; padding:16px; margin:10px 0; }
+.og-join-label { font-size:.78rem; font-weight:700; color:var(--text2); margin-bottom:10px; }
+.og-join-row { display:flex; gap:8px; }
+.og-join-row input { flex:1; padding:10px 14px; border-radius:12px; background:var(--card2); border:1.5px solid var(--border); color:var(--text1); font-size:.85rem; font-family:monospace; letter-spacing:.1em; font-weight:700; }
+.og-join-btn { padding:10px 18px; border-radius:12px; background:var(--blue); color:#fff; border:none; font-weight:800; cursor:pointer; font-size:.85rem; transition:.15s; }
+.og-join-btn:active { transform:scale(.96); }
+
+.og-shortcuts { display:flex; gap:10px; margin:10px 0; }
+.og-shortcut { flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding:11px; border-radius:14px; background:var(--card); border:1.5px solid var(--border); font-size:.78rem; font-weight:700; cursor:pointer; color:var(--text2); transition:.15s; }
+.og-shortcut:hover { border-color:var(--blue); color:var(--blue2); }
+
+.og-how-to { background:rgba(59,130,246,.06); border:1.5px solid rgba(59,130,246,.15); border-radius:16px; padding:14px; margin-top:10px; }
+.ogh-title { font-size:.8rem; font-weight:800; color:var(--blue2); margin-bottom:10px; }
+.ogh-step { display:flex; align-items:center; gap:10px; margin-bottom:8px; font-size:.78rem; color:var(--text2); }
+.ogh-num { width:22px; height:22px; border-radius:50%; background:var(--blue); color:#fff; display:flex; align-items:center; justify-content:center; font-size:.7rem; font-weight:800; flex-shrink:0; }
+
+/* ── ONLINE GAME ROOM ── */
+.og-room-meta { display:flex; justify-content:space-between; align-items:center; padding:8px 16px; background:var(--card); border-bottom:1px solid var(--border); }
+.og-room-id-row { font-size:.78rem; color:var(--text3); }
+.og-room-id-row strong { color:var(--blue2); letter-spacing:.1em; font-family:monospace; font-size:.9rem; }
+.og-my-sym { font-size:.78rem; font-weight:700; color:var(--text2); }
+.og-share-btn { background:rgba(59,130,246,.15); border:1px solid rgba(59,130,246,.3); color:var(--blue2); border-radius:10px; padding:5px 12px; font-size:.75rem; font-weight:700; cursor:pointer; }
+
+.og-waiting { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:50px 20px; text-align:center; }
+.og-wait-icon { font-size:3rem; animation:pulse 1.5s infinite; }
+.og-wait-title { font-size:1.1rem; font-weight:800; margin:16px 0 8px; }
+.og-wait-sub { font-size:.82rem; color:var(--text3); margin-bottom:14px; }
+.og-room-code { font-size:2rem; font-weight:900; font-family:monospace; letter-spacing:.15em; color:var(--blue2); background:var(--card); padding:12px 24px; border-radius:14px; border:2px dashed var(--blue); }
+@keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+
+.og-board-wrap { flex:1; padding:14px; display:flex; flex-direction:column; align-items:center; gap:12px; overflow:auto; }
+.og-turn-bar { width:100%; text-align:center; padding:10px 16px; border-radius:12px; background:var(--card); font-size:.85rem; font-weight:700; border:1.5px solid var(--border); transition:color .3s; }
+
+/* ── TIC TAC TOE ── */
+.ttt-board { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; width:280px; }
+.ttt-cell {
+  aspect-ratio:1; background:var(--card); border:2px solid var(--border);
+  border-radius:16px; display:flex; align-items:center; justify-content:center;
+  cursor:pointer; transition:.15s; font-size:2.2rem;
+}
+.ttt-cell:hover:not(.filled) { border-color:var(--blue); background:rgba(59,130,246,.08); }
+.ttt-cell.filled { cursor:default; }
+.ttt-sym { font-size:2.2rem; transition:.15s; }
+.x-sym { color:#f43f5e; text-shadow:0 0 20px rgba(244,63,94,.5); }
+.o-sym { color:#3b82f6; text-shadow:0 0 20px rgba(59,130,246,.5); }
+
+/* ── CHESS ── */
+.chess-board {
+  display:grid; grid-template-columns:repeat(8,1fr);
+  width:min(340px, 92vw); border-radius:12px; overflow:hidden;
+  border:3px solid var(--border); box-shadow:0 8px 32px rgba(0,0,0,.4);
+}
+.chess-cell {
+  aspect-ratio:1; display:flex; align-items:center; justify-content:center;
+  cursor:pointer; transition:all .15s; position:relative;
+}
+.chess-cell.light { background:#f0d9b5; }
+.chess-cell.dark { background:#b58863; }
+.chess-cell.selected { background:#afd650 !important; box-shadow:inset 0 0 0 3px rgba(0,0,0,.3); }
+.chess-cell:hover { opacity:.85; }
+.chess-piece { font-size:clamp(1rem,3.5vw,1.6rem); line-height:1; user-select:none; }
+.chess-piece.white { filter:drop-shadow(0 1px 2px rgba(0,0,0,.5)); }
+.chess-piece.black { filter:drop-shadow(0 1px 2px rgba(0,0,0,.8)); }
+.chess-info-row { display:flex; justify-content:space-between; width:min(340px,92vw); padding:6px 2px; }
+.chess-captured { font-size:.9rem; letter-spacing:.02em; }
+
+/* ── LEADERBOARD ── */
+.lb-row {
+  display:flex; align-items:center; gap:12px;
+  padding:12px 14px; background:var(--card); border-radius:14px;
+  margin-bottom:8px; border:1.5px solid var(--border);
+  transition:.15s;
+}
+.lb-row.top3 { border-color:rgba(251,191,36,.3); background:rgba(251,191,36,.06); }
+.lb-rank { font-size:1.3rem; width:32px; text-align:center; }
+.lb-av { font-size:1.5rem; }
+.lb-info { flex:1; }
+.lb-name { font-weight:800; font-size:.88rem; }
+.lb-sub { font-size:.7rem; color:var(--text3); margin-top:2px; }
+.lb-pts { text-align:center; }
+.lb-pts span { font-size:1.1rem; font-weight:900; color:var(--blue2); display:block; }
+.lb-pts small { font-size:.65rem; color:var(--text3); }
+
+/* ── ONLINE HISTORY ── */
+.oh-section-title { font-size:.8rem; font-weight:800; color:var(--text3); margin-bottom:10px; letter-spacing:.05em; text-transform:uppercase; }
+.oh-opp-card { background:var(--card); border-radius:14px; padding:14px 16px; margin-bottom:8px; border:1.5px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+.oh-opp-name { font-weight:700; font-size:.86rem; }
+.oh-opp-stats { display:flex; gap:12px; font-size:.78rem; font-weight:700; }
+.oh-game-row { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); }
+.oh-game-icon { font-size:1.3rem; width:28px; text-align:center; }
+.oh-game-info { flex:1; }
+
+/* ── SEARCH HISTORY ── */
+.sh-row {
+  display:flex; align-items:center; gap:12px;
+  padding:12px 14px; background:var(--card); border-radius:12px;
+  margin-bottom:8px; cursor:pointer; border:1.5px solid var(--border);
+  transition:.15s;
+}
+.sh-row:hover { border-color:var(--blue); }
+.sh-icon { color:var(--text3); font-size:.95rem; }
+.sh-text { flex:1; font-size:.86rem; font-weight:600; color:var(--text2); }
+.sh-arrow { color:var(--text3); font-size:.8rem; }
+
+/* ── COMING SOON (Delete Account) ── */
+.coming-soon-icon { font-size:3.5rem; margin-bottom:16px; }
+.coming-soon-title { font-size:1.5rem; font-weight:900; background:linear-gradient(135deg,var(--blue),var(--purple)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin:0 0 8px; }
+.coming-soon-sub { font-size:.84rem; color:var(--text2); margin-bottom:24px; }
+.coming-soon-save-box {
+  display:flex; align-items:flex-start; gap:14px;
+  background:rgba(52,211,153,.08); border:1.5px solid rgba(52,211,153,.25);
+  border-radius:16px; padding:16px; text-align:left; margin-top:8px;
+}
+.css-icon { font-size:1.6rem; flex-shrink:0; }
+.css-title { font-weight:800; font-size:.88rem; color:#34d399; margin-bottom:4px; }
+.css-sub { font-size:.77rem; color:var(--text2); line-height:1.6; }
+
+/* ── TYPING TAB FUTURISTIC LOOK ── */
+.typing-home {
+  background:transparent;
+}
+.typing-home-header {
+  padding:20px 16px 14px;
+  background:linear-gradient(135deg,rgba(6,182,212,.08),rgba(139,92,246,.08));
+  border-bottom:1px solid rgba(6,182,212,.15);
+  position:relative; overflow:hidden;
+}
+.typing-home-header::before {
+  content:''; position:absolute; inset:0;
+  background:repeating-linear-gradient(90deg,transparent,transparent 40px,rgba(6,182,212,.03) 40px,rgba(6,182,212,.03) 41px),
+             repeating-linear-gradient(0deg,transparent,transparent 40px,rgba(6,182,212,.03) 40px,rgba(6,182,212,.03) 41px);
+}
+.typing-home-header h2 {
+  font-size:1.25rem; font-weight:900; margin:0 0 4px;
+  background:linear-gradient(90deg,#22d3ee,#8b5cf6);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  position:relative;
+}
+.typing-home-header p { font-size:.78rem; color:rgba(6,182,212,.8); margin:0 0 12px; position:relative; font-family:'Syne',sans-serif; letter-spacing:.03em; }
+.typing-home-stats { display:flex; gap:12px; position:relative; }
+.ths {
+  flex:1; background:rgba(6,182,212,.1); border:1px solid rgba(6,182,212,.2);
+  border-radius:12px; padding:10px 8px; text-align:center;
+}
+.ths b { display:block; font-size:1.1rem; font-weight:900; color:#22d3ee; font-family:'Syne',sans-serif; }
+.ths span { font-size:.68rem; color:rgba(6,182,212,.7); font-weight:600; letter-spacing:.04em; text-transform:uppercase; }
+
+.exam-search-wrap {
+  background:rgba(6,182,212,.06) !important;
+  border:1.5px solid rgba(6,182,212,.2) !important;
+  border-radius:14px !important;
+}
+.exam-search-wrap:focus-within {
+  border-color:rgba(6,182,212,.5) !important;
+  box-shadow:0 0 0 3px rgba(6,182,212,.1) !important;
+}
+.exam-search-wrap input { color:var(--text1) !important; }
+.exam-search-wrap input::placeholder { color:rgba(6,182,212,.5) !important; }
+
+.exam-cat-btn {
+  background:rgba(6,182,212,.08) !important;
+  border:1.5px solid rgba(6,182,212,.15) !important;
+  color:rgba(6,182,212,.7) !important;
+  font-family:'Syne',sans-serif !important;
+  letter-spacing:.03em !important;
+  font-size:.72rem !important;
+}
+.exam-cat-btn.active {
+  background:linear-gradient(135deg,rgba(6,182,212,.3),rgba(139,92,246,.3)) !important;
+  border-color:rgba(6,182,212,.5) !important;
+  color:#22d3ee !important;
+  box-shadow:0 0 12px rgba(6,182,212,.2) !important;
+}
+
+/* Exam cards futuristic */
+.exam-card-v2 {
+  background:linear-gradient(135deg,rgba(6,182,212,.08),rgba(139,92,246,.05));
+  border:1.5px solid rgba(6,182,212,.15);
+  border-radius:16px;
+}
+.exam-card-v2:hover { border-color:rgba(6,182,212,.4); box-shadow:0 4px 20px rgba(6,182,212,.15); }
+.ecv2-title { color:var(--text1); font-family:'Syne',sans-serif; }
+.ecv2-lang span { background:rgba(6,182,212,.12); color:#22d3ee; border-color:rgba(6,182,212,.2); }
+
+/* Typing active screen — futuristic terminal */
+.typing-area {
+  background:rgba(6,182,212,.04) !important;
+  border:1.5px solid rgba(6,182,212,.18) !important;
+  border-radius:16px !important;
+  font-family:'Plus Jakarta Sans',monospace !important;
+  caret-color:#22d3ee !important;
+}
+.typing-char-correct { color:#22d3ee !important; }
+.typing-char-wrong { color:#f43f5e !important; background:rgba(244,63,94,.15) !important; }
+.typing-char-current::after { border-color:#22d3ee !important; box-shadow:0 0 8px rgba(6,182,212,.6) !important; }
+
+/* Typing stat boxes */
+.ts-box {
+  background:rgba(6,182,212,.06) !important;
+  border:1px solid rgba(6,182,212,.15) !important;
+  border-radius:12px !important;
+}
+.ts-val { color:#22d3ee !important; font-family:'Syne',sans-serif !important; }
+
+/* WPM ring futuristic */
+.wpm-ring-circle { stroke:#22d3ee !important; }
+.typing-result-screen .wpm-num { color:#22d3ee !important; }
+
+/* Number Game - word scramble streak */
+.ws-streak-bar { display:flex; align-items:center; gap:8px; font-size:.8rem; color:var(--amber); font-weight:700; }
