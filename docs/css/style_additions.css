@@ -638,3 +638,68 @@
 
 /* Number Game - word scramble streak */
 .ws-streak-bar { display:flex; align-items:center; gap:8px; font-size:.8rem; color:var(--amber); font-weight:700; }
+
+/* ── ONLINE GAME CARDS (3-option UI) ── */
+.og-game-cards { display:flex; flex-direction:column; gap:12px; margin:14px 0; }
+
+.og-game-card {
+  background:var(--card); border:1.5px solid var(--border);
+  border-radius:18px; padding:16px; transition:.2s;
+}
+.og-game-card:hover { border-color:rgba(59,130,246,.4); }
+
+.ogc-header {
+  display:flex; align-items:center; gap:12px; margin-bottom:14px;
+}
+.ogc-icon { font-size:2rem; }
+.ogc-title { font-weight:800; font-size:.95rem; color:var(--text1); }
+.ogc-sub { font-size:.72rem; color:var(--text3); margin-top:2px; }
+
+.ogc-actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+
+.ogc-btn {
+  padding:10px 8px; border-radius:12px; border:none;
+  font-size:.78rem; font-weight:700; cursor:pointer;
+  transition:.15s; display:flex; align-items:center;
+  justify-content:center; gap:5px;
+}
+.ogc-btn:active { transform:scale(.96); }
+
+.ogc-btn.random {
+  background:linear-gradient(135deg,rgba(16,185,129,.2),rgba(6,182,212,.2));
+  border:1.5px solid rgba(16,185,129,.35); color:#34d399;
+}
+.ogc-btn.random.chess {
+  background:linear-gradient(135deg,rgba(139,92,246,.2),rgba(236,72,153,.2));
+  border-color:rgba(139,92,246,.35); color:#a78bfa;
+}
+.ogc-btn.create {
+  background:rgba(59,130,246,.12);
+  border:1.5px solid rgba(59,130,246,.25); color:var(--blue2);
+}
+.ogc-btn.create.chess {
+  background:rgba(139,92,246,.12);
+  border-color:rgba(139,92,246,.25); color:#a78bfa;
+}
+.ogc-btn:hover { filter:brightness(1.15); }
+
+/* ── MATCHMAKING STATUS ── */
+.og-matchmaking-status {
+  display:flex; align-items:center; gap:12px;
+  background:rgba(16,185,129,.08); border:1.5px solid rgba(16,185,129,.25);
+  border-radius:14px; padding:14px 16px; margin:10px 0;
+}
+.og-matchmaking-status.hidden { display:none; }
+.og-mm-spinner {
+  width:20px; height:20px; border-radius:50%;
+  border:2.5px solid rgba(52,211,153,.2);
+  border-top-color:#34d399;
+  animation:spin .8s linear infinite; flex-shrink:0;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+.og-mm-text { flex:1; font-size:.82rem; font-weight:700; color:#34d399; }
+.og-mm-cancel {
+  background:rgba(244,63,94,.12); border:1px solid rgba(244,63,94,.3);
+  color:#f43f5e; border-radius:8px; padding:5px 10px;
+  font-size:.72rem; font-weight:700; cursor:pointer;
+}
