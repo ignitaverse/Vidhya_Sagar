@@ -11,6 +11,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style_futuristic.css">
 <link rel="stylesheet" href="css/style_additions.css">
+<link rel="stylesheet" href="css/style_typing_upgrade.css">
 </head>
 <body>
 
@@ -616,29 +617,71 @@
 
     <!-- TYPING: ACTIVE -->
     <div class="sub-screen no-bot" id="screen-typing-active" style="display:flex;flex-direction:column">
+
+      <!-- HEADER: Exam title + timer row -->
       <div class="type-header">
+        <!-- Row 1: Typing Test title (centered, bold blue bg) -->
+        <div class="type-test-id-bar" id="type-test-id-bar">
+          Typing Test — <span id="type-exam-title-bar">Practice</span>
+        </div>
+        <!-- Row 2: Exam name + time left -->
         <div class="type-header-row">
-          <button class="ss-back" onclick="exitTyping()" style="flex-shrink:0">←</button>
-          <div class="type-title" id="type-exam-title">Typing</div>
-          <div class="type-timer" id="type-timer">10:00</div>
+          <button class="ss-back" onclick="exitTyping()" title="Exit" style="flex-shrink:0;background:rgba(255,255,255,.12);border:none;color:#fff;border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:1rem">←</button>
+          <div class="type-title" id="type-exam-title">Typing Practice</div>
+          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+            <span style="font-size:.72rem;color:rgba(255,255,255,.6);font-weight:600">Time left:-</span>
+            <div class="type-timer" id="type-timer">10:00</div>
+          </div>
         </div>
+        <!-- Row 3: Keyboard layout + Language bar -->
+        <div class="typing-lang-bar" id="typing-lang-bar">
+          <span>⌨️ Keyboard Layout: <b id="type-kb-layout">QWERTY</b></span>
+          <span>🌐 Language: <b id="type-lang-label">English</b></span>
+        </div>
+        <!-- Row 4: Live stats (4 boxes) -->
         <div class="type-live-stats">
-          <div class="tls tls-wpm"><div class="tls-val" id="tls-wpm">0</div><div class="tls-lbl">WPM</div></div>
-          <div class="tls tls-acc"><div class="tls-val" id="tls-acc">100%</div><div class="tls-lbl">Accuracy</div></div>
-          <div class="tls tls-err"><div class="tls-val" id="tls-err">0</div><div class="tls-lbl">Errors</div></div>
-          <div class="tls tls-keys"><div class="tls-val" id="tls-keys">0</div><div class="tls-lbl">Keys</div></div>
+          <div class="tls tls-wpm">
+            <div class="tls-val" id="tls-wpm">0</div>
+            <div class="tls-lbl">Keystrokes Count</div>
+          </div>
+          <div class="tls tls-acc">
+            <div class="tls-val" id="tls-acc">100%</div>
+            <div class="tls-lbl">Accuracy</div>
+          </div>
+          <div class="tls tls-err">
+            <div class="tls-val" id="tls-err">0</div>
+            <div class="tls-lbl">Errors</div>
+          </div>
+          <div class="tls tls-keys">
+            <div class="tls-val" id="tls-keys">0</div>
+            <div class="tls-lbl">Keys</div>
+          </div>
         </div>
-        <div class="type-prog-bar" style="margin-top:8px">
+        <!-- Row 5: Progress bar -->
+        <div class="type-prog-bar">
           <div class="type-prog-fill" id="type-prog-fill" style="width:0%"></div>
         </div>
       </div>
-      <div style="flex:1;overflow-y:auto">
+
+      <!-- PASSAGE DISPLAY -->
+      <div style="flex:1;overflow-y:auto;background:#fff" id="passage-scroll-area">
         <div class="passage-display" id="passage-display"></div>
       </div>
+
+      <!-- INPUT AREA -->
       <div class="typing-inp-area">
-        <textarea class="typing-inp" id="typing-inp" placeholder="यहाँ type करें…" rows="3" spellcheck="false" autocorrect="off" autocapitalize="off" autocomplete="off"></textarea>
-        <div class="typing-inp-hint">Type करें — Timer automatically शुरू होगा · Backspace allowed</div>
+        <textarea class="typing-inp" id="typing-inp"
+          placeholder="यहाँ type करना शुरू करें… Timer automatically शुरू होगा"
+          rows="3" spellcheck="false" autocorrect="off"
+          autocapitalize="off" autocomplete="off"></textarea>
       </div>
+
+      <!-- CANCEL / SUBMIT BUTTONS -->
+      <div class="typing-action-row">
+        <button class="btn-typing-cancel" onclick="exitTyping()">Cancel</button>
+        <button class="btn-typing-submit" id="btn-typing-submit-main" onclick="if(window.TypingModule)TypingModule.submitEarly()">Submit</button>
+      </div>
+
     </div>
 
     <!-- TYPING: RESULT -->
@@ -648,23 +691,31 @@
         <div class="ss-title">Typing Result</div>
       </div>
       <div class="typing-result-page">
-        <span class="tr-emoji" id="tr-emoji">🏆</span>
-        <div class="tr-title" id="tr-title">Excellent!</div>
+
+        <!-- Result header banner -->
+        <div class="tr-header-banner">
+          <span class="tr-emoji" id="tr-emoji">🏆</span>
+          <div class="tr-title" id="tr-title">Excellent!</div>
+          <div class="tr-verdict" id="tr-verdict-badge">
+            <span id="tr-verdict-t">Result</span>
+          </div>
+          <div style="font-size:.78rem;color:rgba(255,255,255,.55);margin-top:8px" id="tr-verdict-d"></div>
+        </div>
+
+        <!-- 4 stat boxes -->
         <div class="tr-grid">
           <div class="tr-stat tr-wpm"><b id="tr-wpm">0</b><span>Net WPM</span></div>
           <div class="tr-stat tr-acc"><b id="tr-acc">0%</b><span>Accuracy</span></div>
           <div class="tr-stat tr-err"><b id="tr-err">0</b><span>Errors</span></div>
           <div class="tr-stat tr-keys"><b id="tr-keys">0</b><span>Keystrokes</span></div>
         </div>
-        <div class="tr-verdict">
-          <div class="tr-verdict-t" id="tr-verdict-t">Result</div>
-          <div class="tr-verdict-d" id="tr-verdict-d"></div>
-        </div>
-        <div style="display:flex;gap:9px;justify-content:center;flex-wrap:wrap">
+
+        <!-- Action buttons -->
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;padding:0 16px 14px">
           <button class="btn-primary" id="btn-retry-typing">🔄 Try Again</button>
           <button class="btn-ghost" onclick="closeSubScreen('screen-typing-result');closeSubScreen('screen-typing-active')">📋 More Passages</button>
         </div>
-        <p style="font-size:.8rem;color:var(--text2);margin-top:14px" id="typing-save-msg"></p>
+        <p style="font-size:.8rem;color:var(--text2);text-align:center;padding:0 16px 20px" id="typing-save-msg"></p>
       </div>
     </div>
 
@@ -1188,5 +1239,6 @@
 <script src="js/chat.js"></script>
 <script src="js/profile.js"></script>
 <script src="js/games.js"></script>
+<script src="js/patch.js"></script>
 </body>
 </html>
