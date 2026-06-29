@@ -1,0 +1,906 @@
+/* ═══════════════════════════════════════════════════════════════
+   VidyaSagar v5 — TYPING UPGRADE + FULL SITE FIXES
+   Reference: artypingplatform.com style (blue header, dark body,
+   two-panel layout, live stats sidebar)
+   Load AFTER style_additions.css
+═══════════════════════════════════════════════════════════════ */
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   SECTION 1 — TYPING ACTIVE SCREEN
+   Matches reference image exactly
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+/* Top header bar — royal blue like reference */
+.type-header {
+  padding: 0 !important;
+  background: #1a56db !important;
+  backdrop-filter: none !important;
+  border-bottom: none !important;
+  flex-shrink: 0 !important;
+}
+
+/* Exam name bar (Army Agniveer LDC/SKT) */
+.type-header-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  background: #1a3a6b !important;
+  padding: 7px 14px !important;
+  margin-bottom: 0 !important;
+  gap: 8px !important;
+}
+
+.type-title {
+  flex: 1 !important;
+  font-size: .82rem !important;
+  font-weight: 700 !important;
+  color: #fff !important;
+  letter-spacing: .01em !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* Timer — right side, bold white */
+.type-timer {
+  font-family: 'Syne', monospace !important;
+  font-size: 1rem !important;
+  font-weight: 900 !important;
+  color: #fff !important;
+  background: rgba(0,0,0,.25) !important;
+  border-radius: 8px !important;
+  padding: 3px 10px !important;
+  letter-spacing: .04em !important;
+  flex-shrink: 0 !important;
+}
+
+/* Timer urgent — flashes red when < 60s */
+.type-timer.urgent {
+  color: #ff4d4d !important;
+  animation: timerFlash .7s ease infinite alternate !important;
+}
+@keyframes timerFlash {
+  from { background: rgba(244,63,94,.15); }
+  to   { background: rgba(244,63,94,.35); }
+}
+
+/* Title row with Typing Test Id */
+.type-test-id-bar {
+  background: #1a56db;
+  text-align: center;
+  padding: 8px 14px;
+  font-family: 'Syne', sans-serif;
+  font-size: .85rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: .02em;
+  border-bottom: 1px solid rgba(255,255,255,.12);
+}
+
+/* Live stats row — 4 boxes like reference */
+.type-live-stats {
+  display: grid !important;
+  grid-template-columns: repeat(4,1fr) !important;
+  gap: 0 !important;
+  border-top: 1px solid rgba(255,255,255,.08) !important;
+  background: #0f2d5e !important;
+}
+
+.tls {
+  flex: unset !important;
+  text-align: center !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  border-right: 1px solid rgba(255,255,255,.08) !important;
+  padding: 8px 6px !important;
+}
+.tls:last-child { border-right: none !important; }
+
+.tls-val {
+  font-family: 'Syne', monospace !important;
+  font-size: 1.1rem !important;
+  font-weight: 900 !important;
+  line-height: 1.1 !important;
+  color: #fff !important;
+}
+.tls-lbl {
+  font-size: .6rem !important;
+  color: rgba(255,255,255,.55) !important;
+  text-transform: uppercase !important;
+  letter-spacing: .05em !important;
+  margin-top: 2px !important;
+}
+
+/* Override individual color — make them all white in header */
+.tls-wpm .tls-val  { color: #60efff !important; }
+.tls-acc .tls-val  { color: #34d399 !important; }
+.tls-err .tls-val  { color: #fb7185 !important; }
+.tls-keys .tls-val { color: #fbbf24 !important; }
+
+/* Progress bar — thin blue line */
+.type-prog-bar {
+  height: 4px !important;
+  background: rgba(255,255,255,.1) !important;
+  border-radius: 0 !important;
+}
+.type-prog-fill {
+  height: 100% !important;
+  background: linear-gradient(90deg,#22d3ee,#3b82f6,#8b5cf6) !important;
+  transition: width .4s ease !important;
+  border-radius: 0 !important;
+}
+
+/* ── Passage display — white bg, dark text like reference ── */
+.passage-display {
+  padding: 18px 16px !important;
+  font-size: 1rem !important;
+  line-height: 2.0 !important;
+  font-family: 'Plus Jakarta Sans', 'Noto Sans Devanagari', sans-serif !important;
+  letter-spacing: .01em !important;
+  user-select: none !important;
+  background: #fff !important;
+  color: #374151 !important;
+  min-height: 200px !important;
+  border: none !important;
+  border-radius: 0 !important;
+  text-align: justify !important;
+}
+
+/* Character colors — matching reference */
+.pc.correct  { color: #374151 !important; background: none !important; }
+.pc.wrong    { color: #dc2626 !important; background: rgba(220,38,38,.12) !important; border-radius: 2px; }
+.pc.current  { background: rgba(255,235,59,.55) !important; border-radius: 2px; }  /* yellow highlight like reference */
+.pc.pending  { color: #9ca3af !important; }
+
+/* Light theme already matches */
+[data-theme="light"] .passage-display { background: #fff !important; color: #374151 !important; }
+[data-theme="light"] .pc.correct { color: #374151 !important; }
+[data-theme="light"] .pc.current { background: rgba(255,235,59,.55) !important; }
+
+/* ── Typing input area ── */
+.typing-inp-area {
+  padding: 12px 14px !important;
+  border-top: 2px solid #e5e7eb !important;
+  background: #f9fafb !important;
+  flex-shrink: 0 !important;
+}
+
+.typing-inp {
+  width: 100% !important;
+  background: #fff !important;
+  border: 2px solid #d1d5db !important;
+  border-radius: 10px !important;
+  padding: 12px 14px !important;
+  color: #111827 !important;
+  font-size: 1rem !important;
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  outline: none !important;
+  resize: none !important;
+  transition: border-color .2s !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,.07) !important;
+  min-height: 80px !important;
+}
+.typing-inp:focus {
+  border-color: #1a56db !important;
+  box-shadow: 0 0 0 3px rgba(26,86,219,.12) !important;
+  background: #fff !important;
+}
+.typing-inp::placeholder { color: #9ca3af !important; }
+
+.typing-inp-hint {
+  font-size: .72rem !important;
+  color: #6b7280 !important;
+  margin-top: 5px !important;
+  text-align: center !important;
+}
+
+/* Cancel / Submit buttons row */
+.typing-action-row {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding: 10px 14px !important;
+  background: #f3f4f6 !important;
+  border-top: 1px solid #e5e7eb !important;
+  gap: 10px !important;
+  flex-shrink: 0 !important;
+}
+.btn-typing-cancel {
+  background: #ef4444 !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 10px !important;
+  padding: 10px 28px !important;
+  font-size: .88rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all .2s !important;
+  letter-spacing: .02em !important;
+}
+.btn-typing-cancel:hover { background: #dc2626 !important; transform: translateY(-1px); }
+.btn-typing-submit {
+  background: #1a56db !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 10px !important;
+  padding: 10px 28px !important;
+  font-size: .88rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all .2s !important;
+  letter-spacing: .02em !important;
+  box-shadow: 0 3px 12px rgba(26,86,219,.35) !important;
+}
+.btn-typing-submit:hover { background: #1e40af !important; transform: translateY(-1px); }
+
+/* Dark theme overrides for typing input area */
+[data-theme="dark"] .typing-inp-area,
+:not([data-theme]) .typing-inp-area {
+  background: rgba(6,13,31,.95) !important;
+  border-top-color: rgba(6,182,212,.2) !important;
+}
+[data-theme="dark"] .typing-inp,
+:not([data-theme]) .typing-inp {
+  background: rgba(255,255,255,.05) !important;
+  border-color: rgba(6,182,212,.25) !important;
+  color: #e8f0ff !important;
+}
+[data-theme="dark"] .typing-inp:focus,
+:not([data-theme]) .typing-inp:focus {
+  border-color: rgba(6,182,212,.6) !important;
+  background: rgba(6,182,212,.05) !important;
+}
+[data-theme="dark"] .typing-action-row,
+:not([data-theme]) .typing-action-row {
+  background: rgba(4,8,15,.9) !important;
+  border-top-color: rgba(6,182,212,.15) !important;
+}
+[data-theme="dark"] .passage-display,
+:not([data-theme]) .passage-display {
+  background: #0f172a !important;
+  color: #cbd5e1 !important;
+}
+[data-theme="dark"] .pc.correct,
+:not([data-theme]) .pc.correct  { color: #22d3ee !important; background: none !important; }
+[data-theme="dark"] .pc.current,
+:not([data-theme]) .pc.current  { background: rgba(251,191,36,.25) !important; }
+[data-theme="dark"] .pc.pending,
+:not([data-theme]) .pc.pending  { color: #4a6080 !important; }
+
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   SECTION 2 — TYPING HOME UPGRADE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+.typing-home-header {
+  background: linear-gradient(135deg, #0d1b4b 0%, #1a3a6b 60%, #0d2244 100%) !important;
+  border: none !important;
+  border-bottom: 3px solid #1a56db !important;
+  border-radius: 0 !important;
+  padding: 24px 16px 20px !important;
+  margin-bottom: 16px !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.typing-home-header::before {
+  content: '' !important;
+  position: absolute !important;
+  inset: 0 !important;
+  background: 
+    radial-gradient(ellipse 60% 80% at 80% 50%, rgba(26,86,219,.35), transparent),
+    radial-gradient(ellipse 40% 60% at 20% 30%, rgba(6,182,212,.2), transparent);
+}
+
+.typing-home-header h2 {
+  font-family: 'Syne', sans-serif !important;
+  font-size: 1.4rem !important;
+  font-weight: 900 !important;
+  color: #fff !important;
+  -webkit-background-clip: unset !important;
+  -webkit-text-fill-color: unset !important;
+  background: none !important;
+  position: relative !important;
+  margin-bottom: 4px !important;
+}
+
+.typing-home-header p {
+  font-size: .82rem !important;
+  color: rgba(255,255,255,.6) !important;
+  position: relative !important;
+  margin-bottom: 16px !important;
+}
+
+.typing-home-stats {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 8px !important;
+  position: relative !important;
+}
+
+.ths {
+  background: rgba(255,255,255,.1) !important;
+  border: 1px solid rgba(255,255,255,.15) !important;
+  border-radius: 12px !important;
+  padding: 10px 8px !important;
+  text-align: center !important;
+  backdrop-filter: blur(10px) !important;
+}
+.ths b {
+  display: block !important;
+  font-family: 'Syne', sans-serif !important;
+  font-size: 1.2rem !important;
+  font-weight: 900 !important;
+  color: #fff !important;
+}
+.ths span {
+  font-size: .65rem !important;
+  color: rgba(255,255,255,.55) !important;
+  text-transform: uppercase !important;
+  letter-spacing: .06em !important;
+  font-weight: 600 !important;
+}
+
+/* Category tabs — pill style */
+.exam-cat-tabs { 
+  padding: 0 14px 8px !important; 
+  gap: 7px !important;
+}
+.exam-cat-btn {
+  background: rgba(26,86,219,.1) !important;
+  border: 1.5px solid rgba(26,86,219,.2) !important;
+  color: rgba(96,165,250,.9) !important;
+  border-radius: 22px !important;
+  padding: 7px 14px !important;
+  font-size: .75rem !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  transition: all .2s !important;
+  letter-spacing: .02em !important;
+}
+.exam-cat-btn.active {
+  background: #1a56db !important;
+  border-color: #1a56db !important;
+  color: #fff !important;
+  box-shadow: 0 4px 14px rgba(26,86,219,.4) !important;
+}
+.exam-cat-btn:hover:not(.active) {
+  background: rgba(26,86,219,.2) !important;
+  color: #93c5fd !important;
+}
+
+/* Exam cards */
+.exam-card-v2 {
+  background: var(--card) !important;
+  border: 1.5px solid var(--border) !important;
+  border-radius: 16px !important;
+  overflow: hidden !important;
+  transition: all .22s !important;
+}
+.exam-card-v2:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: 0 10px 30px rgba(26,86,219,.25) !important;
+  border-color: rgba(26,86,219,.5) !important;
+}
+.ecv2-start-btn {
+  background: #1a56db !important;
+  border-radius: 8px !important;
+  padding: 5px 12px !important;
+  font-size: .72rem !important;
+  font-weight: 700 !important;
+  color: #fff !important;
+  border: none !important;
+  cursor: pointer !important;
+  box-shadow: 0 3px 10px rgba(26,86,219,.4) !important;
+  transition: all .2s !important;
+}
+.ecv2-start-btn:hover { opacity: .9 !important; transform: translateY(-1px); }
+
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   SECTION 3 — TYPING RESULT UPGRADE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+.typing-result-page {
+  padding: 0 !important;
+  max-width: none !important;
+  margin: 0 !important;
+  text-align: center !important;
+}
+
+/* Result header — blue banner */
+.tr-header-banner {
+  background: linear-gradient(135deg, #0d1b4b, #1a3a6b) !important;
+  padding: 28px 20px 24px !important;
+  text-align: center !important;
+  border-bottom: 3px solid #1a56db !important;
+}
+
+.tr-emoji {
+  font-size: 3.2rem !important;
+  display: block !important;
+  margin-bottom: 10px !important;
+}
+
+.tr-title {
+  font-family: 'Syne', sans-serif !important;
+  font-size: 1.6rem !important;
+  font-weight: 900 !important;
+  color: #fff !important;
+  margin-bottom: 6px !important;
+}
+
+.tr-verdict {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 7px 20px !important;
+  border-radius: 30px !important;
+  font-size: .9rem !important;
+  font-weight: 800 !important;
+  margin-top: 8px !important;
+  letter-spacing: .04em !important;
+}
+.tr-verdict.pass {
+  background: rgba(52,211,153,.18) !important;
+  color: #34d399 !important;
+  border: 1.5px solid rgba(52,211,153,.4) !important;
+}
+.tr-verdict.fail {
+  background: rgba(244,63,94,.18) !important;
+  color: #fb7185 !important;
+  border: 1.5px solid rgba(244,63,94,.4) !important;
+}
+
+/* Stats grid — 4 boxes */
+.tr-grid {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 10px !important;
+  padding: 16px !important;
+  margin-bottom: 0 !important;
+}
+
+.tr-stat {
+  background: var(--card) !important;
+  border: 1.5px solid var(--border) !important;
+  border-radius: 14px !important;
+  padding: 16px 12px !important;
+  text-align: center !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+.tr-stat::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+}
+.tr-stat:nth-child(1)::before { background: linear-gradient(90deg, #22d3ee, #3b82f6); }
+.tr-stat:nth-child(2)::before { background: linear-gradient(90deg, #34d399, #10b981); }
+.tr-stat:nth-child(3)::before { background: linear-gradient(90deg, #fb7185, #f43f5e); }
+.tr-stat:nth-child(4)::before { background: linear-gradient(90deg, #fbbf24, #f59e0b); }
+
+.tr-stat b {
+  display: block !important;
+  font-family: 'Syne', sans-serif !important;
+  font-size: 2.2rem !important;
+  font-weight: 900 !important;
+  margin-bottom: 4px !important;
+  line-height: 1 !important;
+}
+.tr-stat:nth-child(1) b { color: #22d3ee !important; }
+.tr-stat:nth-child(2) b { color: #34d399 !important; }
+.tr-stat:nth-child(3) b { color: #fb7185 !important; }
+.tr-stat:nth-child(4) b { color: #fbbf24 !important; }
+
+.tr-stat span {
+  font-size: .72rem !important;
+  color: var(--text3) !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .05em !important;
+}
+
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   SECTION 4 — GLOBAL BUG FIXES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+/* Fix: sub-screen stacking on quiz result */
+#screen-quiz-result  { z-index: 175 !important; }
+#screen-typing-result { z-index: 175 !important; }
+#screen-quiz-active  { z-index: 170 !important; }
+#screen-typing-active { z-index: 170 !important; }
+#screen-online-game  { z-index: 180 !important; }
+
+/* Fix: back button always visible */
+.ss-back {
+  background: rgba(255,255,255,.08) !important;
+  border: 1px solid rgba(255,255,255,.14) !important;
+  color: var(--text) !important;
+  border-radius: 10px !important;
+  padding: 6px 12px !important;
+  font-size: .85rem !important;
+  cursor: pointer !important;
+  transition: .15s !important;
+  flex-shrink: 0 !important;
+}
+.ss-back:hover { background: rgba(255,255,255,.14) !important; }
+
+/* Fix: quiz exit button */
+.qexit {
+  background: rgba(244,63,94,.12) !important;
+  border: 1px solid rgba(244,63,94,.25) !important;
+  color: #fb7185 !important;
+  border-radius: 10px !important;
+  width: 32px !important; height: 32px !important;
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  cursor: pointer !important; font-size: .9rem !important;
+  transition: .15s !important;
+}
+.qexit:hover { background: rgba(244,63,94,.22) !important; }
+
+/* Fix: option buttons alignment */
+.opt-btn {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  width: 100% !important;
+  text-align: left !important;
+}
+.opt-lbl {
+  width: 28px !important; height: 28px !important;
+  border-radius: 8px !important;
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  font-size: .78rem !important; font-weight: 800 !important;
+  flex-shrink: 0 !important;
+}
+
+/* Fix: correct/wrong option visibility */
+.opt-btn.correct { background: rgba(52,211,153,.15) !important; border-color: rgba(52,211,153,.5) !important; color: #34d399 !important; }
+.opt-btn.wrong   { background: rgba(244,63,94,.12) !important; border-color: rgba(244,63,94,.4) !important; color: #fb7185 !important; }
+.opt-btn.correct .opt-lbl { background: #34d399 !important; color: #000 !important; }
+.opt-btn.wrong .opt-lbl   { background: #f43f5e !important; color: #fff !important; }
+
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   SECTION 5 — GAMES FUTURISTIC
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+/* Game cards hover glow */
+.game-card-v2:hover {
+  box-shadow: 0 0 0 2px rgba(59,130,246,.5), 0 12px 30px rgba(0,0,0,.35) !important;
+}
+
+/* TTT board glow on hover */
+.ttt-cell.hoverable:hover {
+  background: rgba(26,86,219,.15) !important;
+  border-color: #1a56db !important;
+  box-shadow: inset 0 0 12px rgba(26,86,219,.2) !important;
+}
+
+/* Chess board improvements */
+.chess-board {
+  box-shadow: 0 8px 40px rgba(0,0,0,.55), 0 0 0 3px rgba(26,86,219,.3) !important;
+}
+.chess-cell.selected {
+  background: rgba(251,191,36,.55) !important;
+  box-shadow: inset 0 0 0 3px rgba(251,191,36,.8) !important;
+}
+
+/* Number game improvement */
+.ng-num-display {
+  font-family: 'Syne', monospace !important;
+  font-size: 4rem !important;
+  font-weight: 900 !important;
+  background: linear-gradient(135deg, #22d3ee, #8b5cf6) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  display: block !important;
+  text-align: center !important;
+  margin: 16px 0 !important;
+}
+
+.ng-hint {
+  font-size: .88rem !important;
+  font-weight: 600 !important;
+  text-align: center !important;
+  padding: 10px 14px !important;
+  border-radius: 10px !important;
+  margin: 10px 0 !important;
+  transition: all .3s !important;
+}
+.ng-hint.hot  { background: rgba(239,68,68,.12) !important; color: #fb7185 !important; border: 1px solid rgba(239,68,68,.25) !important; }
+.ng-hint.warm { background: rgba(245,158,11,.12) !important; color: #fbbf24 !important; border: 1px solid rgba(245,158,11,.25) !important; }
+.ng-hint.cold { background: rgba(96,165,250,.1)  !important; color: #93c5fd !important; border: 1px solid rgba(96,165,250,.2)  !important; }
+
+/* Word scramble input */
+.ws-scrambled {
+  font-family: 'Syne', monospace !important;
+  font-size: 2.2rem !important;
+  font-weight: 900 !important;
+  letter-spacing: .2em !important;
+  background: linear-gradient(135deg, #a78bfa, #ec4899) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  text-align: center !important;
+  display: block !important;
+  margin: 14px 0 !important;
+}
+
+/* Streak badge */
+.ws-streak {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  background: rgba(245,158,11,.15) !important;
+  color: #fbbf24 !important;
+  border: 1px solid rgba(245,158,11,.3) !important;
+  border-radius: 20px !important;
+  padding: 4px 12px !important;
+  font-size: .78rem !important;
+  font-weight: 800 !important;
+}
+
+/* Win banner */
+.ng-win-banner {
+  background: linear-gradient(135deg, rgba(52,211,153,.15), rgba(6,182,212,.12)) !important;
+  border: 2px solid rgba(52,211,153,.4) !important;
+  border-radius: 16px !important;
+  padding: 20px !important;
+  text-align: center !important;
+  display: none !important;
+  margin-top: 14px !important;
+}
+.ng-win-banner.show { display: block !important; animation: popIn .4s var(--spring); }
+@keyframes popIn { from{transform:scale(.8);opacity:0} to{transform:scale(1);opacity:1} }
+
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   SECTION 6 — QUIZ FUTURISTIC
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+/* Subject cards — glowing hover */
+.subj-card {
+  position: relative !important;
+  overflow: hidden !important;
+}
+.subj-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at 50% 0%, rgba(var(--c-rgb,59,130,246),.12), transparent 70%);
+  opacity: 0;
+  transition: opacity .3s;
+}
+.subj-card:hover::after { opacity: 1 !important; }
+
+/* Q card pulse animation on new question */
+@keyframes qCardIn {
+  from { transform: translateX(12px); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+.q-card.animating { animation: qCardIn .25s ease; }
+
+/* Explanation box */
+.q-explain {
+  background: linear-gradient(135deg, rgba(245,158,11,.08), rgba(251,191,36,.05)) !important;
+  border: 1.5px solid rgba(245,158,11,.3) !important;
+  border-radius: 14px !important;
+  padding: 14px !important;
+  margin-top: 12px !important;
+}
+.explain-head {
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  font-weight: 800 !important;
+  font-size: .86rem !important;
+  color: #fbbf24 !important;
+  margin-bottom: 8px !important;
+}
+.explain-text {
+  font-size: .83rem !important;
+  color: var(--text2) !important;
+  line-height: 1.7 !important;
+}
+
+/* Result ring */
+#ring-circle { transition: stroke-dashoffset 1s ease; }
+
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   SECTION 7 — CHAT & AI POLISH
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+/* Chat bubbles — proper WhatsApp style */
+.chat-bub {
+  max-width: 78% !important;
+  word-break: break-word !important;
+  border-radius: 14px !important;
+  padding: 9px 12px 7px !important;
+  position: relative !important;
+  font-size: .88rem !important;
+  line-height: 1.55 !important;
+}
+
+.chat-row.sent .chat-bub {
+  background: rgba(16,185,129,.18) !important;
+  border: 1px solid rgba(16,185,129,.28) !important;
+  border-bottom-right-radius: 4px !important;
+}
+.chat-row.recv .chat-bub {
+  background: var(--card2) !important;
+  border: 1px solid var(--border) !important;
+  border-bottom-left-radius: 4px !important;
+}
+
+/* AI chat bubbles */
+.ai-bub {
+  max-width: 82% !important;
+  border-radius: 14px !important;
+  padding: 10px 13px !important;
+  font-size: .87rem !important;
+  line-height: 1.65 !important;
+}
+.ai-msg-wrap.user .ai-bub {
+  background: linear-gradient(135deg,rgba(59,130,246,.18),rgba(139,92,246,.14)) !important;
+  border: 1px solid rgba(59,130,246,.3) !important;
+}
+.ai-msg-wrap:not(.user) .ai-bub {
+  background: var(--card2) !important;
+  border: 1px solid var(--border2) !important;
+}
+
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   SECTION 8 — LOADING & TOAST POLISH
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+/* Loading skeleton animation */
+.vs-loading-text {
+  text-align: center !important;
+  padding: 30px !important;
+  color: var(--text3) !important;
+  font-size: .84rem !important;
+  position: relative !important;
+}
+.vs-loading-text::after {
+  content: '';
+  display: block;
+  width: 40px; height: 3px;
+  background: linear-gradient(90deg, var(--blue), var(--purple));
+  border-radius: 3px;
+  margin: 14px auto 0;
+  animation: loadBar 1.2s ease infinite;
+}
+@keyframes loadBar {
+  0%   { transform: scaleX(0); transform-origin: left; }
+  50%  { transform: scaleX(1); transform-origin: left; }
+  51%  { transform: scaleX(1); transform-origin: right; }
+  100% { transform: scaleX(0); transform-origin: right; }
+}
+
+/* Better toast */
+#toast {
+  bottom: calc(var(--bot-h) + 14px) !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  white-space: nowrap !important;
+  min-width: 200px !important;
+  max-width: calc(100vw - 28px) !important;
+  text-align: center !important;
+  backdrop-filter: blur(12px) !important;
+  font-size: .84rem !important;
+  padding: 10px 18px !important;
+  border-radius: 30px !important;
+  font-weight: 600 !important;
+  z-index: 9999 !important;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   SECTION 9 — MISC FIXES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+/* Fix: exam search in typing */
+.exam-search-wrap {
+  margin: 0 14px 14px !important;
+  background: var(--card) !important;
+  border: 1.5px solid var(--border2) !important;
+  border-radius: 14px !important;
+  transition: all .2s !important;
+}
+.exam-search-wrap:focus-within {
+  border-color: rgba(26,86,219,.5) !important;
+  box-shadow: 0 0 0 3px rgba(26,86,219,.1) !important;
+}
+
+/* Fix: profile stats alignment */
+.profile-qstats {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-around !important;
+  padding: 14px 0 !important;
+}
+.pqs {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 3px !important;
+  cursor: pointer !important;
+  padding: 8px 14px !important;
+  border-radius: 12px !important;
+  transition: background .15s !important;
+}
+.pqs:hover { background: rgba(59,130,246,.08) !important; }
+.pqs b {
+  font-family: 'Syne', sans-serif !important;
+  font-size: 1.3rem !important;
+  font-weight: 900 !important;
+}
+.pqs span {
+  font-size: .67rem !important;
+  color: var(--text3) !important;
+  text-transform: uppercase !important;
+  letter-spacing: .04em !important;
+}
+
+/* Fix: button states */
+.btn-primary:disabled,
+.btn-primary[disabled] {
+  opacity: .5 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+}
+
+/* Fix: passage card hover */
+.passage-card-v2:hover {
+  background: linear-gradient(135deg, rgba(26,86,219,.08), rgba(6,182,212,.05)) !important;
+  border-color: rgba(26,86,219,.4) !important;
+  transform: translateX(4px) !important;
+}
+
+/* Fix: No-scroll on body when modal open */
+body.modal-open { overflow: hidden !important; }
+
+/* Fix: Keyboard layout display bar */
+.typing-lang-bar {
+  background: #1a56db !important;
+  color: #fff !important;
+  font-size: .78rem !important;
+  font-weight: 700 !important;
+  padding: 6px 16px !important;
+  display: flex !important;
+  gap: 20px !important;
+  border-bottom: 1px solid rgba(255,255,255,.12) !important;
+}
+.typing-lang-bar span {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  color: rgba(255,255,255,.85) !important;
+}
+
+/* Responsive tweaks */
+@media (max-width: 400px) {
+  .tr-grid { grid-template-columns: 1fr 1fr !important; }
+  .type-live-stats { grid-template-columns: repeat(4,1fr) !important; }
+  .tls-val { font-size: .9rem !important; }
+  .tls-lbl { font-size: .52rem !important; }
+}
+
+/* Light theme compatibility */
+[data-theme="light"] .type-header { background: #1a56db !important; }
+[data-theme="light"] .type-header-row { background: #1a3a6b !important; }
+[data-theme="light"] .type-live-stats { background: #0f2d5e !important; }
+[data-theme="light"] .typing-home-header { background: linear-gradient(135deg,#0d1b4b,#1a3a6b) !important; }
+[data-theme="light"] .passage-display { background: #fff !important; color: #374151 !important; }
+[data-theme="light"] .typing-inp-area { background: #f3f4f6 !important; border-top-color: #e5e7eb !important; }
+[data-theme="light"] .typing-inp { background: #fff !important; border-color: #d1d5db !important; color: #111827 !important; }
+[data-theme="light"] .typing-action-row { background: #f3f4f6 !important; border-top-color: #e5e7eb !important; }
+[data-theme="light"] .pc.correct { color: #1d4ed8 !important; }
+[data-theme="light"] .pc.current { background: rgba(255,235,59,.6) !important; }
