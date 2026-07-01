@@ -11,7 +11,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style_futuristic.css">
 <link rel="stylesheet" href="css/style_additions.css">
-<link rel="stylesheet" href="css/style_typing_upgrade.css">
 </head>
 <body>
 
@@ -616,72 +615,84 @@
     </div>
 
     <!-- TYPING: ACTIVE -->
-    <div class="sub-screen no-bot" id="screen-typing-active" style="display:flex;flex-direction:column">
-
-      <!-- HEADER: Exam title + timer row -->
-      <div class="type-header">
-        <!-- Row 1: Typing Test title (centered, bold blue bg) -->
-        <div class="type-test-id-bar" id="type-test-id-bar">
+    <div class="sub-screen no-bot" id="screen-typing-active" style="display:flex;flex-direction:column;background:#1a1a2e">
+      <!-- TOP HEADER BAR — exam name + timer -->
+      <div style="background:#1a56db;padding:0;flex-shrink:0">
+        <!-- Title row -->
+        <div style="text-align:center;padding:7px 14px;font-family:'Syne',sans-serif;font-size:.82rem;font-weight:800;color:#fff;border-bottom:1px solid rgba(255,255,255,.12)" id="type-test-id-bar">
           Typing Test — <span id="type-exam-title-bar">Practice</span>
         </div>
-        <!-- Row 2: Exam name + time left -->
-        <div class="type-header-row">
-          <button class="ss-back" onclick="exitTyping()" title="Exit" style="flex-shrink:0;background:rgba(255,255,255,.12);border:none;color:#fff;border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:1rem">←</button>
-          <div class="type-title" id="type-exam-title">Typing Practice</div>
-          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
-            <span style="font-size:.72rem;color:rgba(255,255,255,.6);font-weight:600">Time left:-</span>
+        <!-- Exam name + timer -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 14px;background:#0f2d5e">
+          <button onclick="exitTyping()" style="background:rgba(255,255,255,.12);border:none;color:#fff;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:1rem;flex-shrink:0;display:flex;align-items:center;justify-content:center">←</button>
+          <div style="flex:1;font-size:.78rem;font-weight:700;color:#fff;text-align:center;padding:0 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="type-exam-title">Typing Practice</div>
+          <div style="display:flex;align-items:center;gap:5px;flex-shrink:0">
+            <span style="font-size:.68rem;color:rgba(255,255,255,.6);font-weight:600">Time left:-</span>
             <div class="type-timer" id="type-timer">10:00</div>
           </div>
         </div>
-        <!-- Row 3: Keyboard layout + Language bar -->
-        <div class="typing-lang-bar" id="typing-lang-bar">
+        <!-- Keyboard + Language bar -->
+        <div style="display:flex;gap:20px;padding:5px 16px;background:#1a3a6b;font-size:.73rem;font-weight:700;color:rgba(255,255,255,.8);border-top:1px solid rgba(255,255,255,.1)">
           <span>⌨️ Keyboard Layout: <b id="type-kb-layout">QWERTY</b></span>
           <span>🌐 Language: <b id="type-lang-label">English</b></span>
         </div>
-        <!-- Row 4: Live stats (4 boxes) -->
-        <div class="type-live-stats">
-          <div class="tls tls-wpm">
-            <div class="tls-val" id="tls-wpm">0</div>
-            <div class="tls-lbl">Keystrokes Count</div>
+        <!-- 4 live stats -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);background:#0a1f3d;border-top:1px solid rgba(255,255,255,.08)">
+          <div style="text-align:center;padding:7px 4px;border-right:1px solid rgba(255,255,255,.08)">
+            <div class="tls-val" id="tls-wpm" style="font-family:'Syne',monospace;font-size:1rem;font-weight:900;color:#60efff">0</div>
+            <div style="font-size:.58rem;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.04em;margin-top:1px">WPM</div>
           </div>
-          <div class="tls tls-acc">
-            <div class="tls-val" id="tls-acc">100%</div>
-            <div class="tls-lbl">Accuracy</div>
+          <div style="text-align:center;padding:7px 4px;border-right:1px solid rgba(255,255,255,.08)">
+            <div class="tls-val" id="tls-acc" style="font-family:'Syne',monospace;font-size:1rem;font-weight:900;color:#34d399">100%</div>
+            <div style="font-size:.58rem;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.04em;margin-top:1px">Accuracy</div>
           </div>
-          <div class="tls tls-err">
-            <div class="tls-val" id="tls-err">0</div>
-            <div class="tls-lbl">Errors</div>
+          <div style="text-align:center;padding:7px 4px;border-right:1px solid rgba(255,255,255,.08)">
+            <div class="tls-val" id="tls-err" style="font-family:'Syne',monospace;font-size:1rem;font-weight:900;color:#fb7185">0</div>
+            <div style="font-size:.58rem;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.04em;margin-top:1px">Errors</div>
           </div>
-          <div class="tls tls-keys">
-            <div class="tls-val" id="tls-keys">0</div>
-            <div class="tls-lbl">Keys</div>
+          <div style="text-align:center;padding:7px 4px">
+            <div class="tls-val" id="tls-keys" style="font-family:'Syne',monospace;font-size:1rem;font-weight:900;color:#fbbf24">0</div>
+            <div style="font-size:.58rem;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.04em;margin-top:1px">Keys</div>
           </div>
         </div>
-        <!-- Row 5: Progress bar -->
-        <div class="type-prog-bar">
-          <div class="type-prog-fill" id="type-prog-fill" style="width:0%"></div>
+        <!-- Progress bar -->
+        <div style="height:3px;background:rgba(255,255,255,.08)">
+          <div id="type-prog-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#22d3ee,#3b82f6);transition:width .4s ease"></div>
         </div>
       </div>
 
-      <!-- PASSAGE DISPLAY -->
-      <div style="flex:1;overflow-y:auto;background:#fff" id="passage-scroll-area">
-        <div class="passage-display" id="passage-display"></div>
-      </div>
+      <!-- MAIN CONTENT AREA — scrollable, centered box layout -->
+      <div style="flex:1;overflow-y:auto;padding:16px 14px;display:flex;flex-direction:column;gap:12px">
 
-      <!-- INPUT AREA -->
-      <div class="typing-inp-area">
-        <textarea class="typing-inp" id="typing-inp"
-          placeholder="यहाँ type करना शुरू करें… Timer automatically शुरू होगा"
-          rows="3" spellcheck="false" autocorrect="off"
-          autocapitalize="off" autocomplete="off"></textarea>
-      </div>
+        <!-- PASSAGE BOX — white box like reference image -->
+        <div style="background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.4)">
+          <div class="passage-display" id="passage-display"
+            style="padding:16px;font-size:.95rem;line-height:2;font-family:'Plus Jakarta Sans','Noto Sans Devanagari',sans-serif;color:#374151;min-height:160px;max-height:220px;overflow-y:auto;text-align:justify;user-select:none">
+          </div>
+        </div>
 
-      <!-- CANCEL / SUBMIT BUTTONS -->
-      <div class="typing-action-row">
-        <button class="btn-typing-cancel" onclick="exitTyping()">Cancel</button>
-        <button class="btn-typing-submit" id="btn-typing-submit-main" onclick="if(window.TypingModule)TypingModule.submitEarly()">Submit</button>
-      </div>
+        <!-- INPUT BOX — below passage, white rounded box -->
+        <div style="background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.4)">
+          <textarea id="typing-inp"
+            placeholder="यहाँ type करना शुरू करें… (Timer auto-start होगा)"
+            rows="4"
+            spellcheck="false" autocorrect="off" autocapitalize="off" autocomplete="off"
+            style="width:100%;padding:14px;background:#fff;border:none;outline:none;resize:none;font-size:.95rem;font-family:'Plus Jakarta Sans',sans-serif;color:#111827;line-height:1.7;box-sizing:border-box;display:block"></textarea>
+        </div>
 
+        <!-- CANCEL / SUBMIT row -->
+        <div style="display:flex;justify-content:space-between;gap:10px">
+          <button onclick="exitTyping()"
+            style="flex:1;background:#ef4444;color:#fff;border:none;border-radius:10px;padding:11px 0;font-size:.88rem;font-weight:700;cursor:pointer;letter-spacing:.02em">
+            Cancel
+          </button>
+          <button id="btn-typing-submit-main"
+            style="flex:1;background:#1a56db;color:#fff;border:none;border-radius:10px;padding:11px 0;font-size:.88rem;font-weight:700;cursor:pointer;letter-spacing:.02em;box-shadow:0 3px 12px rgba(26,86,219,.4)">
+            Submit
+          </button>
+        </div>
+
+      </div>
     </div>
 
     <!-- TYPING: RESULT -->
@@ -691,31 +702,23 @@
         <div class="ss-title">Typing Result</div>
       </div>
       <div class="typing-result-page">
-
-        <!-- Result header banner -->
-        <div class="tr-header-banner">
-          <span class="tr-emoji" id="tr-emoji">🏆</span>
-          <div class="tr-title" id="tr-title">Excellent!</div>
-          <div class="tr-verdict" id="tr-verdict-badge">
-            <span id="tr-verdict-t">Result</span>
-          </div>
-          <div style="font-size:.78rem;color:rgba(255,255,255,.55);margin-top:8px" id="tr-verdict-d"></div>
-        </div>
-
-        <!-- 4 stat boxes -->
+        <span class="tr-emoji" id="tr-emoji">🏆</span>
+        <div class="tr-title" id="tr-title">Excellent!</div>
         <div class="tr-grid">
           <div class="tr-stat tr-wpm"><b id="tr-wpm">0</b><span>Net WPM</span></div>
           <div class="tr-stat tr-acc"><b id="tr-acc">0%</b><span>Accuracy</span></div>
           <div class="tr-stat tr-err"><b id="tr-err">0</b><span>Errors</span></div>
           <div class="tr-stat tr-keys"><b id="tr-keys">0</b><span>Keystrokes</span></div>
         </div>
-
-        <!-- Action buttons -->
-        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;padding:0 16px 14px">
+        <div class="tr-verdict">
+          <div class="tr-verdict-t" id="tr-verdict-t">Result</div>
+          <div class="tr-verdict-d" id="tr-verdict-d"></div>
+        </div>
+        <div style="display:flex;gap:9px;justify-content:center;flex-wrap:wrap">
           <button class="btn-primary" id="btn-retry-typing">🔄 Try Again</button>
           <button class="btn-ghost" onclick="closeSubScreen('screen-typing-result');closeSubScreen('screen-typing-active')">📋 More Passages</button>
         </div>
-        <p style="font-size:.8rem;color:var(--text2);text-align:center;padding:0 16px 20px" id="typing-save-msg"></p>
+        <p style="font-size:.8rem;color:var(--text2);margin-top:14px" id="typing-save-msg"></p>
       </div>
     </div>
 
@@ -1050,25 +1053,56 @@
 
 
     <!-- ════ ONLINE GAME ROOM ════ -->
-    <div class="sub-screen no-bot" id="screen-online-game">
-      <div class="ss-header">
+    <div class="sub-screen no-bot" id="screen-online-game" style="display:flex;flex-direction:column">
+      <!-- Header -->
+      <div class="ss-header" style="background:linear-gradient(135deg,#0d1b4b,#1a3a6b);border-bottom:2px solid #1a56db;flex-shrink:0">
         <button class="ss-back" onclick="OnlineGames.leaveRoom()">← Leave</button>
-        <div class="ss-title" id="og-game-title">Online Game</div>
-        <button class="og-share-btn" id="btn-og-share-room" onclick="OnlineGames.shareRoom()">📋 Share</button>
+        <div class="ss-title" id="og-game-title" style="color:#fff">Online Game</div>
+        <button style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:8px;padding:5px 10px;font-size:.75rem;font-weight:700;cursor:pointer" id="btn-og-share-room" onclick="OnlineGames.shareRoom()">📋 Share</button>
       </div>
-      <div class="og-room-meta">
-        <div class="og-room-id-row">Room: <strong id="og-room-id">---</strong></div>
-        <div class="og-my-sym" id="og-my-symbol">You: —</div>
+
+      <!-- Room info bar -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:#0a1528;border-bottom:1px solid rgba(255,255,255,.08);flex-shrink:0">
+        <div style="font-size:.78rem;color:rgba(255,255,255,.6)">Room: <strong id="og-room-id" style="color:#60efff;font-family:'Syne',monospace;letter-spacing:.1em">---</strong></div>
+        <div style="font-size:.78rem;color:rgba(255,255,255,.7);font-weight:600" id="og-my-symbol">You: —</div>
       </div>
-      <div class="og-waiting" id="og-waiting">
-        <div class="og-wait-icon">⏳</div>
-        <div class="og-wait-title">Opponent का इंतज़ार…</div>
-        <div class="og-wait-sub">Room ID share करें:</div>
-        <div class="og-room-code" id="og-room-code-display"></div>
-        <button class="btn-ghost" onclick="OnlineGames.copyRoomId()" style="margin-top:12px">📋 Copy ID</button>
+
+      <!-- Turn bar -->
+      <div id="og-turn-bar" style="text-align:center;padding:7px 14px;font-size:.82rem;font-weight:700;background:#0f2040;color:rgba(255,255,255,.6);border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0">
+        ⏳ Game शुरू होने का इंतज़ार…
       </div>
-      <div class="og-board-wrap hidden" id="og-board-wrap">
-        <!-- Board rendered by JS -->
+
+      <!-- Scrollable game area -->
+      <div style="flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:center;padding:16px 14px;gap:14px">
+
+        <!-- Waiting for opponent -->
+        <div class="og-waiting" id="og-waiting" style="width:100%;max-width:360px">
+          <div style="background:rgba(26,86,219,.1);border:2px dashed rgba(26,86,219,.3);border-radius:16px;padding:28px 20px;text-align:center">
+            <div style="font-size:2.5rem;margin-bottom:12px">⏳</div>
+            <div style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;color:#fff;margin-bottom:6px">Opponent का इंतज़ार…</div>
+            <div style="font-size:.8rem;color:rgba(255,255,255,.55);margin-bottom:16px">Room ID share करें:</div>
+            <div id="og-room-code-display" style="font-family:'Syne',monospace;font-size:1.8rem;font-weight:900;color:#60efff;letter-spacing:.18em;background:rgba(96,239,255,.08);border:1.5px solid rgba(96,239,255,.2);border-radius:12px;padding:10px 20px;margin-bottom:14px"></div>
+            <button onclick="OnlineGames.copyRoomId()" style="background:#1a56db;color:#fff;border:none;border-radius:10px;padding:9px 22px;font-size:.82rem;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(26,86,219,.4)">📋 Copy Room ID</button>
+          </div>
+        </div>
+
+        <!-- Board area -->
+        <div class="hidden" id="og-board-wrap" style="width:100%;max-width:400px;display:flex;flex-direction:column;align-items:center;gap:10px">
+          <!-- Board rendered by JS -->
+        </div>
+
+        <!-- Result overlay (shown when game ends) -->
+        <div class="hidden" id="og-result-overlay" style="width:100%;max-width:360px;border-radius:18px;overflow:hidden;text-align:center">
+          <div style="background:linear-gradient(135deg,#0d1b4b,#1a3a6b);padding:28px 20px;border:2px solid #1a56db">
+            <div style="font-size:2.8rem;margin-bottom:8px" id="og-result-emoji">🏆</div>
+            <div style="font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:900;color:#fff;margin-bottom:4px" id="og-result-title">Game Over!</div>
+            <div style="font-size:.85rem;color:rgba(255,255,255,.6);margin-bottom:18px" id="og-result-sub">—</div>
+            <div style="display:flex;gap:10px;justify-content:center">
+              <button onclick="OnlineGames.leaveRoom()" style="background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:9px 18px;font-size:.82rem;font-weight:700;cursor:pointer">← Back</button>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -1239,6 +1273,5 @@
 <script src="js/chat.js"></script>
 <script src="js/profile.js"></script>
 <script src="js/games.js"></script>
-<script src="js/patch.js"></script>
 </body>
 </html>
