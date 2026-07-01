@@ -386,23 +386,28 @@ function switchGameTab(panel, btn) {
   if (panel === 'ranks') loadInlineLeaderboard();
 }
 
-function loadInlineLeaderboard() {
+async function loadInlineLeaderboard() {
   const list = document.getElementById('inline-leaderboard-list');
   if (!list) return;
-  const r = JSON.parse(localStorage.getItem('og_rankings') || '{}');
-  const sorted = Object.values(r).sort((a, b) => b.points - a.points);
-  const medals = ['🥇','🥈','🥉'];
-  if (!sorted.length) {
+  list.innerHTML = '<div class="vs-loading-text">Loading…</div>';
+  try {
+    const d = await apiFetch('/api/game/leaderboard/top');
+    const lb = d.leaderboard || [];
+    const medals = ['🥇','🥈','🥉'];
+    if (!lb.length) {
+      list.innerHTML = '<div class="vs-empty" style="padding:30px 0"><span class="ve-icon">🏆</span>कोई ranking नहीं।<br>Online games खेलें!</div>';
+      return;
+    }
+    list.innerHTML = lb.map((p, i) => `
+      <div class="lb-row ${i < 3 ? 'top3' : ''}">
+        <div class="lb-rank">${medals[i] || '#'+(i+1)}</div>
+        <div class="lb-av">${p.avatar || '🎓'}</div>
+        <div class="lb-info"><div class="lb-name">${_escH(p.name)}</div><div class="lb-sub">${p.wins}W · ${p.losses}L · ${p.draws}D</div></div>
+        <div class="lb-pts"><span>${p.points}</span><small>pts</small></div>
+      </div>`).join('');
+  } catch(e) {
     list.innerHTML = '<div class="vs-empty" style="padding:30px 0"><span class="ve-icon">🏆</span>कोई ranking नहीं।<br>Online games खेलें!</div>';
-    return;
   }
-  list.innerHTML = sorted.map((p, i) => `
-    <div class="lb-row ${i < 3 ? 'top3' : ''}">
-      <div class="lb-rank">${medals[i] || '#'+(i+1)}</div>
-      <div class="lb-av">${p.avatar || '🎓'}</div>
-      <div class="lb-info"><div class="lb-name">${p.name}</div><div class="lb-sub">${p.wins}W · ${p.losses}L · ${p.draws}D</div></div>
-      <div class="lb-pts"><span>${p.points}</span><small>pts</small></div>
-    </div>`).join('');
 }
 
 /* ── Search History ── */
@@ -583,6 +588,21 @@ async function init() {
   ChatModule.init();
   ProfileModule.init();
   GamesModule.init();
+
+  // Fix: bind typing submit button
+  document.getElementById('btn-typing-submit-main')?.addEventListener('click', () => {
+    if (window.TypingModule && typeof window.TypingModule.submitEarly === 'function') {
+      window.TypingModule.submitEarly();
+    }
+  });
+
+  // Fix: typing inp auto-detect language
+  document.getElementById('typing-inp')?.addEventListener('input', function() {
+    const langLabel = document.getElementById('type-lang-label');
+    if (!langLabel) return;
+    const hasHindi = /[\u0900-\u097F]/.test(this.value);
+    langLabel.textContent = hasHindi ? 'Hindi' : 'English';
+  });
 
   loadStats();
   startGuestPing();
