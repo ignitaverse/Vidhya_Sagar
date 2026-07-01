@@ -368,6 +368,7 @@ app.delete('/api/feedback/:id', async (req, res) => {
 app.use('/api/auth',    require('./routes/auth'));
 app.use('/api/history', require('./routes/history'));
 app.use('/api/typing',  require('./routes/typing'));
+app.use('/api/game',    require('./routes/game'));
 
 // ══════════════════════════════════════════
 // MONGODB
