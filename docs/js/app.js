@@ -327,13 +327,16 @@ function animateNum(el, target) {
 async function loadStats() {
   try {
     const d = await apiFetch('/api/stats');
-    animateNum(document.getElementById('stat-users'), d.totalUsers || 0);
+    animateNum(document.getElementById('stat-users'),   d.totalUsers   || 0);
     animateNum(document.getElementById('stat-quizzes'), d.totalQuizzes || 0);
-    animateNum(document.getElementById('stat-live'), (d.liveGuests || 0) + 1);
-    animateNum(document.getElementById('stat-users2'), d.totalUsers || 0);
-    animateNum(document.getElementById('stat-live2'), (d.liveGuests || 0) + 1);
-    animateNum(document.getElementById('stat-q2'), d.totalQuizzes || 0);
-  } catch (e) { }
+    animateNum(document.getElementById('stat-live'),   (d.liveGuests  || 0) + 1);
+    animateNum(document.getElementById('stat-users2'),  d.totalUsers   || 0);
+    animateNum(document.getElementById('stat-live2'),  (d.liveGuests  || 0) + 1);
+    animateNum(document.getElementById('stat-q2'),      d.totalQuizzes || 0);
+  } catch (e) {
+    // Silently fail — stats are non-critical; set visible defaults
+    ['stat-users','stat-users2'].forEach(id => { const el = document.getElementById(id); if(el && el.textContent==='0') el.textContent = '—'; });
+  }
 }
 function startGuestPing() {
   if (token) return;
@@ -589,19 +592,11 @@ async function init() {
   ProfileModule.init();
   GamesModule.init();
 
-  // Fix: bind typing submit button
+  // FIX: bind typing submit button
   document.getElementById('btn-typing-submit-main')?.addEventListener('click', () => {
-    if (window.TypingModule && typeof window.TypingModule.submitEarly === 'function') {
-      window.TypingModule.submitEarly();
+    if (window.TypingModule && typeof TypingModule.submitEarly === 'function') {
+      TypingModule.submitEarly();
     }
-  });
-
-  // Fix: typing inp auto-detect language
-  document.getElementById('typing-inp')?.addEventListener('input', function() {
-    const langLabel = document.getElementById('type-lang-label');
-    if (!langLabel) return;
-    const hasHindi = /[\u0900-\u097F]/.test(this.value);
-    langLabel.textContent = hasHindi ? 'Hindi' : 'English';
   });
 
   loadStats();
