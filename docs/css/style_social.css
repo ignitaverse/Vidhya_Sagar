@@ -1,0 +1,208 @@
+/* ═══════════════════════════════════════════════════════════════
+   VidyaSagar v5 — style_social.css
+   New styles for: typing test zoom layout, Instagram-style profiles,
+   friends, direct messages, quiz language toggle.
+   Load LAST (after style_futuristic, style_additions, style_typing_upgrade)
+═══════════════════════════════════════════════════════════════ */
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   TYPING TEST — ZOOM / SPLIT-SCREEN LAYOUT
+   Passage takes the top half (bigger font = "zoomed"), live stats +
+   input take the bottom half.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.type-passage-zone {
+  flex: 1 1 50%;
+  min-height: 0;
+  display: flex;
+  background: #1a1a2e;
+  padding: 10px 14px 6px;
+}
+.type-passage-zone .passage-display {
+  flex: 1;
+  background: #fff !important;
+  border-radius: 14px !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,.4);
+  padding: 20px 18px !important;
+  font-size: 1.22rem !important;
+  line-height: 2.05 !important;
+  overflow-y: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+}
+
+.type-stats-zone {
+  flex: 1 1 50%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #12121f;
+  padding: 10px 14px 14px;
+  gap: 10px;
+  border-top: 2px solid rgba(26,86,219,.3);
+}
+
+.type-live-stats-big {
+  display: grid;
+  grid-template-columns: repeat(4,1fr);
+  gap: 8px;
+  flex-shrink: 0;
+}
+.tstat-big {
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 12px;
+  padding: 10px 4px;
+  text-align: center;
+}
+.tstat-big .tls-val { font-family:'Syne',monospace !important; font-size: 1.35rem !important; font-weight: 900 !important; line-height: 1.1 !important; }
+.tstat-lbl { font-size: .62rem; color: rgba(255,255,255,.55); text-transform: uppercase; letter-spacing: .05em; margin-top: 3px; }
+.tstat-wpm  .tls-val { color: #60efff !important; }
+.tstat-acc  .tls-val { color: #34d399 !important; }
+.tstat-err  .tls-val { color: #fb7185 !important; }
+.tstat-keys .tls-val { color: #fbbf24 !important; }
+
+.type-input-wrap {
+  flex: 1;
+  min-height: 60px;
+  display: flex;
+}
+.type-input-wrap textarea#typing-inp {
+  flex: 1;
+  height: 100%;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   PROFILE HEADER — Instagram-style additions
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.ph-username { font-size: .85rem; color: var(--blue2); font-weight: 600; margin-top: 1px; }
+.ph-actions-row { display: flex; gap: 8px; justify-content: center; margin-top: 14px; }
+.ph-act-btn {
+  border: none; border-radius: 10px; padding: 9px 18px; font-size: .82rem; font-weight: 700;
+  cursor: pointer; transition: transform .15s, opacity .15s; font-family: inherit;
+}
+.ph-act-btn:active { transform: scale(.96); }
+.ph-act-primary { background: linear-gradient(135deg,var(--blue),var(--purple)); color: #fff; flex: 1; max-width: 220px; }
+.ph-act-icon { background: rgba(255,255,255,.08); color: var(--text); width: 42px; flex-shrink: 0; padding: 9px 0; }
+
+.profile-autodelete-note {
+  font-size: .72rem; color: var(--text3); text-align: center; background: rgba(255,255,255,.04);
+  border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; margin: 12px 14px 0;
+  line-height: 1.5;
+}
+.profile-autodelete-note:empty { display: none; }
+
+/* Online presence dot */
+.online-dot {
+  position: absolute; width: 13px; height: 13px; border-radius: 50%;
+  background: #34d399; border: 2px solid var(--bg, #04080f);
+  bottom: 2px; right: 2px;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   FRIENDS GRID + REQUESTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.friend-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(78px,1fr)); gap: 10px;
+}
+.friend-tile {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer;
+  padding: 8px 4px; border-radius: 12px; transition: background .15s;
+}
+.friend-tile:active { background: rgba(255,255,255,.06); }
+.friend-tile-avatar {
+  width: 52px; height: 52px; border-radius: 50%; overflow: hidden;
+  background: linear-gradient(135deg,var(--blue),var(--purple));
+  display: flex; align-items: center; justify-content: center; font-size: 1.5rem; position: relative;
+}
+.friend-tile-name { font-size: .68rem; color: var(--text2); text-align: center; max-width: 74px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+#profile-friend-requests {
+  margin: 12px 14px 0; background: rgba(139,92,246,.08); border: 1px solid rgba(139,92,246,.25);
+  border-radius: 12px; padding: 10px 12px;
+}
+.fr-heading { font-size: .74rem; font-weight: 700; color: var(--purple2, #a78bfa); margin-bottom: 8px; }
+.fr-row { display: flex; align-items: center; gap: 9px; padding: 6px 0; }
+.fr-name { flex: 1; font-size: .82rem; font-weight: 600; cursor: pointer; }
+.fr-row button { border: none; border-radius: 8px; width: 30px; height: 30px; font-size: .85rem; cursor: pointer; flex-shrink: 0; }
+.fr-accept { background: rgba(52,211,153,.18); color: #34d399; }
+.fr-decline { background: rgba(251,113,133,.15); color: #fb7185; }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   OTHER USER'S PROFILE (screen-user-profile)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.uprofile-header { display: flex; align-items: center; gap: 16px; padding: 20px 16px 4px; }
+.uprofile-avatar {
+  width: 84px; height: 84px; border-radius: 50%; overflow: hidden; flex-shrink: 0; position: relative;
+  background: linear-gradient(135deg,var(--blue),var(--purple)); display: flex; align-items: center; justify-content: center; font-size: 2.3rem;
+}
+.uprofile-id { flex: 1; min-width: 0; }
+.uprofile-name { font-size: 1.05rem; font-weight: 800; font-family: var(--ff-head); }
+.uprofile-username { font-size: .82rem; color: var(--blue2); font-weight: 600; }
+.uprofile-meta { font-size: .74rem; color: var(--text3); margin-top: 3px; }
+.uprofile-bio { font-size: .82rem; color: var(--text2); padding: 10px 16px 0; line-height: 1.5; }
+.uprofile-actions { display: flex; gap: 8px; padding: 14px 16px 4px; }
+
+.uact-btn {
+  flex: 1; border: none; border-radius: 10px; padding: 10px 14px; font-size: .82rem; font-weight: 700;
+  cursor: pointer; background: rgba(255,255,255,.07); color: var(--text); transition: transform .15s;
+}
+.uact-btn:active { transform: scale(.96); }
+.uact-btn:disabled { cursor: default; }
+.uact-primary { background: linear-gradient(135deg,var(--blue),var(--purple)); color: #fff; }
+.uact-muted { background: rgba(255,255,255,.05); color: var(--text3); }
+.uact-friends { background: rgba(52,211,153,.15); color: #34d399; }
+.uact-live { background: rgba(244,63,94,.15); color: #fb7185; border: 1px solid rgba(244,63,94,.35); animation: liveGlow 1.6s ease infinite; margin: 0 16px; flex-basis: 100%; }
+@keyframes liveGlow { 0%,100% { box-shadow: 0 0 0 rgba(244,63,94,0); } 50% { box-shadow: 0 0 14px rgba(244,63,94,.35); } }
+#uprofile-watchlive { padding: 0 0 4px; }
+#uprofile-watchlive:empty { display: none; }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   DIRECT MESSAGES — inbox + thread
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.dm-inbox-row {
+  display: flex; align-items: center; gap: 12px; padding: 12px 16px; cursor: pointer;
+  border-bottom: 1px solid var(--border); transition: background .15s;
+}
+.dm-inbox-row:active { background: rgba(255,255,255,.05); }
+.dm-inbox-avatar {
+  width: 46px; height: 46px; border-radius: 50%; overflow: hidden; flex-shrink: 0; position: relative;
+  background: linear-gradient(135deg,var(--blue),var(--purple)); display: flex; align-items: center; justify-content: center; font-size: 1.3rem;
+}
+.dm-inbox-mid { flex: 1; min-width: 0; }
+.dm-inbox-name { font-size: .88rem; font-weight: 700; }
+.dm-inbox-preview { font-size: .76rem; color: var(--text3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px; }
+.dm-unread-badge {
+  background: var(--rose,#f43f5e); color: #fff; font-size: .68rem; font-weight: 800; border-radius: 999px;
+  min-width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; padding: 0 5px; flex-shrink: 0;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   QUIZ LANGUAGE TOGGLE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.qlang-btn {
+  background: rgba(255,255,255,.06); border: 1.5px solid var(--border); color: var(--text2);
+  border-radius: 999px; padding: 6px 16px; font-size: .78rem; font-weight: 700; cursor: pointer; transition: all .2s;
+}
+.qlang-btn.active { background: linear-gradient(135deg,var(--blue),var(--purple)); border-color: transparent; color: #fff; }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   GAME RESULT OVERLAY — small polish for the new button stack
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+#og-result-overlay { transition: opacity .25s ease, transform .25s ease; opacity: 0; transform: scale(.95); }
+#og-result-overlay.show { opacity: 1; transform: scale(1); }
+#og-rematch-invite { animation: slideUp .25s ease; }
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   CHAT / DM INPUT — defensive resilience
+   Belt-and-suspenders so the message box can never end up invisible,
+   zero-height, or uneditable regardless of what else is on screen.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.chat-ta, .ai-inp, #dm-inp {
+  caret-color: var(--blue2, #60a5fa) !important;
+  min-height: 40px !important;
+  pointer-events: auto !important;
+  -webkit-user-select: text !important;
+  user-select: text !important;
+}
+.chat-inp-bar, .ai-inp-bar { pointer-events: auto !important; }
