@@ -33,7 +33,7 @@ app.use(cors({
   ],
   credentials: true
 }));
-app.use(express.json({ limit: '2mb' }));
+app.use(express.json({ limit: '6mb' }));
 
 // ─── RATE LIMITING (simple in-memory) ───
 const rateLimitMap = new Map();
@@ -78,13 +78,17 @@ app.get('/quiz/states', async (req, res) => {
     })).rows[0]?.cnt ?? 0);
     if (!total) return res.json({ success: true, data: [], remaining: 0, exhausted: true });
     const result = await turso.execute({
-      sql: `SELECT rowid,question,options,answer,description FROM "states_quiz" ${w} ORDER BY RANDOM() LIMIT ${batchSize}`,
+      sql: `SELECT rowid, * FROM "states_quiz" ${w} ORDER BY RANDOM() LIMIT ${batchSize}`,
       args
     });
     const questions = result.rows.map(r => ({
       id: r.rowid, q: r.question,
       opts: typeof r.options === 'string' ? JSON.parse(r.options) : r.options,
-      ans: Number(r.answer), description: r.description || ''
+      ans: Number(r.answer), description: r.description || '',
+      // Optional bilingual columns — only present if the table has them. When absent these
+      // are simply undefined and the frontend falls back to the single-language fields above.
+      q_en: r.question_en || undefined,
+      opts_en: r.options_en ? (typeof r.options_en === 'string' ? JSON.parse(r.options_en) : r.options_en) : undefined,
     }));
     res.json({ success: true, data: questions, remaining: total - questions.length });
   } catch(e) { res.status(500).json({ success: false, message: e.message }); }
@@ -132,13 +136,15 @@ app.get('/quiz/:subject', async (req, res) => {
     })).rows[0]?.cnt ?? 0);
     if (!total) return res.json({ success: true, data: [], remaining: 0, exhausted: true });
     const result = await turso.execute({
-      sql: `SELECT rowid,question,options,answer,description FROM "${table}"${w} ORDER BY RANDOM() LIMIT ${batchSize}`,
+      sql: `SELECT rowid, * FROM "${table}"${w} ORDER BY RANDOM() LIMIT ${batchSize}`,
       args
     });
     const questions = result.rows.map(r => ({
       id: r.rowid, q: r.question,
       opts: typeof r.options === 'string' ? JSON.parse(r.options) : r.options,
-      ans: Number(r.answer), description: r.description || ''
+      ans: Number(r.answer), description: r.description || '',
+      q_en: r.question_en || undefined,
+      opts_en: r.options_en ? (typeof r.options_en === 'string' ? JSON.parse(r.options_en) : r.options_en) : undefined,
     }));
     res.json({ success: true, data: questions, remaining: total - questions.length });
   } catch(e) { res.status(500).json({ success: false, message: e.message }); }
@@ -158,7 +164,7 @@ app.get('/api/users/search', async (req, res) => {
       isPublic: true,
       isDeactivated: false
     })
-    .select('name avatar bio examPrep joinedAt')
+    .select('name username avatar bio examPrep joinedAt')
     .limit(10)
     .lean();
     res.json({
@@ -166,6 +172,7 @@ app.get('/api/users/search', async (req, res) => {
       users: users.map(u => ({
         id: u._id,
         name: u.name,
+        username: u.username || '',
         avatar: u.avatar || '🎓',
         bio: u.bio || '',
         examPrep: u.examPrep || '',
@@ -369,6 +376,8 @@ app.use('/api/auth',    require('./routes/auth'));
 app.use('/api/history', require('./routes/history'));
 app.use('/api/typing',  require('./routes/typing'));
 app.use('/api/game',    require('./routes/game'));
+app.use('/api/users',   require('./routes/users'));
+app.use('/api/messages',require('./routes/messages'));
 
 // ══════════════════════════════════════════
 // MONGODB
@@ -380,7 +389,10 @@ mongoose.connect(process.env.MONGODB_URI, {
 .then(() => {
   console.log('✅ MongoDB connected');
 
-  // Auto-delete inactive users (10 days — matches client-side auto-logout)
+  // Auto-delete inactive users (1 year of inactivity)
+  // NOTE: this used to be 10 days, which meant a student who simply took a couple of
+  // weeks off (exam break, holidays, etc.) would have their entire account and history
+  // permanently deleted. Changed to match the 1-year policy shown in the profile screen.
   async function cleanInactiveUsers() {
     try {
       const User = require('./models/User');
@@ -389,7 +401,7 @@ mongoose.connect(process.env.MONGODB_URI, {
       const CM   = require('./models/ChatMessage');
       const FB   = require('./models/Feedback');
       const cutoff = new Date();
-      cutoff.setDate(cutoff.getDate() - 10); // 10 days
+      cutoff.setFullYear(cutoff.getFullYear() - 1); // 1 year — handles leap years correctly
       const inactive = await User.find({ lastActive: { $lt: cutoff } });
       for (const u of inactive) {
         await Promise.all([
@@ -400,7 +412,7 @@ mongoose.connect(process.env.MONGODB_URI, {
           User.findByIdAndDelete(u._id)
         ]);
       }
-      if (inactive.length) console.log(`[AutoClean] Removed ${inactive.length} inactive users (10+ days)`);
+      if (inactive.length) console.log(`[AutoClean] Removed ${inactive.length} inactive users (1+ year)`);
     } catch(e) { console.error('[AutoClean]', e.message); }
   }
 
@@ -413,14 +425,16 @@ mongoose.connect(process.env.MONGODB_URI, {
 // HEALTH + 404
 // ══════════════════════════════════════════
 app.get('/', (req, res) => res.json({
-  status: '✅ VidyaSagar v4',
+  status: '✅ VidyaSagar v5',
   mongodb: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected',
   routes: {
     quiz: '/quiz/:subject', states: '/quiz/states',
     userSearch: '/api/users/search?q=name',
+    users: '/api/users/:id', friends: '/api/users/:id/friends',
+    messages: '/api/messages/conversations',
     ai: '/api/ai/chat', chat: '/api/chat',
     notif: '/api/notifications', auth: '/api/auth',
-    history: '/api/history', typing: '/api/typing'
+    history: '/api/history', typing: '/api/typing', game: '/api/game'
   }
 }));
 
