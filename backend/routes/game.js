@@ -107,6 +107,22 @@ function isValidChessMove(board, fr, fc, tr, tc, color) {
   }
 }
 
+/* ── Active-game presence (for "Watch Live" from a friend's profile) ──
+   Keyed by Mongo user id so it's reliable even if two players share a display name. */
+const activeKey = userId => `game:active:${userId}`;
+async function setActivePointers(hostId, guestId, roomId) {
+  const jobs = [];
+  if (hostId)  jobs.push(redis.set(activeKey(hostId),  roomId, { ex: ROOM_TTL }));
+  if (guestId) jobs.push(redis.set(activeKey(guestId), roomId, { ex: ROOM_TTL }));
+  await Promise.all(jobs);
+}
+async function clearActivePointers(hostId, guestId) {
+  const jobs = [];
+  if (hostId)  jobs.push(redis.del(activeKey(hostId)));
+  if (guestId) jobs.push(redis.del(activeKey(guestId)));
+  await Promise.all(jobs);
+}
+
 /* ══════════════════════════════════════
    ROUTES
 ══════════════════════════════════════ */
@@ -124,8 +140,10 @@ router.post('/create', protect, async (req, res) => {
       id:          roomId,
       game:        gameType,
       host:        req.user.name,
+      hostId:      req.user._id,
       hostAvatar:  req.user.avatar || '🎓',
       guest:       null,
+      guestId:     null,
       guestAvatar: null,
       status:      'waiting',   // waiting | playing | finished
       board:       gameType === 'ttt' ? Array(9).fill('') : initChessBoard(),
@@ -164,11 +182,13 @@ router.post('/join', protect, async (req, res) => {
       return res.status(400).json({ success: false, message: 'खुद से नहीं खेल सकते!' });
 
     room.guest       = req.user.name;
+    room.guestId     = req.user._id;
     room.guestAvatar = req.user.avatar || '🎓';
     room.status      = 'playing';
 
     /* Save updated room, reset TTL */
     await redis.set(roomKey(roomId), JSON.stringify(room), { ex: ROOM_TTL });
+    await setActivePointers(room.hostId, room.guestId, room.id);
 
     res.json({ success: true, room });
   } catch (e) {
@@ -177,7 +197,14 @@ router.post('/join', protect, async (req, res) => {
 });
 
 /* ── GET ROOM STATE (Polling) ── */
+/* NOTE: Static routes (/history/me, /leaderboard/top, /matchmake/check/:gt)
+   must be defined BEFORE this dynamic route */
 router.get('/:roomId', protect, async (req, res) => {
+  // Guard: skip known static sub-paths that shouldn't hit here
+  if (['history', 'leaderboard', 'matchmake'].includes(req.params.roomId)) {
+    return res.status(404).json({ success: false, message: 'Route not found' });
+  }
+
   try {
     const raw = await redis.get(roomKey(req.params.roomId.toUpperCase()));
     if (!raw) return res.status(404).json({ success: false, message: 'Room expired या नहीं मिला' });
@@ -218,6 +245,7 @@ router.post('/:roomId/move', protect, async (req, res) => {
       if (winner) {
         room.status = 'finished';
         room.winner = winner === 'draw' ? null : req.user.name;
+        await clearActivePointers(room.hostId, room.guestId);
 
         /* Save to MongoDB history */
         await GameHistory.create({
@@ -269,6 +297,7 @@ router.post('/:roomId/move', protect, async (req, res) => {
       if (captured?.piece === 'K') {
         room.status = 'finished';
         room.winner = req.user.name;
+        await clearActivePointers(room.hostId, room.guestId);
 
         await GameHistory.create({
           roomId:      room.id,
@@ -304,10 +333,16 @@ router.post('/:roomId/leave', protect, async (req, res) => {
 
     const room = typeof raw === 'string' ? JSON.parse(raw) : raw;
 
+    const isHost  = room.hostId  ? String(room.hostId)  === String(req.user._id) : room.host  === req.user.name;
+    const isGuest = room.guestId ? String(room.guestId) === String(req.user._id) : room.guest === req.user.name;
+    if (!isHost && !isGuest)
+      return res.status(403).json({ success: false, message: 'आप इस game में player नहीं हैं' });
+
     if (room.status === 'playing') {
       /* Other player wins by forfeit */
       room.winner = room.host === req.user.name ? room.guest : room.host;
       room.status = 'finished';
+      await clearActivePointers(room.hostId, room.guestId);
 
       await GameHistory.create({
         roomId:      room.id,
@@ -422,23 +457,24 @@ router.post('/matchmake', protect, async (req, res) => {
     if (!['ttt','chess'].includes(gameType))
       return res.status(400).json({ success:false, message:'Invalid gameType' });
 
-    const qKey   = `queue:${gameType}`;          // waiting queue
-    const myName = req.user.name;
+    const qKey = `queue:${gameType}`;          // waiting queue
+    const me   = { id: String(req.user._id), name: req.user.name, avatar: req.user.avatar || '🎓' };
 
     /* Check if someone already waiting */
-    const waiting = await redis.lpop(qKey);
+    const raw = await redis.lpop(qKey);
+    const waiting = raw ? (typeof raw === 'string' ? JSON.parse(raw) : raw) : null;
 
-    if (waiting && waiting !== myName) {
+    if (waiting && waiting.id !== me.id) {
       /* Match found! Create room */
       const roomId = Math.random().toString(36).slice(2,8).toUpperCase();
       const room = {
         id: roomId, game: gameType,
-        host: waiting, hostAvatar: '🎓',   // avatar fetch later
-        guest: myName, guestAvatar: req.user.avatar || '🎓',
+        host: waiting.name, hostId: waiting.id, hostAvatar: waiting.avatar || '🎓',
+        guest: me.name, guestId: me.id, guestAvatar: me.avatar,
         status: 'playing',
         board: gameType === 'ttt' ? Array(9).fill('') : initChessBoard(),
         selected: null,
-        turn: waiting,                      // host goes first
+        turn: waiting.name,                 // host goes first
         turnSymbol: gameType === 'chess' ? 'white' : 'X',
         captured: { white:[], black:[] },
         moves: [], winner: null,
@@ -447,11 +483,12 @@ router.post('/matchmake', protect, async (req, res) => {
       };
 
       /* Notify waiting player via Redis key */
-      const matchKey = `match:${waiting}:${gameType}`;
+      const matchKey = `match:${waiting.id}:${gameType}`;
       await redis.set(matchKey, JSON.stringify({ roomId, symbol: gameType==='chess'?'white':'X' }), { ex: 60 });
 
       /* Save room */
       await redis.set(roomKey(roomId), JSON.stringify(room), { ex: ROOM_TTL });
+      await setActivePointers(room.hostId, room.guestId, room.id);
 
       return res.json({
         success: true, matched: true, roomId,
@@ -459,11 +496,8 @@ router.post('/matchmake', protect, async (req, res) => {
         isHost: false
       });
     } else {
-      /* Add to queue */
-      if (waiting === myName) {
-        /* Already in queue — check if matched meanwhile */
-      }
-      await redis.rpush(qKey, myName);
+      /* Add to queue (re-adds self if lpop returned our own stale entry) */
+      await redis.rpush(qKey, JSON.stringify(me));
       await redis.expire(qKey, 90);         // 90s queue TTL
 
       return res.json({ success: true, matched: false });
@@ -476,7 +510,7 @@ router.post('/matchmake', protect, async (req, res) => {
 /* ── CHECK MATCH (polling by waiting player) ── */
 router.get('/matchmake/check/:gameType', protect, async (req, res) => {
   try {
-    const matchKey = `match:${req.user.name}:${req.params.gameType}`;
+    const matchKey = `match:${req.user._id}:${req.params.gameType}`;
     const raw = await redis.get(matchKey);
     if (!raw) return res.json({ success:true, matched:false });
 
@@ -501,13 +535,85 @@ router.post('/matchmake/cancel', protect, async (req, res) => {
     const qKey = `queue:${gameType}`;
     /* Remove from queue — get all, filter out, re-push */
     const all = await redis.lrange(qKey, 0, -1);
-    const filtered = all.filter(n => n !== req.user.name);
+    const filtered = all.filter(raw => {
+      const entry = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      return entry.id !== String(req.user._id);
+    });
     await redis.del(qKey);
     if (filtered.length) {
       await redis.rpush(qKey, ...filtered);
       await redis.expire(qKey, 90);
     }
     res.json({ success:true });
+  } catch(e) {
+    res.status(500).json({ success:false, message:e.message });
+  }
+});
+
+/* ── WATCH LIVE: is this user currently in an active game? ── */
+router.get('/active/:userId', protect, async (req, res) => {
+  try {
+    const roomId = await redis.get(activeKey(req.params.userId));
+    if (!roomId) return res.json({ success: true, active: false });
+    const raw = await redis.get(roomKey(roomId));
+    if (!raw) return res.json({ success: true, active: false });
+    const room = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    if (room.status !== 'playing') return res.json({ success: true, active: false });
+    res.json({
+      success: true, active: true, roomId: room.id, gameType: room.game,
+      host: room.host, guest: room.guest,
+    });
+  } catch(e) {
+    res.status(500).json({ success:false, message:e.message });
+  }
+});
+
+/* ── REMATCH: create a fresh room with the same two players ── */
+router.post('/:roomId/rematch', protect, async (req, res) => {
+  try {
+    const raw = await redis.get(roomKey(req.params.roomId.toUpperCase()));
+    if (!raw) return res.status(404).json({ success: false, message: 'पुराना room अब उपलब्ध नहीं है' });
+    const oldRoom = typeof raw === 'string' ? JSON.parse(raw) : raw;
+
+    const meId = String(req.user._id);
+    const wasHost  = oldRoom.hostId  ? String(oldRoom.hostId)  === meId : oldRoom.host  === req.user.name;
+    const wasGuest = oldRoom.guestId ? String(oldRoom.guestId) === meId : oldRoom.guest === req.user.name;
+    if (!wasHost && !wasGuest)
+      return res.status(403).json({ success: false, message: 'यह आपका game नहीं था' });
+    if (oldRoom.status !== 'finished')
+      return res.status(400).json({ success: false, message: 'Game अभी खत्म नहीं हुआ' });
+    if (!oldRoom.guest)
+      return res.status(400).json({ success: false, message: 'Opponent नहीं मिला — नया game शुरू करें' });
+
+    // Swap who starts, so the loser (or whoever went second) gets to go first this time
+    const roomId = Math.random().toString(36).slice(2,8).toUpperCase();
+    const newHostIsOldGuest = wasHost; // requester was host last time -> becomes guest, old guest becomes new host
+    const newHost      = newHostIsOldGuest ? oldRoom.guest      : oldRoom.host;
+    const newHostId    = newHostIsOldGuest ? oldRoom.guestId    : oldRoom.hostId;
+    const newHostAv    = newHostIsOldGuest ? oldRoom.guestAvatar: oldRoom.hostAvatar;
+
+    const newRoom = {
+      id: roomId, game: oldRoom.game,
+      host: newHost, hostId: newHostId, hostAvatar: newHostAv || '🎓',
+      guest: null, guestId: null, guestAvatar: null,
+      status: 'waiting',
+      board: oldRoom.game === 'ttt' ? Array(9).fill('') : initChessBoard(),
+      selected: null,
+      turn: newHost,
+      turnSymbol: oldRoom.game === 'chess' ? 'white' : 'X',
+      captured: { white: [], black: [] },
+      moves: [], winner: null,
+      created: Date.now(),
+      rematchOf: oldRoom.id,
+    };
+    await redis.set(roomKey(roomId), JSON.stringify(newRoom), { ex: ROOM_TTL });
+
+    // Leave a pointer on the old (finished) room so the opponent's still-open result screen can discover it
+    oldRoom.rematchRoomId = roomId;
+    oldRoom.rematchBy = req.user.name;
+    await redis.set(roomKey(oldRoom.id), JSON.stringify(oldRoom), { ex: 600 }); // 10 min grace window
+
+    res.json({ success: true, roomId, room: newRoom, isHost: true });
   } catch(e) {
     res.status(500).json({ success:false, message:e.message });
   }
