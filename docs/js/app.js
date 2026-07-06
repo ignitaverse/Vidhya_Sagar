@@ -90,6 +90,10 @@ function closeSubScreen(id) {
   el.classList.remove('open');
   const i = _subStack.lastIndexOf(id);
   if (i !== -1) _subStack.splice(i, 1);
+  // Some screens run background polling that must stop no matter how the screen closes
+  // (explicit back arrow, hardware/ESC back, or switching tabs) — not just their own button.
+  if (id === 'screen-dm-thread') window.SocialModule?.stopDmPolling?.();
+  if (id === 'screen-online-game') window.OnlineGames?.stopPolling?.();
 }
 
 function _closeTopSub() {
@@ -119,7 +123,11 @@ function updateAuthUI() {
   const av = document.getElementById('top-avatar');
   if (token && userData) {
     if (av) {
-      av.textContent = userData.avatar || (userData.name?.[0]?.toUpperCase() || 'U');
+      if (userData.photo) {
+        av.innerHTML = `<img src="${userData.photo}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">`;
+      } else {
+        av.textContent = userData.avatar || (userData.name?.[0]?.toUpperCase() || 'U');
+      }
       av.style.background = 'linear-gradient(135deg,var(--blue),var(--purple))';
     }
   } else {
@@ -487,11 +495,11 @@ async function doUserSearch(q) {
     const users = d.users || [];
     if (!users.length) { drop.innerHTML = '<div style="padding:14px;text-align:center;color:var(--text3);font-size:.82rem">No students found</div>'; return; }
     drop.innerHTML = users.map(u => `
-      <div style="display:flex;align-items:center;gap:11px;padding:12px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .15s" onmouseover="this.style.background='rgba(59,130,246,.08)'" onmouseout="this.style.background=''" onclick="showToast('Public profile coming soon! 🚀','info')">
-        <div style="width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0">${u.avatar || '🎓'}</div>
+      <div style="display:flex;align-items:center;gap:11px;padding:12px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .15s" onmouseover="this.style.background='rgba(59,130,246,.08)'" onmouseout="this.style.background=''" onclick="openUserProfile('${u.id}')">
+        <div style="width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;overflow:hidden">${u.photo ? `<img src="${u.photo}" style="width:100%;height:100%;object-fit:cover">` : (u.avatar || '🎓')}</div>
         <div>
           <div style="font-weight:700;font-size:.88rem">${_escH(u.name)}</div>
-          <div style="font-size:.72rem;color:var(--text3)">${_escH(u.examPrep || 'Student')}</div>
+          <div style="font-size:.72rem;color:var(--text3)">${u.username ? '@'+_escH(u.username) : _escH(u.examPrep || 'Student')}</div>
         </div>
       </div>`).join('');
   } catch (e) { drop.innerHTML = `<div style="padding:14px;text-align:center;color:var(--rose);font-size:.82rem">${e.message}</div>`; }
@@ -591,6 +599,7 @@ async function init() {
   ChatModule.init();
   ProfileModule.init();
   GamesModule.init();
+  SocialModule.init();
 
   // FIX: bind typing submit button
   document.getElementById('btn-typing-submit-main')?.addEventListener('click', () => {

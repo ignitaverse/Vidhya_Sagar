@@ -5,6 +5,51 @@ const QuizModule = (() => {
   let quizState={seenIds:[],score:0,wrong:0,answered:0,total:0,isLast:false,elapsed:0};
   let timerInterval=null, elapsedSeconds=0, timerStarted=false;
   let isPaused=false, prevQuestions=[], isReviewing=false;
+  let quizLang = localStorage.getItem('vs_quiz_lang') === 'en' ? 'en' : 'hi';
+
+  /* ── Bilingual helpers ──
+     Falls back gracefully: if the chosen language's field isn't present for a given
+     question (most question banks are Hindi-only today), we just show whatever exists
+     instead of leaving a blank. As soon as a subject's data includes *_en fields, the
+     English toggle lights up for it automatically — no code changes needed. */
+  function _pickText(q, lang){
+    if(lang==='en') return q.q_en||q.question_en||q.q||q.question||'';
+    return q.q_hi||q.question_hi||q.q||q.question||'';
+  }
+  function _pickOpts(q, lang){
+    if(lang==='en' && (q.opts_en||q.options_en)) return q.opts_en||q.options_en;
+    return q.opts||q.options||[];
+  }
+  function _hasEnglish(q){ return !!(q && (q.q_en||q.question_en)); }
+
+  function setQuizLang(lang){
+    quizLang = lang==='en' ? 'en' : 'hi';
+    localStorage.setItem('vs_quiz_lang', quizLang);
+    document.querySelectorAll('.qlang-btn').forEach(b=>b.classList.toggle('active', b.dataset.lang===quizLang));
+    // Re-paint just the text of whatever question is currently on screen — deliberately
+    // does NOT touch answered/disabled state so switching language mid-question can't
+    // let someone answer twice or reset their score.
+    const current = isReviewing ? prevQuestions[prevQuestions.length-1]?.q : questions[currentQ];
+    if(current) _applyQuestionText(current);
+  }
+
+  function _applyQuestionText(q){
+    const qEl=document.getElementById('q-text');
+    if(qEl) qEl.textContent=_pickText(q, quizLang);
+    const opts=_pickOpts(q, quizLang);
+    document.querySelectorAll('.opt-btn').forEach((btn,i)=>{
+      const span=btn.querySelector('span:last-child');
+      if(span && opts[i]!==undefined) span.textContent=opts[i];
+    });
+  }
+
+  function bindQuizLangToggle(){
+    document.querySelectorAll('.qlang-btn').forEach(btn=>{
+      btn.classList.toggle('active', btn.dataset.lang===quizLang);
+      if(btn._bound)return; btn._bound=true;
+      btn.addEventListener('click',()=>setQuizLang(btn.dataset.lang));
+    });
+  }
 
   function progKey(){
     const sub=currentState?'states':(currentSubject?.id||'x');
@@ -51,6 +96,7 @@ const QuizModule = (() => {
     currentSubject=sub;currentCategory=null;currentState=null;
     document.getElementById('cat-screen-title').textContent=`${sub.emoji} ${sub.name}`;
     openSubScreen('screen-quiz-category');
+    bindQuizLangToggle();
     const wrap=document.getElementById('cat-list-wrap');
     wrap.innerHTML='<div class="vs-loading-text">Loading…</div>';
     const prog=loadProgress();
@@ -150,22 +196,16 @@ const QuizModule = (() => {
     answered=false;
     const q=questions[currentQ];
     document.getElementById('q-num').textContent=`Q${quizState.answered+1}`;
-    /* ✅ BILINGUAL: Show question in both Hindi and English if both available */
-    const qEng = q.q_en || q.question_en || '';
-    const qHin = q.q_hi || q.question_hi || q.q || q.question || '';
-    if(qEng && qHin && qEng !== qHin){
-      document.getElementById('q-text').innerHTML=
-        `<span class="q-lang-hi">${qHin}</span><span class="q-lang-divider">—</span><span class="q-lang-en">${qEng}</span>`;
-    } else {
-      document.getElementById('q-text').textContent = qHin || qEng;
-    }
+    document.getElementById('q-text').textContent=_pickText(q, quizLang);
     updateProgressUI();
-    const opts=q.opts||q.options||[];
+    const opts=_pickOpts(q, quizLang);
     document.querySelectorAll('.opt-btn').forEach((btn,i)=>{
       btn.className='opt-btn';btn.disabled=false;
       btn.querySelector('span:last-child').textContent=opts[i]??'';
       btn.style.display=opts[i]!==undefined?'':'none';
     });
+    // Only show the language toggle when this question actually has an English version
+    document.getElementById('quiz-lang-bar')?.classList.toggle('hidden', !_hasEnglish(q));
     document.getElementById('btn-q-next').classList.add('hidden');
     document.getElementById('q-explain').classList.add('hidden');
     document.getElementById('btn-q-prev').disabled=prevQuestions.length===0;
@@ -179,11 +219,9 @@ const QuizModule = (() => {
     isReviewing=true;
     document.getElementById('q-review-banner').style.display='block';
     document.getElementById('q-num').textContent=`Q${entry.qNum} — Review`;
-    const rqEn=entry.q.q_en||entry.q.question_en||'', rqHi=entry.q.q_hi||entry.q.question_hi||entry.q.q||entry.q.question||'';
-    if(rqEn&&rqHi&&rqEn!==rqHi){
-      document.getElementById('q-text').innerHTML=`<span class="q-lang-hi">${rqHi}</span><span class="q-lang-divider">—</span><span class="q-lang-en">${rqEn}</span>`;
-    } else { document.getElementById('q-text').textContent=rqHi||rqEn; }
-    const opts=entry.q.opts||entry.q.options||[];
+    document.getElementById('q-text').textContent=_pickText(entry.q, quizLang);
+    document.getElementById('quiz-lang-bar')?.classList.toggle('hidden', !_hasEnglish(entry.q));
+    const opts=_pickOpts(entry.q, quizLang);
     document.querySelectorAll('.opt-btn').forEach((btn,i)=>{
       btn.className='opt-btn';btn.disabled=true;
       btn.querySelector('span:last-child').textContent=opts[i]??'';
@@ -300,6 +338,7 @@ const QuizModule = (() => {
   }
 
   function init(){
+    bindQuizLangToggle();
     document.querySelectorAll('.opt-btn').forEach(btn=>btn.addEventListener('click',()=>handleAnswer(parseInt(btn.dataset.i))));
     document.getElementById('btn-q-next')?.addEventListener('click',()=>{
       if(isReviewing){renderQuestion();return;}

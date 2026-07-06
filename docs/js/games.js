@@ -163,6 +163,9 @@ const GamesModule = (() => {
     mySymbol:    null,  // 'X'/'O' for TTT, 'white'/'black' for chess
     isHost:      false,
     lastUpdate:  null,
+    _spectating: false,
+    _postGameTimer: null,
+    _rematchPromptShown: false,
 
 
     /* ── Find Random Match ── */
@@ -263,6 +266,40 @@ const GamesModule = (() => {
       }
     },
 
+    /* ── Watch Live (spectate a friend's ongoing game, read-only) ── */
+    async spectate(roomId) {
+      if (!token || !userData) { openAuth('login'); return; }
+      try {
+        const d = await apiFetch(`/api/game/${roomId}`);
+        if (d.room.status !== 'playing') { showToast('यह game अभी live नहीं है', 'info'); return; }
+        this._spectating = true;
+        this.currentRoom = roomId;
+        this.currentGame = d.room.game;
+        openSubScreen('screen-online-game');
+        const leaveBtn = _el('btn-og-leave');
+        if (leaveBtn) leaveBtn.textContent = '👁️ Stop Watching';
+        _el('og-room-id').textContent = d.room.id;
+        _el('og-room-code-display').textContent = d.room.id;
+        _el('og-game-title').textContent = (d.room.game === 'chess' ? '♟️ Chess' : '⭕ Tic Tac Toe');
+        _el('og-my-symbol').textContent = `👁️ ${d.room.host} vs ${d.room.guest}`;
+        _el('og-waiting')?.classList.add('hidden');
+        _el('og-board-wrap')?.classList.remove('hidden');
+        this._renderBoard(d.room);
+        this._updateTurnBar(d.room);
+        this.startPolling();
+      } catch (e) {
+        showToast('Game नहीं मिला — शायद खत्म हो गया', 'info');
+      }
+    },
+
+    stopSpectating() {
+      this.stopPolling();
+      this._spectating = false;
+      this.currentRoom = null;
+      this.currentGame = null;
+      closeSubScreen('screen-online-game');
+    },
+
     /* ── Join Room ── */
     async joinRoom(roomId) {
       if (!token || !userData) { openAuth('login'); return; }
@@ -286,7 +323,10 @@ const GamesModule = (() => {
 
     /* ── Open game screen ── */
     _openGameScreen(room, isHost) {
+      this._spectating = false;
       openSubScreen('screen-online-game');
+      const leaveBtn = _el('btn-og-leave');
+      if (leaveBtn) leaveBtn.textContent = '← Leave';
       _el('og-room-id').textContent         = room.id;
       _el('og-room-code-display').textContent = room.id;
       _el('og-game-title').textContent = room.game === 'chess' ? '♟️ Chess' : '⭕ Tic Tac Toe';
@@ -334,7 +374,15 @@ const GamesModule = (() => {
 
         if (room.status === 'finished') {
           this.stopPolling();
-          this._showResult(room);
+          if (this._spectating) {
+            const bar = _el('og-turn-bar');
+            if (bar) {
+              bar.textContent = (room.winner ? `🏆 ${room.winner} जीते!` : '🤝 Draw!') + ' — game खत्म हुआ';
+              bar.style.color = 'var(--amber)';
+            }
+          } else {
+            this._showResult(room);
+          }
         }
       } catch(e) {
         // Room expired or network error — stop polling silently
@@ -383,6 +431,7 @@ const GamesModule = (() => {
 
       wrap.querySelectorAll('.ttt-cell:not(.filled)').forEach(cell => {
         cell.addEventListener('click', () => {
+          if (this._spectating) { showToast('आप सिर्फ देख रहे हैं 👁️', 'info'); return; }
           if (!myTurn) { showToast('आपकी बारी नहीं है!', 'warn'); return; }
           this.makeMove({ idx: parseInt(cell.dataset.i) });
         });
@@ -429,6 +478,7 @@ const GamesModule = (() => {
 
       wrap.querySelectorAll('.chess-cell').forEach(cell => {
         cell.addEventListener('click', () => {
+          if (this._spectating) { showToast('आप सिर्फ देख रहे हैं 👁️', 'info'); return; }
           const r=parseInt(cell.dataset.r), c=parseInt(cell.dataset.c);
           const piece = board[r]?.[c];
 
@@ -481,13 +531,102 @@ const GamesModule = (() => {
       const won  = room.winner === userData?.name;
       const draw = room.winner === null;
       setTimeout(() => {
-        showToast(draw ? '🤝 Draw!' : won ? '🏆 आप जीते!' : '😔 आप हारे!', won ? 'success' : 'info');
+        this._renderResultOverlay(room, won, draw);
+        this._startPostGamePoll(room.id);
       }, 300);
+    },
+
+    _renderResultOverlay(room, won, draw) {
+      const ov = _el('og-result-overlay');
+      if (!ov) { // markup missing for some reason — don't leave the player with silence
+        showToast(draw ? '🤝 Draw!' : won ? '🏆 आप जीते!' : '😔 आप हारे!', won ? 'success' : 'info');
+        return;
+      }
+      const opponent = room.host === userData?.name ? room.guest : room.host;
+      _el('og-result-emoji') && (_el('og-result-emoji').textContent = draw ? '🤝' : won ? '🏆' : '😔');
+      _el('og-result-title') && (_el('og-result-title').textContent = draw ? 'Draw!' : won ? 'आप जीते! 🎉' : 'आप हारे!');
+      _el('og-result-sub')   && (_el('og-result-sub').textContent   = opponent ? `vs ${opponent}` : '');
+      ov.dataset.roomId = room.id;
+      ov.classList.remove('hidden');
+      ov.classList.add('show');
+    },
+
+    _hideResultOverlay() {
+      const ov = _el('og-result-overlay');
+      ov?.classList.add('hidden');
+      ov?.classList.remove('show');
+      this._stopPostGamePoll();
+    },
+
+    /* ── Post-game polling: watches the just-finished room for a rematch invite ── */
+    _startPostGamePoll(oldRoomId) {
+      this._stopPostGamePoll();
+      this._postGameTimer = setInterval(async () => {
+        try {
+          const d = await apiFetch(`/api/game/${oldRoomId}`);
+          const r = d.room;
+          if (r.rematchRoomId && r.rematchBy !== userData?.name && !this._rematchPromptShown) {
+            this._rematchPromptShown = true;
+            this._offerRematch(r.rematchRoomId, r.rematchBy);
+          }
+        } catch (e) { this._stopPostGamePoll(); } // room's gone — nothing left to watch for
+      }, 3000);
+    },
+    _stopPostGamePoll() {
+      if (this._postGameTimer) { clearInterval(this._postGameTimer); this._postGameTimer = null; }
+      this._rematchPromptShown = false;
+    },
+
+    _offerRematch(newRoomId, byName) {
+      const bar = _el('og-rematch-invite');
+      if (!bar) { showToast(`${byName} ने Rematch भेजा! 🔄`, 'info'); return; }
+      _el('og-rematch-text') && (_el('og-rematch-text').textContent = `${byName} ने Rematch भेजा! 🔄`);
+      bar.classList.remove('hidden');
+      const acceptBtn = _el('og-rematch-accept'), ignoreBtn = _el('og-rematch-ignore');
+      if (acceptBtn) acceptBtn.onclick = () => { bar.classList.add('hidden'); this.acceptRematch(newRoomId); };
+      if (ignoreBtn) ignoreBtn.onclick = () => { bar.classList.add('hidden'); };
+    },
+
+    /* ── Result overlay actions ── */
+    async rematch() {
+      const oldRoomId = _el('og-result-overlay')?.dataset.roomId || this.currentRoom;
+      if (!oldRoomId) return;
+      this._hideResultOverlay();
+      try {
+        showToast('Rematch room बना रहे हैं…', 'info');
+        const d = await apiFetch(`/api/game/${oldRoomId}/rematch`, { method: 'POST' });
+        this.currentRoom = d.roomId;
+        this.currentGame = d.room.game;
+        this.isHost      = true;
+        this.mySymbol    = d.room.game === 'chess' ? 'white' : 'X';
+        this._openGameScreen(d.room, true);
+      } catch (e) { showToast('Error: ' + e.message, 'error'); }
+    },
+
+    async acceptRematch(roomId) {
+      this._hideResultOverlay();
+      await this.joinRoom(roomId);
+    },
+
+    newMatch() {
+      const gt = this.currentGame;
+      this._hideResultOverlay();
+      this.currentRoom = null; this.currentGame = null;
+      closeSubScreen('screen-online-game');
+      if (gt) this.findMatch(gt);
+    },
+
+    exitAfterResult() {
+      this._hideResultOverlay();
+      this.currentRoom = null; this.currentGame = null;
+      closeSubScreen('screen-online-game');
     },
 
     /* ── Leave / Forfeit ── */
     async leaveRoom() {
+      if (this._spectating) { this.stopSpectating(); return; }
       this.stopPolling();
+      this._stopPostGamePoll();
       this._selectedCell = null;
       if (this.currentRoom) {
         try { await apiFetch(`/api/game/${this.currentRoom}/leave`, { method:'POST' }); } catch {}

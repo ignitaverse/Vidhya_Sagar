@@ -119,12 +119,15 @@ const ChatModule=(()=>{
     if(bar) bar.style.display='none';
   };
 
+  let _sendingGroup = false;
   async function sendGroupMsg(){
     if(!token||!userData){openAuth('login');return;}
+    if(_sendingGroup)return; // guard against double-fire from Enter + tap in quick succession
     const inp=document.getElementById('group-inp');
     const text=inp?.value.trim();
     if(!text)return;
-    inp.value=''; inp.style.height='auto';
+    _sendingGroup=true;
+    inp.value=''; inp.style.height='auto'; inp.disabled=false;
     const reply=replyingTo?{...replyingTo}:null;
     window.clearReply();
     try{
@@ -143,7 +146,15 @@ const ChatModule=(()=>{
         await apiFetch('/api/chat',{method:'POST',body:JSON.stringify({message:text})});
       }
       loadGroupMessages();
-    }catch(e){showToast('Message नहीं गया: '+e.message,'error');inp.value=text;}
+    }catch(e){
+      showToast('Message नहीं गया: '+e.message,'error');
+      // Only restore the failed text if the box is still empty — the user may already
+      // be typing their next message, and we don't want to overwrite that.
+      if(inp && !inp.value) inp.value=text;
+    }finally{
+      _sendingGroup=false;
+      if(inp){ inp.disabled=false; inp.focus(); }
+    }
   }
 
   function startPolling(){stopPolling();pollInterval=setInterval(loadGroupMessages,5000);}
@@ -191,11 +202,14 @@ const ChatModule=(()=>{
     btn.addEventListener('click',sendAIMsg);
   }
 
+  let _sendingAI = false;
   async function sendAIMsg(){
     if(!token){openAuth('login');return;}
+    if(_sendingAI)return;
     const inp=document.getElementById('ai-inp');
     const text=inp?.value.trim();
     if(!text)return;
+    _sendingAI=true;
     inp.value='';
     const container=document.getElementById('ai-msgs');
 
@@ -228,6 +242,11 @@ const ChatModule=(()=>{
       errRow.className='ai-msg-wrap';
       errRow.innerHTML=`<div class="ai-av">🤖</div><div class="ai-bub" style="color:var(--rose)">Error: ${e.message}</div>`;
       container.appendChild(errRow);
+      // Give the message back so it isn't lost if it never reached the server
+      if(inp && !inp.value) inp.value=text;
+    }finally{
+      _sendingAI=false;
+      if(inp){ inp.disabled=false; inp.focus(); }
     }
   }
 
