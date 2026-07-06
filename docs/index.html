@@ -11,6 +11,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style_futuristic.css">
 <link rel="stylesheet" href="css/style_additions.css">
+<link rel="stylesheet" href="css/style_typing_upgrade.css">
+<link rel="stylesheet" href="css/style_social.css">
 </head>
 <body>
 
@@ -352,6 +354,7 @@
       <div class="ss-header">
         <button class="ss-back" onclick="closeSubScreen('screen-profile-panel')">←</button>
         <div class="ss-title">👤 My Profile</div>
+        <button class="ss-back" style="margin-left:auto" title="Account settings" onclick="openSubScreen('screen-account-info')">⚙️</button>
       </div>
       <div class="profile-panel" id="profile-panel-content">
         <div id="profile-not-logged" style="display:none;padding:64px 22px;text-align:center">
@@ -367,10 +370,19 @@
               <div class="ph-edit-dot" onclick="openEmojiPicker()">✏️</div>
             </div>
             <div class="ph-name" id="ph-name">User</div>
-            <div class="ph-email" id="ph-email">email@example.com</div>
+            <div class="ph-username" id="ph-username"></div>
             <div class="ph-joined" id="ph-joined">Member since —</div>
             <div class="ph-bio" id="ph-bio"></div>
+            <div class="ph-actions-row">
+              <button class="ph-act-btn ph-act-primary" id="btn-edit-profile-main">✏️ Edit Profile</button>
+              <button class="ph-act-btn ph-act-icon" id="btn-share-profile-main" title="Share Profile">🔗</button>
+            </div>
           </div>
+
+          <div class="profile-autodelete-note" id="profile-autodelete-note"></div>
+
+          <div class="hidden" id="profile-friend-requests"></div>
+
           <div class="profile-qstats">
             <div class="pqs" id="pqs-quizzes-btn" onclick="ProfileModule.loadHistory()">
               <b id="pqs-quizzes">0</b><span>Quizzes</span>
@@ -385,6 +397,11 @@
             </div>
             <div class="pqs-div"></div>
             <div class="pqs"><b id="pqs-accuracy">—</b><span>Avg Acc</span></div>
+          </div>
+
+          <div class="settings-section">
+            <div class="settings-section-title">Friends (<span id="profile-friends-count">0</span>)</div>
+            <div class="friend-grid" id="profile-friends-grid"></div>
           </div>
 
           <div class="settings-section">
@@ -492,6 +509,10 @@
         <div class="ss-title" id="cat-screen-title">Categories</div>
       </div>
       <div style="padding:13px">
+        <div style="display:flex;justify-content:center;gap:8px;margin-bottom:12px" id="quiz-lang-bar-cat">
+          <button class="qlang-btn" data-lang="hi">🇮🇳 हिंदी</button>
+          <button class="qlang-btn" data-lang="en">🇬🇧 English</button>
+        </div>
         <div class="resume-card hidden" id="resume-card">
           <div class="resume-info">
             <span style="font-size:1.4rem">⏸️</span>
@@ -522,6 +543,10 @@
       <div class="qtrack"><div class="qtrack-fill" id="qtrack-fill"></div></div>
       <div class="quiz-body">
         <div class="q-review-banner" id="q-review-banner">📖 Review Mode</div>
+        <div class="hidden" id="quiz-lang-bar" style="display:flex;justify-content:center;gap:8px;margin-bottom:8px">
+          <button class="qlang-btn" data-lang="hi">🇮🇳 हिंदी</button>
+          <button class="qlang-btn" data-lang="en">🇬🇧 English</button>
+        </div>
         <div class="q-card" id="q-card">
           <div class="q-num" id="q-num">Q1</div>
           <div class="q-text" id="q-text">Loading…</div>
@@ -603,7 +628,7 @@
         <div class="instructions-box">
           <h4>📋 Instructions</h4>
           <ul id="ed-instructions">
-            <li>Timer तभी शुरू होगा जब आप type करना शुरू करेंगे</li>
+            <li>Test शुरू होते ही Timer तुरंत शुरू हो जाएगा — तैयार होकर शुरू करें</li>
             <li>Backspace allowed है — errors count होंगी</li>
             <li>सभी characters (spaces सहित) type करें</li>
             <li>Caps Lock और auto-correct off रखें</li>
@@ -616,14 +641,14 @@
 
     <!-- TYPING: ACTIVE -->
     <div class="sub-screen no-bot" id="screen-typing-active" style="display:flex;flex-direction:column;background:#1a1a2e">
-      <!-- TOP HEADER BAR — exam name + timer -->
+      <!-- TOP HEADER BAR — exam name + timer (kept slim so the two content zones below get the space) -->
       <div style="background:#1a56db;padding:0;flex-shrink:0">
         <!-- Title row -->
-        <div style="text-align:center;padding:7px 14px;font-family:'Syne',sans-serif;font-size:.82rem;font-weight:800;color:#fff;border-bottom:1px solid rgba(255,255,255,.12)" id="type-test-id-bar">
+        <div style="text-align:center;padding:6px 14px;font-family:'Syne',sans-serif;font-size:.8rem;font-weight:800;color:#fff;border-bottom:1px solid rgba(255,255,255,.12)" id="type-test-id-bar">
           Typing Test — <span id="type-exam-title-bar">Practice</span>
         </div>
         <!-- Exam name + timer -->
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 14px;background:#0f2d5e">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 14px;background:#0f2d5e">
           <button onclick="exitTyping()" style="background:rgba(255,255,255,.12);border:none;color:#fff;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:1rem;flex-shrink:0;display:flex;align-items:center;justify-content:center">←</button>
           <div style="flex:1;font-size:.78rem;font-weight:700;color:#fff;text-align:center;padding:0 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="type-exam-title">Typing Practice</div>
           <div style="display:flex;align-items:center;gap:5px;flex-shrink:0">
@@ -632,28 +657,9 @@
           </div>
         </div>
         <!-- Keyboard + Language bar -->
-        <div style="display:flex;gap:20px;padding:5px 16px;background:#1a3a6b;font-size:.73rem;font-weight:700;color:rgba(255,255,255,.8);border-top:1px solid rgba(255,255,255,.1)">
-          <span>⌨️ Keyboard Layout: <b id="type-kb-layout">QWERTY</b></span>
-          <span>🌐 Language: <b id="type-lang-label">English</b></span>
-        </div>
-        <!-- 4 live stats -->
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);background:#0a1f3d;border-top:1px solid rgba(255,255,255,.08)">
-          <div style="text-align:center;padding:7px 4px;border-right:1px solid rgba(255,255,255,.08)">
-            <div class="tls-val" id="tls-wpm" style="font-family:'Syne',monospace;font-size:1rem;font-weight:900;color:#60efff">0</div>
-            <div style="font-size:.58rem;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.04em;margin-top:1px">WPM</div>
-          </div>
-          <div style="text-align:center;padding:7px 4px;border-right:1px solid rgba(255,255,255,.08)">
-            <div class="tls-val" id="tls-acc" style="font-family:'Syne',monospace;font-size:1rem;font-weight:900;color:#34d399">100%</div>
-            <div style="font-size:.58rem;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.04em;margin-top:1px">Accuracy</div>
-          </div>
-          <div style="text-align:center;padding:7px 4px;border-right:1px solid rgba(255,255,255,.08)">
-            <div class="tls-val" id="tls-err" style="font-family:'Syne',monospace;font-size:1rem;font-weight:900;color:#fb7185">0</div>
-            <div style="font-size:.58rem;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.04em;margin-top:1px">Errors</div>
-          </div>
-          <div style="text-align:center;padding:7px 4px">
-            <div class="tls-val" id="tls-keys" style="font-family:'Syne',monospace;font-size:1rem;font-weight:900;color:#fbbf24">0</div>
-            <div style="font-size:.58rem;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.04em;margin-top:1px">Keys</div>
-          </div>
+        <div style="display:flex;gap:20px;padding:4px 16px;background:#1a3a6b;font-size:.7rem;font-weight:700;color:rgba(255,255,255,.8);border-top:1px solid rgba(255,255,255,.1)">
+          <span>⌨️ <b id="type-kb-layout">QWERTY</b></span>
+          <span>🌐 <b id="type-lang-label">English</b></span>
         </div>
         <!-- Progress bar -->
         <div style="height:3px;background:rgba(255,255,255,.08)">
@@ -661,27 +667,28 @@
         </div>
       </div>
 
-      <!-- MAIN CONTENT AREA — scrollable, centered box layout -->
-      <div style="flex:1;overflow-y:auto;padding:16px 14px;display:flex;flex-direction:column;gap:12px">
+      <!-- ZONE A — PASSAGE, zoomed in, roughly the top half of the remaining screen -->
+      <div class="type-passage-zone">
+        <div class="passage-display" id="passage-display"></div>
+      </div>
 
-        <!-- PASSAGE BOX — white box like reference image -->
-        <div style="background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.4)">
-          <div class="passage-display" id="passage-display"
-            style="padding:16px;font-size:.95rem;line-height:2;font-family:'Plus Jakarta Sans','Noto Sans Devanagari',sans-serif;color:#374151;min-height:160px;max-height:220px;overflow-y:auto;text-align:justify;user-select:none">
-          </div>
+      <!-- ZONE B — live speed info + typing box, roughly the bottom half -->
+      <div class="type-stats-zone">
+        <div class="type-live-stats-big">
+          <div class="tstat-big tstat-wpm"><div class="tls-val" id="tls-wpm">0</div><div class="tstat-lbl">WPM</div></div>
+          <div class="tstat-big tstat-acc"><div class="tls-val" id="tls-acc">100%</div><div class="tstat-lbl">Accuracy</div></div>
+          <div class="tstat-big tstat-err"><div class="tls-val" id="tls-err">0</div><div class="tstat-lbl">Errors</div></div>
+          <div class="tstat-big tstat-keys"><div class="tls-val" id="tls-keys">0</div><div class="tstat-lbl">Keys</div></div>
         </div>
 
-        <!-- INPUT BOX — below passage, white rounded box -->
-        <div style="background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.4)">
-          <textarea id="typing-inp"
-            placeholder="यहाँ type करना शुरू करें… (Timer auto-start होगा)"
-            rows="4"
-            spellcheck="false" autocorrect="off" autocapitalize="off" autocomplete="off"
-            style="width:100%;padding:14px;background:#fff;border:none;outline:none;resize:none;font-size:.95rem;font-family:'Plus Jakarta Sans',sans-serif;color:#111827;line-height:1.7;box-sizing:border-box;display:block"></textarea>
+        <div class="type-input-wrap">
+          <textarea id="typing-inp" class="typing-inp"
+            placeholder="यहाँ type करना शुरू करें…"
+            rows="3"
+            spellcheck="false" autocorrect="off" autocapitalize="off" autocomplete="off"></textarea>
         </div>
 
-        <!-- CANCEL / SUBMIT row -->
-        <div style="display:flex;justify-content:space-between;gap:10px">
+        <div class="typing-action-row" style="background:transparent;border-top:none;padding:8px 0 0">
           <button onclick="exitTyping()"
             style="flex:1;background:#ef4444;color:#fff;border:none;border-radius:10px;padding:11px 0;font-size:.88rem;font-weight:700;cursor:pointer;letter-spacing:.02em">
             Cancel
@@ -691,7 +698,6 @@
             Submit
           </button>
         </div>
-
       </div>
     </div>
 
@@ -710,7 +716,7 @@
           <div class="tr-stat tr-err"><b id="tr-err">0</b><span>Errors</span></div>
           <div class="tr-stat tr-keys"><b id="tr-keys">0</b><span>Keystrokes</span></div>
         </div>
-        <div class="tr-verdict">
+        <div class="tr-verdict" id="tr-verdict-badge">
           <div class="tr-verdict-t" id="tr-verdict-t">Result</div>
           <div class="tr-verdict-d" id="tr-verdict-d"></div>
         </div>
@@ -823,6 +829,44 @@
           <div class="ctc-info"><div class="ctc-name">Discussion Group</div><div class="ctc-desc">Students के साथ discuss करें</div></div>
           <span class="ctc-arrow">›</span>
         </div>
+        <div class="chat-type-card" onclick="openDMInbox()">
+          <div class="ctc-icon" style="background:linear-gradient(135deg,#ec4899,#8b5cf6)">💌</div>
+          <div class="ctc-info"><div class="ctc-name">Messages</div><div class="ctc-desc">Friends से 1:1 बात करें</div></div>
+          <span class="ctc-arrow">›</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ USER PROFILE (viewing someone else — Instagram style) ════ -->
+    <div class="sub-screen" id="screen-user-profile">
+      <div class="ss-header">
+        <button class="ss-back" onclick="closeSubScreen('screen-user-profile')">←</button>
+        <div class="ss-title">Profile</div>
+      </div>
+      <div class="profile-panel" id="uprofile-body"></div>
+    </div>
+
+    <!-- ════ DM INBOX ════ -->
+    <div class="sub-screen" id="screen-dm-inbox">
+      <div class="ss-header">
+        <button class="ss-back" onclick="closeSubScreen('screen-dm-inbox')">←</button>
+        <div class="ss-title">💌 Messages</div>
+      </div>
+      <div id="dm-inbox-list" style="padding:6px 0"></div>
+    </div>
+
+    <!-- ════ DM THREAD (1:1 chat) ════ -->
+    <div class="sub-screen no-bot" id="screen-dm-thread" style="display:flex;flex-direction:column">
+      <div class="ss-header">
+        <button class="ss-back" onclick="closeDMThread()">←</button>
+        <div class="ss-title" id="dm-thread-name">Chat</div>
+      </div>
+      <div class="chat-msgs-area" id="dm-msgs"></div>
+      <div class="chat-inp-bar">
+        <div class="chat-inp-box" id="dm-inp-box">
+          <textarea class="chat-ta" id="dm-inp" placeholder="Message लिखें…" rows="1" maxlength="1000"></textarea>
+        </div>
+        <button class="chat-send-btn" id="dm-send-btn">➤</button>
       </div>
     </div>
 
@@ -892,9 +936,23 @@
         <div class="ss-title">👤 Account Info</div>
       </div>
       <div style="padding:18px">
+        <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:18px">
+          <div id="ph-avatar-wrap" style="width:84px;height:84px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center;font-size:2.4rem;overflow:hidden;margin-bottom:10px">🎓</div>
+          <div style="display:flex;gap:8px">
+            <label for="photo-upload-inp" class="btn-ghost" style="font-size:.76rem;padding:7px 14px;cursor:pointer">📷 Upload Photo</label>
+            <button type="button" id="btn-remove-photo" class="btn-ghost" style="font-size:.76rem;padding:7px 14px">✕ Remove</button>
+          </div>
+          <input type="file" accept="image/*" id="photo-upload-inp" class="hidden">
+          <div style="font-size:.68rem;color:var(--text3);margin-top:6px">या नीचे emoji में से चुनें</div>
+        </div>
         <div class="field">
           <label>नाम <span id="name-changes-left" style="font-size:.7rem;color:var(--amber);margin-left:6px"></span></label>
           <input type="text" id="ai-name" placeholder="Full Name">
+        </div>
+        <div class="field">
+          <label>Username <span id="username-changes-left" style="font-size:.7rem;color:var(--amber);margin-left:6px"></span></label>
+          <input type="text" id="ai-username" placeholder="username" maxlength="30" style="text-transform:lowercase">
+          <div id="username-avail-msg" style="font-size:.7rem;margin-top:4px"></div>
         </div>
         <div class="field"><label>Email</label><input type="email" id="ai-email" disabled style="opacity:.5"></div>
         <div class="field"><label>Date of Birth</label><input type="date" id="ai-dob"></div>
@@ -1036,18 +1094,16 @@
         <button class="ss-back" onclick="closeSubScreen('screen-delete-account')">←</button>
         <div class="ss-title">🗑️ Delete Account</div>
       </div>
-      <div style="padding:30px 20px;text-align:center">
-        <div class="coming-soon-icon">🔒</div>
-        <h3 class="coming-soon-title">Coming Soon</h3>
-        <p class="coming-soon-sub">Account delete feature अभी available नहीं है।</p>
-        <div class="coming-soon-save-box">
-          <span class="css-icon">✅</span>
-          <div>
-            <div class="css-title">आपकी Progress Safe है!</div>
-            <div class="css-sub">आपका सारा quiz data, typing history और progress हमारे secure servers पर save है।</div>
-          </div>
+      <div style="padding:26px 20px">
+        <div style="text-align:center;font-size:2.6rem;margin-bottom:8px">⚠️</div>
+        <h3 style="text-align:center;font-weight:800;margin-bottom:6px">Account permanently delete करें?</h3>
+        <p style="text-align:center;color:var(--text3);font-size:.84rem;margin-bottom:18px">आपका quiz history, typing history, chats और profile — सब कुछ हमेशा के लिए मिट जाएगा। यह वापस नहीं हो सकता।</p>
+        <div class="field">
+          <label>Type <b style="color:var(--rose)">DELETE</b> to confirm</label>
+          <input type="text" id="delete-confirm-inp" placeholder="DELETE" style="text-transform:uppercase">
         </div>
-        <button class="btn-ghost w100" style="margin-top:22px" onclick="closeSubScreen('screen-delete-account')">← वापस जाएं</button>
+        <button class="btn-primary w100" id="btn-confirm-delete" style="background:var(--rose);margin-top:8px">🗑️ Permanently Delete My Account</button>
+        <button class="btn-ghost w100" style="margin-top:10px" onclick="closeSubScreen('screen-delete-account')">← रहने दो, वापस जाएं</button>
       </div>
     </div>
 
@@ -1097,10 +1153,19 @@
             <div style="font-size:2.8rem;margin-bottom:8px" id="og-result-emoji">🏆</div>
             <div style="font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:900;color:#fff;margin-bottom:4px" id="og-result-title">Game Over!</div>
             <div style="font-size:.85rem;color:rgba(255,255,255,.6);margin-bottom:18px" id="og-result-sub">—</div>
-            <div style="display:flex;gap:10px;justify-content:center">
-              <button onclick="OnlineGames.leaveRoom()" style="background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:9px 18px;font-size:.82rem;font-weight:700;cursor:pointer">← Back</button>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <button onclick="OnlineGames.rematch()" style="background:#1a56db;color:#fff;border:none;border-radius:10px;padding:11px 18px;font-size:.85rem;font-weight:700;cursor:pointer;box-shadow:0 3px 12px rgba(26,86,219,.4)">🔄 Rematch (same opponent)</button>
+              <button onclick="OnlineGames.newMatch()" style="background:rgba(34,211,238,.15);color:#22d3ee;border:1px solid rgba(34,211,238,.35);border-radius:10px;padding:11px 18px;font-size:.85rem;font-weight:700;cursor:pointer">🆕 New Match</button>
+              <button onclick="OnlineGames.exitAfterResult()" style="background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:9px 18px;font-size:.82rem;font-weight:700;cursor:pointer">← Leave</button>
             </div>
           </div>
+        </div>
+
+        <!-- Rematch invite bar — shown to the opponent if the other player requests a rematch -->
+        <div class="hidden" id="og-rematch-invite" style="position:fixed;left:14px;right:14px;bottom:90px;z-index:250;background:#0f2d5e;border:1.5px solid #1a56db;border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:10px;box-shadow:0 8px 24px rgba(0,0,0,.5)">
+          <span style="flex:1;font-size:.8rem;font-weight:700;color:#fff" id="og-rematch-text">Rematch invite</span>
+          <button id="og-rematch-accept" style="background:#1a56db;color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:.78rem;font-weight:700;cursor:pointer">Accept</button>
+          <button id="og-rematch-ignore" style="background:rgba(255,255,255,.1);color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:.78rem;cursor:pointer">✕</button>
         </div>
 
       </div>
@@ -1272,6 +1337,7 @@
 <script src="js/typing.js"></script>
 <script src="js/chat.js"></script>
 <script src="js/profile.js"></script>
+<script src="js/social.js"></script>
 <script src="js/games.js"></script>
 </body>
 </html>
