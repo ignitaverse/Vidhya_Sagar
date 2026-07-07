@@ -194,6 +194,53 @@
 @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   TYPING — PASSAGES GROUPED BY DIFFICULTY
+   Desktop: 3 boxes side-by-side (Easy / Normal / Hard).
+   Mobile: boxes stack vertically. Each box scrolls independently.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.passages-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+@media (max-width: 768px) {
+  .passages-list { grid-template-columns: 1fr; }
+}
+.passage-box {
+  display: flex;
+  flex-direction: column;
+  background: rgba(255,255,255,.03);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  min-width: 0;
+}
+.passage-box-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px;
+  font-weight: 800; font-size: .82rem;
+  border-bottom: 1.5px solid var(--border);
+  flex-shrink: 0;
+}
+.passage-box-sub { font-weight: 600; font-size: .68rem; opacity: .7; margin-left: 4px; }
+.passage-box-count {
+  background: rgba(255,255,255,.08); border-radius: 999px;
+  min-width: 22px; height: 22px; padding: 0 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .72rem; font-weight: 800;
+}
+.passage-box-easy   .passage-box-head { color: #34d399; background: rgba(52,211,153,.08); }
+.passage-box-normal .passage-box-head { color: #fbbf24; background: rgba(251,191,36,.08); }
+.passage-box-hard   .passage-box-head { color: #fb7185; background: rgba(251,113,133,.08); }
+.passage-box-body {
+  padding: 10px;
+  overflow-y: auto;
+  max-height: 380px;
+}
+.passage-box-body .passage-card-v2:last-child { margin-bottom: 0 !important; }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    CHAT / DM INPUT — defensive resilience
    Belt-and-suspenders so the message box can never end up invisible,
    zero-height, or uneditable regardless of what else is on screen.
