@@ -195,14 +195,13 @@ const TypingModule = (() => {
     if (!list) return;
     list.innerHTML = '<div class="vs-loading-text">Loading passages…</div>';
 
+    let passages = [];
     try {
       const sb = _getSupabase();
-      let passages = [];
-
       if (sb) {
         const { data, error } = await sb
           .from('passages')
-          .select('id, title, text, language, word_count')
+          .select('id, title, text, language, word_count, difficulty')
           .eq('exam_id', examId)
           .order('created_at');
         if (error) throw new Error(error.message);
@@ -210,51 +209,75 @@ const TypingModule = (() => {
           id: p.id, title: p.title||'Passage', text: p.text,
           language: p.language||'english',
           wordCount: p.word_count || p.text.trim().split(/\s+/).length,
+          difficulty: _normDifficulty(p.difficulty),
           examId
         }));
       } else {
         passages = _offlinePassages(examId);
       }
-
-      if (countPill) countPill.textContent = passages.length + ' passages';
-
-      if (!passages.length) {
-        list.innerHTML = '<div class="vs-empty"><span class="ve-icon">📄</span>No passages yet</div>';
-        return;
-      }
-
-      list.innerHTML = passages.map((p, i) => `
-        <div class="passage-card-v2" onclick="TypingModule.startFromPassage('${JSON.stringify({...p,text:''}).replace(/'/g,"&#39;")}','${p.id}')"
-          style="background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:13px 14px;margin-bottom:10px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:12px">
-          <div style="width:36px;height:36px;border-radius:10px;background:rgba(26,86,219,.12);border:1.5px solid rgba(26,86,219,.2);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.85rem;color:#3b82f6;flex-shrink:0">${i+1}</div>
-          <div style="flex:1;min-width:0">
-            <div style="font-weight:700;font-size:.86rem;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_esc(p.title||'Passage '+(i+1))}</div>
-            <div style="display:flex;gap:8px;font-size:.7rem;color:var(--text3)">
-              <span>📝 ${p.wordCount} words</span>
-              <span>${p.language==='hindi'?'📖 Hindi':'🔤 English'}</span>
-            </div>
-          </div>
-          <span style="color:#3b82f6;font-size:.85rem;font-weight:700">▶</span>
-        </div>`).join('');
-
-      // Store passages for direct access
-      window._currentPassages = passages;
-
     } catch(e) {
-      const ps = _offlinePassages(examId);
-      window._currentPassages = ps;
-      if (countPill) countPill.textContent = ps.length + ' passages';
-      list.innerHTML = ps.map((p, i) => `
-        <div class="passage-card-v2" onclick="TypingModule._startWithText('${p.id}')"
-          style="background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:13px 14px;margin-bottom:10px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:12px">
-          <div style="width:36px;height:36px;border-radius:10px;background:rgba(26,86,219,.12);border:1.5px solid rgba(26,86,219,.2);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.85rem;color:#3b82f6;flex-shrink:0">${i+1}</div>
-          <div style="flex:1;min-width:0">
-            <div style="font-weight:700;font-size:.86rem;margin-bottom:3px">${_esc(p.title)}</div>
-            <div style="font-size:.7rem;color:var(--text3)">📝 ${p.wordCount} words · ${p.language==='hindi'?'Hindi':'English'}</div>
-          </div>
-          <span style="color:#3b82f6;font-size:.85rem;font-weight:700">▶</span>
-        </div>`).join('');
+      passages = _offlinePassages(examId);
     }
+
+    window._currentPassages = passages;
+    if (countPill) countPill.textContent = passages.length + ' passages';
+
+    if (!passages.length) {
+      list.innerHTML = '<div class="vs-empty"><span class="ve-icon">📄</span>No passages yet</div>';
+      return;
+    }
+
+    _renderPassageBoxes(list, passages);
+  }
+
+  /* Any unrecognised/missing difficulty value falls back to 'normal' so older
+     passages (added before this field existed) still show up somewhere. */
+  function _normDifficulty(d) {
+    const v = String(d||'').toLowerCase().trim();
+    return ['easy','normal','hard'].includes(v) ? v : 'normal';
+  }
+
+  /* Renders passages grouped into 3 side-by-side (desktop) / stacked (mobile)
+     boxes by difficulty. Each box scrolls independently once it has more
+     passages than fit — new Supabase rows just show up in the right box
+     next time this screen opens, no other change needed. */
+  function _renderPassageBoxes(list, passages) {
+    const levels = [
+      { key:'easy',   label:'🟢 Easy',   sub:'आसान'   },
+      { key:'normal', label:'🟡 Normal', sub:'सामान्य' },
+      { key:'hard',   label:'🔴 Hard',   sub:'कठिन'    },
+    ];
+    list.innerHTML = levels.map(lvl => {
+      const items = passages.filter(p => p.difficulty === lvl.key);
+      return `
+        <div class="passage-box passage-box-${lvl.key}">
+          <div class="passage-box-head">
+            <span>${lvl.label} <span class="passage-box-sub">${lvl.sub}</span></span>
+            <span class="passage-box-count">${items.length}</span>
+          </div>
+          <div class="passage-box-body">
+            ${items.length
+              ? items.map((p,i) => _passageCardHtml(p,i)).join('')
+              : '<div class="vs-empty" style="padding:22px 8px;font-size:.76rem"><span class="ve-icon" style="font-size:1.5rem">📄</span>अभी कोई passage नहीं</div>'}
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function _passageCardHtml(p, i) {
+    return `
+      <div class="passage-card-v2" onclick="TypingModule._startWithText('${p.id}')"
+        style="background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:13px 14px;margin-bottom:10px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:12px">
+        <div style="width:36px;height:36px;border-radius:10px;background:rgba(26,86,219,.12);border:1.5px solid rgba(26,86,219,.2);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.85rem;color:#3b82f6;flex-shrink:0">${i+1}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:.86rem;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_esc(p.title||'Passage '+(i+1))}</div>
+          <div style="display:flex;gap:8px;font-size:.7rem;color:var(--text3)">
+            <span>📝 ${p.wordCount} words</span>
+            <span>${p.language==='hindi'?'📖 Hindi':'🔤 English'}</span>
+          </div>
+        </div>
+        <span style="color:#3b82f6;font-size:.85rem;font-weight:700">▶</span>
+      </div>`;
   }
 
   /* Offline passages fallback */
@@ -272,11 +295,13 @@ const TypingModule = (() => {
     };
 
     const lang = _currentExam?.languages?.includes('hindi') ? 'hindi' : 'english';
+    const levels = ['easy','normal','hard'];
     return (texts[lang] || texts.english).map((t, i) => ({
       id: `offline-${examId}-${i}`,
       title: t.title,
       text: t.text,
       language: lang,
+      difficulty: levels[i % levels.length],
       wordCount: t.text.trim().split(/\s+/).length,
       examId
     }));
