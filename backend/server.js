@@ -378,6 +378,7 @@ app.use('/api/typing',  require('./routes/typing'));
 app.use('/api/game',    require('./routes/game'));
 app.use('/api/users',   require('./routes/users'));
 app.use('/api/messages',require('./routes/messages'));
+app.use('/api/player',  require('./routes/player'));
 
 // ══════════════════════════════════════════
 // MONGODB
