@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="css/style_additions.css">
 <link rel="stylesheet" href="css/style_typing_upgrade.css">
 <link rel="stylesheet" href="css/style_social.css">
+<link rel="stylesheet" href="css/style_player.css">
 </head>
 <body>
 
@@ -346,8 +347,33 @@
     </div>
 
     <!-- ══════════════════════════════════════════
-         SUB-SCREENS
+         PLAYER TAB (Watch Online - clevra_bot se)
     ══════════════════════════════════════════ -->
+    <div class="tab-screen" id="screen-player">
+      <div class="games-hero"><h2>🎬 Player</h2><p>Movies aur shows seedhe yahin dekho</p></div>
+      <p class="pl-policy-note">🎁 Pehla video bilkul free (bina login) — uske baad free login karke dekhte raho।</p>
+
+      <div class="pl-searchbar">
+        <input type="text" id="pl-search-input" placeholder="🔍 Naam se dhoondo..." autocomplete="off">
+      </div>
+
+      <div id="pl-cooldown-banner" class="pl-cooldown-banner hidden"></div>
+
+      <div id="pl-grid" class="pl-grid">
+        <div class="vs-loading-text">Load हो रहा है…</div>
+      </div>
+    </div>
+
+    <!-- PLAYER MODAL (video) -->
+    <div class="modal-ov hidden" id="pl-modal">
+      <div class="pl-modal-box">
+        <button class="pl-modal-close" onclick="PlayerModule.closePlayer()">✕</button>
+        <div id="pl-video-wrap">
+          <video id="pl-video" controls playsinline controlsList="nodownload"></video>
+        </div>
+        <div id="pl-video-title" class="pl-video-title"></div>
+      </div>
+    </div>
 
     <!-- PROFILE PANEL -->
     <div class="sub-screen" id="screen-profile-panel">
@@ -1224,6 +1250,9 @@
     <button class="nav-tab" data-tab="games" onclick="switchTab('games')">
       <span class="ni">🎮</span><span>Games</span>
     </button>
+    <button class="nav-tab" data-tab="player" onclick="switchTab('player')">
+      <span class="ni">🎬</span><span>Player</span>
+    </button>
   </nav>
 
 </div><!-- /app -->
@@ -1339,5 +1368,6 @@
 <script src="js/profile.js"></script>
 <script src="js/social.js"></script>
 <script src="js/games.js"></script>
+<script src="js/player.js"></script>
 </body>
 </html>
