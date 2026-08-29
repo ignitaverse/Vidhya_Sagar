@@ -7,6 +7,9 @@ const VS_CONFIG = {
   /* ── Backend API ── */
   API: 'https://vidhya-sagar.onrender.com',
 
+  /* ── Watch Online (Player tab) - clevra_bot ka /api/catalog + /api/web-watch ── */
+  WATCH_API: 'https://clevra-bot.onrender.com',
+
   /* ── Supabase (Typing Passages) ──
      Supabase dashboard → Settings → API */
   SUPABASE_URL:  'https://YOUR_PROJECT.supabase.co',

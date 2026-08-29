@@ -67,6 +67,7 @@ function switchTab(tab) {
   if (btn) btn.classList.add('active');
   if (tab === 'quiz' && !window._qLoaded) { window._qLoaded = true; QuizModule.loadSubjects(); }
   if (tab === 'typing' && !window._tLoaded) { window._tLoaded = true; TypingModule.loadExams(); }
+  if (tab === 'player' && !window._plLoaded) { window._plLoaded = true; PlayerModule.loadCatalog(); }
   history.pushState({ tab, type: 'tab' }, '', `#${tab}`);
   // Futuristic nav ripple
   if (btn) {
