@@ -55,9 +55,12 @@ const PlayerModule = (() => {
       _items = data.items || [];
       _renderGrid();
     } catch (e) {
-      console.warn('[Player] catalog load failed:', e.message);
+      const detail = (e && e.message) ? e.message : String(e);
+      console.error('[Player] catalog load failed - actual error:', e);
       if (grid) {
-        grid.innerHTML = '<div class="pl-empty">⚠️ Catalog load nahi ho paya। Thodi der baad try karein।</div>';
+        grid.innerHTML =
+          '<div class="pl-empty">⚠️ Catalog load nahi ho paya।<br>' +
+          '<small style="opacity:.65;word-break:break-all">Technical: ' + _esc(detail) + '</small></div>';
       }
     } finally {
       _loading = false;
@@ -176,6 +179,15 @@ const PlayerModule = (() => {
     banner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
+  /* ── Deep-link se aaya token (Telegram ke Watch Online button se) -
+     ye token bot ki taraf se already force-sub/rate-limit check karke
+     bana hai, isliye yahan koi anonymous/login cooldown check nahi -
+     seedha player khol dete hain. ── */
+  function openDirectToken(token) {
+    if (!token) return;
+    _openPlayer(_api('/stream/' + token), '🎬 Video');
+  }
+
   /* ── Video modal ── */
   function _openPlayer(streamUrl, title) {
     const modal = document.getElementById('pl-modal');
@@ -212,5 +224,5 @@ const PlayerModule = (() => {
     _searchTimer = setTimeout(() => loadCatalog(val), 350);
   });
 
-  return { loadCatalog, playTitle, closePlayer };
+  return { loadCatalog, playTitle, closePlayer, openDirectToken };
 })();

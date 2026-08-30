@@ -626,6 +626,15 @@ async function init() {
   history.replaceState({ tab: 'home', type: 'tab' }, '', '#home');
   await new Promise(r => setTimeout(r, 1100));
   hideLoader();
+
+  // Telegram ke "Watch Online" button se ab seedha yahan ?watch=<token> ke
+  // saath aata hai (dekho clevra_bot -> plugins/processor.py) - Player tab
+  // kholke turant wahi video chala dete hain, catalog browse kiye bina.
+  const _watchToken = new URLSearchParams(window.location.search).get('watch');
+  if (_watchToken && window.PlayerModule) {
+    switchTab('player');
+    PlayerModule.openDirectToken(_watchToken);
+  }
 }
 
 document.addEventListener('DOMContentLoaded', init);
