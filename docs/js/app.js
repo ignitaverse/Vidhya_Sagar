@@ -1,5 +1,16 @@
 /* VidyaSagar v5 — app.js FUTURISTIC UPGRADE */
 'use strict';
+
+// FIX: Telegram ke "Watch Online" se ?watch=<token> ke saath aane wala deep
+// link - isse SABSE PEHLE, script load hote hi capture karte hain (init()
+// ke end tak WAIT nahi karte). Pehle ye init() ke bilkul end mein padha
+// jaata tha, jab tak wahan pahunchte-pahunchte (QuizModule.init(),
+// ChatModule.init(), history.replaceState(), waghera) beech mein URL ka
+// query-string kho jaata tha - isliye Player tab tak kabhi pahunchta hi
+// nahi tha, seedha Home reh jaata tha. Ab is line ke chalte, baad mein
+// URL ke saath kuch bhi ho, humare paas token pehle se surakshit hai.
+const _deepLinkWatchToken = new URLSearchParams(window.location.search).get('watch');
+
 let token    = localStorage.getItem('vs_token') || null;
 let userData = JSON.parse(localStorage.getItem('vs_user') || 'null');
 
@@ -627,13 +638,12 @@ async function init() {
   await new Promise(r => setTimeout(r, 1100));
   hideLoader();
 
-  // Telegram ke "Watch Online" button se ab seedha yahan ?watch=<token> ke
-  // saath aata hai (dekho clevra_bot -> plugins/processor.py) - Player tab
-  // kholke turant wahi video chala dete hain, catalog browse kiye bina.
-  const _watchToken = new URLSearchParams(window.location.search).get('watch');
-  if (_watchToken && window.PlayerModule) {
-    switchTab('player');
-    PlayerModule.openDirectToken(_watchToken);
+  if (_deepLinkWatchToken) {
+    console.log('[Player] deep-link watch token mila:', _deepLinkWatchToken, '| PlayerModule ready:', !!window.PlayerModule);
+    if (window.PlayerModule) {
+      switchTab('player');
+      PlayerModule.openDirectToken(_deepLinkWatchToken);
+    }
   }
 }
 

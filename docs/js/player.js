@@ -189,12 +189,32 @@ const PlayerModule = (() => {
   }
 
   /* ── Video modal ── */
+  const _MEDIA_ERROR_TEXT = {
+    1: 'MEDIA_ERR_ABORTED - load beech mein rok diya gaya',
+    2: 'MEDIA_ERR_NETWORK - network/stream fail hui (URL, CORS, ya server error ho sakta hai)',
+    3: 'MEDIA_ERR_DECODE - video decode nahi ho paya (corrupt/unsupported encoding)',
+    4: 'MEDIA_ERR_SRC_NOT_SUPPORTED - is URL/format ko browser support nahi karta (galat URL ho sakta hai)',
+  };
+
   function _openPlayer(streamUrl, title) {
     const modal = document.getElementById('pl-modal');
     const video = document.getElementById('pl-video');
     const titleEl = document.getElementById('pl-video-title');
+    const errEl = document.getElementById('pl-video-error');
     if (!modal || !video) return;
     if (titleEl) titleEl.textContent = title;
+    if (errEl) { errEl.classList.add('hidden'); errEl.textContent = ''; }
+
+    video.onerror = () => {
+      const err = video.error;
+      const detail = err ? (_MEDIA_ERROR_TEXT[err.code] || `Unknown error code ${err.code}`) : 'Unknown error';
+      console.error('[Player] video playback error:', err, '| src:', streamUrl);
+      if (errEl) {
+        errEl.textContent = '⚠️ Video load nahi ho paya - ' + detail;
+        errEl.classList.remove('hidden');
+      }
+    };
+
     video.src = streamUrl;
     modal.classList.remove('hidden');
     video.play().catch(() => { /* autoplay block ho sakta hai - controls se chala sakte hain */ });
