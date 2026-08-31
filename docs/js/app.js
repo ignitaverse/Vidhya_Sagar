@@ -55,6 +55,29 @@ function showToast(msg, type = 'info') {
   t._t = setTimeout(() => t.classList.add('hidden'), 3400);
 }
 
+/* ── Global error safety-net: koi bhi UNEXPECTED JS error ya unhandled
+   promise rejection, kahin bhi (kisi bhi module mein), ab silent nahi
+   rehta - turant ek toast dikh jaata hai. Har alag error apni ek baar
+   dikhta hai (2 second ke andar wahi repeat na ho, spam se bachne ke
+   liye), console mein poora detail hamesha rehta hai. ── */
+let _lastGlobalErrorAt = 0;
+function _reportGlobalError(msg) {
+  const now = Date.now();
+  if (now - _lastGlobalErrorAt < 2000) return;
+  _lastGlobalErrorAt = now;
+  showToast('Kuch galat hua: ' + msg, 'error');
+}
+window.addEventListener('error', (e) => {
+  console.error('[Global Error]', e.error || e.message, e);
+  _reportGlobalError(e.message || 'Unknown script error');
+});
+window.addEventListener('unhandledrejection', (e) => {
+  const reason = e.reason;
+  const msg = (reason && reason.message) ? reason.message : String(reason);
+  console.error('[Unhandled Promise Rejection]', reason);
+  _reportGlobalError(msg);
+});
+
 /* ── Loader ── */
 function hideLoader() {
   document.getElementById('vs-loading').classList.add('out');
@@ -562,7 +585,7 @@ function bindEvents() {
             showLastSeen: document.getElementById('tog-lastseen')?.checked
           })
         });
-      } catch (e) { }
+      } catch (e) { console.warn('[Privacy toggle save failed]', e); }
     });
   });
 }
@@ -631,7 +654,7 @@ async function init() {
       const u = (d.notifications || []).filter(n => !readIds.includes(String(n._id))).length;
       const b = document.getElementById('notif-badge');
       if (b && u > 0) { b.textContent = u; b.classList.remove('hidden'); }
-    } catch (e) { }
+    } catch (e) { console.warn('[Notification badge update failed]', e); }
   }
 
   history.replaceState({ tab: 'home', type: 'tab' }, '', '#home');

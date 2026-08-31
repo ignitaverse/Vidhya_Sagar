@@ -35,7 +35,15 @@ const PlayerModule = (() => {
   }
 
   function _api(path) {
-    const base = (window.VS_CONFIG && VS_CONFIG.WATCH_API) ? VS_CONFIG.WATCH_API : '';
+    // FIX (asli root cause): config.js mein `const VS_CONFIG` hai - top-level
+    // const/let KABHI window ka property nahi banta, isliye `window.VS_CONFIG`
+    // hamesha undefined tha, chahe VS_CONFIG khud available ho. Isse har API
+    // call ka base HAMESHA '' ban jaata tha - matlab fetch VidyaSagar ke apne
+    // domain (ignitaverse.github.io) par jaati thi, clevra-bot par nahi, aur
+    // wahan se GitHub Pages ka apna 404 HTML page wapas aata tha (isiliye
+    // "Unexpected token '<', <!DOCTYPE" wali JSON-parse error). Ab `typeof`
+    // se check karte hain, jo bare identifier ko sahi dhoondh leta hai.
+    const base = (typeof VS_CONFIG !== 'undefined' && VS_CONFIG.WATCH_API) ? VS_CONFIG.WATCH_API : '';
     return base.replace(/\/$/, '') + path;
   }
 

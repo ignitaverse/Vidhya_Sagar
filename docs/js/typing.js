@@ -337,7 +337,7 @@ const TypingModule = (() => {
             return;
           }
         }
-      } catch(e) {}
+      } catch(e) { console.warn('[Typing resume-by-id failed]', e); }
       // Fallback offline
       const fallbacks = _offlinePassages(examId).filter(p => p.language === language);
       const p = fallbacks[0] || _offlinePassages(examId)[0];
@@ -356,7 +356,7 @@ const TypingModule = (() => {
         const full = passages.find(x => String(x.id) === String(parsed.id));
         if (full) { _initTest(full); return; }
       }
-    } catch(e) {}
+    } catch(e) { console.warn('[Typing resume-parsed failed]', e); }
   }
 
   /* Internal: called with passage ID when passage is already in window._currentPassages */
@@ -577,7 +577,13 @@ const TypingModule = (() => {
     _showResult({ netWpm, acc, errors: _errors, keystrokes: _keystrokes, elapsed, passed });
 
     // Save to backend
-    if (window.token && _currentPassage) {
+    // FIX: `token` app.js mein `let` se declare hota hai - let/const KABHI
+    // window ka property nahi banta, isliye `window.token` hamesha
+    // undefined tha, chahe user login ho ya na ho. Matlab logged-in users
+    // ka result YAHAN KABHI save hi nahi hota tha, aur neeche wala message
+    // bhi hamesha "Login karein" hi dikhata tha. Ab bare `token` use karte
+    // hain, jo shared script-scope se sahi value uthata hai.
+    if (token && _currentPassage) {
       apiFetch('/api/typing/save', {
         method: 'POST',
         body: JSON.stringify({
@@ -606,7 +612,7 @@ const TypingModule = (() => {
     _setTxt('tr-acc',  acc + '%');
     _setTxt('tr-err',  errors);
     _setTxt('tr-keys', keystrokes);
-    _setTxt('typing-save-msg', window.token ? 'Saving…' : 'Login करें to save results');
+    _setTxt('typing-save-msg', token ? 'Saving…' : 'Login करें to save results');
 
     // Verdict badge
     const badge = _el('tr-verdict-t');

@@ -306,7 +306,7 @@ const ProfileModule = (() => {
       const qEl = document.getElementById('pqs-quizzes');  if (qEl) qEl.textContent = qList.length;
       const tEl = document.getElementById('pqs-typing');    if (tEl) tEl.textContent = tList.length;
       const aEl = document.getElementById('pqs-accuracy'); if (aEl) aEl.textContent = tList.length ? avgAcc + '%' : '—';
-    } catch(e) {}
+    } catch(e) { console.warn('[Profile stats display failed]', e); }
   }
 
   async function saveInfo() {
