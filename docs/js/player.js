@@ -75,6 +75,15 @@ const PlayerModule = (() => {
     }
   }
 
+  function _formatDuration(totalSeconds) {
+    const s = Number(totalSeconds);
+    if (!s || s <= 0) return null;
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    if (h > 0) return `${h}h ${m}m`;
+    return `${m}m`;
+  }
+
   function _renderGrid() {
     const grid = document.getElementById('pl-grid');
     if (!grid) return;
@@ -85,16 +94,26 @@ const PlayerModule = (() => {
       grid.innerHTML = `<div class="pl-empty">${msg}</div>`;
       return;
     }
-    grid.innerHTML = _items.map(it => `
+    grid.innerHTML = _items.map(it => {
+      const dur = _formatDuration(it.duration_seconds);
+      const thumbSrc = it.thumb_id ? _api('/api/thumbnail?id=' + encodeURIComponent(it.thumb_id)) : null;
+      return `
       <div class="pl-card" data-title="${_esc(it.name)}">
-        <div class="pl-card-icon">🎬</div>
+        <div class="pl-card-thumb">
+          ${thumbSrc
+            ? `<img src="${_esc(thumbSrc)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'pl-card-icon',textContent:'🎬'}))">`
+            : `<div class="pl-card-icon">🎬</div>`}
+          ${dur ? `<span class="pl-card-duration">${_esc(dur)}</span>` : ''}
+        </div>
         <div class="pl-card-title">${_esc(it.name)}</div>
         <div class="pl-card-meta">
           ${it.year ? `<span class="pl-tag pl-tag-year">${_esc(it.year)}</span>` : ''}
           ${(it.qualities || []).slice(0, 2).map(q => `<span class="pl-tag pl-tag-q">${_esc(q)}</span>`).join('')}
         </div>
+        ${it.channel_title ? `<div class="pl-card-channel">📡 ${_esc(it.channel_title)}</div>` : ''}
       </div>
-    `).join('');
+    `;
+    }).join('');
   }
 
   /* ── Play (pehli baar anonymous, dusri baar se login zaroori) ── */
