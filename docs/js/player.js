@@ -223,6 +223,12 @@ const PlayerModule = (() => {
     4: 'MEDIA_ERR_SRC_NOT_SUPPORTED - is URL/format ko browser support nahi karta (galat URL ho sakta hai)',
   };
 
+  // Local (device se select ki gayi) file ka blob URL yahan track karte
+  // hain - closePlayer() par revoke karna zaroori hai warna memory leak
+  // hoti rehti hai (har naye file select par purana blob RAM mein reh
+  // jaata, tab band hone tak).
+  let _activeBlobUrl = null;
+
   function _openPlayer(streamUrl, title) {
     const modal = document.getElementById('pl-modal');
     const video = document.getElementById('pl-video');
@@ -247,6 +253,26 @@ const PlayerModule = (() => {
     video.play().catch(() => { /* autoplay block ho sakta hai - controls se chala sakte hain */ });
   }
 
+  /* ── Apne device se file select karke chalana (koi bot/API involved nahi -
+     bilkul local, browser hi file ko seedha read karke play karta hai) ── */
+  function _playLocalFile(file) {
+    if (!file) return;
+    if (!file.type || !file.type.startsWith('video/')) {
+      alert('Sirf video files chalayi ja sakti hain।');
+      return;
+    }
+    const banner = document.getElementById('pl-cooldown-banner');
+    if (banner) banner.classList.add('hidden');
+
+    // Purana blob (agar koi tha) revoke karke naya banate hain.
+    if (_activeBlobUrl) {
+      URL.revokeObjectURL(_activeBlobUrl);
+      _activeBlobUrl = null;
+    }
+    _activeBlobUrl = URL.createObjectURL(file);
+    _openPlayer(_activeBlobUrl, '📂 ' + file.name);
+  }
+
   function closePlayer() {
     const modal = document.getElementById('pl-modal');
     const video = document.getElementById('pl-video');
@@ -256,6 +282,10 @@ const PlayerModule = (() => {
       video.load();
     }
     if (modal) modal.classList.add('hidden');
+    if (_activeBlobUrl) {
+      URL.revokeObjectURL(_activeBlobUrl);
+      _activeBlobUrl = null;
+    }
   }
 
   /* ── Event delegation (grid + search box dono dynamically render hote hain) ── */
@@ -271,5 +301,17 @@ const PlayerModule = (() => {
     _searchTimer = setTimeout(() => loadCatalog(val), 350);
   });
 
-  return { loadCatalog, playTitle, closePlayer, openDirectToken };
+  document.addEventListener('click', (e) => {
+    if (e.target.id !== 'pl-local-file-btn') return;
+    document.getElementById('pl-local-file-input')?.click();
+  });
+
+  document.addEventListener('change', (e) => {
+    if (e.target.id !== 'pl-local-file-input') return;
+    const file = e.target.files && e.target.files[0];
+    _playLocalFile(file);
+    e.target.value = ''; // reset - taaki wahi file dobara select karne par bhi 'change' fire ho
+  });
+
+  return { loadCatalog, playTitle, closePlayer, openDirectToken, playLocalFile: _playLocalFile };
 })();
