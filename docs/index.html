@@ -372,12 +372,51 @@
     <!-- PLAYER MODAL (video) -->
     <div class="modal-ov hidden" id="pl-modal">
       <div class="pl-modal-box">
-        <button class="pl-modal-close" onclick="PlayerModule.closePlayer()">✕</button>
         <div id="pl-video-wrap">
-          <video id="pl-video" controls playsinline controlsList="nodownload"></video>
+          <video id="pl-video" playsinline webkit-playsinline preload="metadata"></video>
+
+          <div id="pl-video-loading" class="pl-video-loading hidden">
+            <div class="pl-spinner"></div>
+          </div>
           <div id="pl-video-error" class="pl-video-error hidden"></div>
+          <div id="pl-video-warning" class="pl-video-warning hidden"></div>
+
+          <!-- Custom (YouTube-style) controls - native browser/OS controls
+               jaan-bujh kar use nahi kiye (upar dekho `controls` attribute
+               hata diya), kyunki kai devices (jaise MIUI/Xiaomi ka WebView)
+               apna khud ka floating system player thop dete hain jo humari
+               styling / rotate / language jaisa kuch bhi support nahi karta. ── -->
+          <button type="button" id="pl-ctrl-center" class="pl-ctrl-center" aria-label="Play/Pause">▶</button>
+
+          <div id="pl-controls" class="pl-controls">
+            <input type="range" id="pl-ctrl-seek" class="pl-ctrl-seek" min="0" max="1000" value="0" step="1">
+            <div class="pl-ctrl-row">
+              <button type="button" id="pl-ctrl-playpause" class="pl-ctrl-btn" aria-label="Play/Pause">▶</button>
+              <span id="pl-ctrl-time" class="pl-ctrl-time">0:00 / 0:00</span>
+              <span class="pl-ctrl-spacer"></span>
+              <button type="button" id="pl-ctrl-lang" class="pl-ctrl-btn pl-ctrl-lang hidden" aria-label="Language">🌐</button>
+              <button type="button" id="pl-ctrl-cc" class="pl-ctrl-btn" aria-label="Captions">CC</button>
+              <button type="button" id="pl-ctrl-vol" class="pl-ctrl-btn" aria-label="Mute/Unmute">🔊</button>
+              <button type="button" id="pl-ctrl-rotate" class="pl-ctrl-btn" aria-label="Rotate">⟳</button>
+              <button type="button" id="pl-ctrl-fullscreen" class="pl-ctrl-btn" aria-label="Fullscreen">⛶</button>
+            </div>
+          </div>
+
+          <!-- Language / CC choose panels -->
+          <div id="pl-lang-panel" class="pl-pick-panel hidden"></div>
+          <div id="pl-cc-panel" class="pl-pick-panel hidden"></div>
+
+          <button class="pl-modal-close" onclick="PlayerModule.closePlayer()">✕</button>
         </div>
-        <div id="pl-video-title" class="pl-video-title"></div>
+        <div class="pl-video-footer">
+          <span class="pl-video-live-dot"></span>
+          <div id="pl-video-title" class="pl-video-title"></div>
+        </div>
+
+        <div id="pl-upnext" class="pl-upnext hidden">
+          <div class="pl-upnext-label">🎬 और वीडियो</div>
+          <div id="pl-upnext-row" class="pl-upnext-row"></div>
+        </div>
       </div>
     </div>
 
