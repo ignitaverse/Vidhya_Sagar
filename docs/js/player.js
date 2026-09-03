@@ -118,11 +118,15 @@ const PlayerModule = (() => {
 
   /* ── Play (pehli baar anonymous, dusri baar se login zaroori) ── */
   const FREE_WATCH_FLAG = 'vs_player_used_free_watch';
+  let _currentItem = null; // abhi khula hua catalog item (language/up-next ke liye)
 
-  async function playTitle(title) {
+  async function playTitle(title, opts) {
     if (!title) return;
+    opts = opts || {};
+    const language = opts.language || null;
     const banner = document.getElementById('pl-cooldown-banner');
     if (banner) banner.classList.add('hidden');
+    _currentItem = _items.find(it => it.name === title) || null;
 
     const usedFreeAlready = localStorage.getItem(FREE_WATCH_FLAG) === '1';
 
@@ -132,7 +136,7 @@ const PlayerModule = (() => {
         const res = await fetch(_api('/api/web-watch'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title: title, visitor_id: _getVisitorId() }),
+          body: JSON.stringify({ title: title, visitor_id: _getVisitorId(), language: language }),
         });
         const data = await res.json();
 
@@ -168,7 +172,7 @@ const PlayerModule = (() => {
       const res = await fetch((VS_CONFIG.API || '').replace(/\/$/, '') + '/api/player/watch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-        body: JSON.stringify({ title: title }),
+        body: JSON.stringify({ title: title, language: language }),
       });
       const data = await res.json();
 
@@ -212,6 +216,7 @@ const PlayerModule = (() => {
      seedha player khol dete hain. ── */
   function openDirectToken(token) {
     if (!token) return;
+    _currentItem = null; // deep-link ke paas catalog item info nahi hota (sirf token)
     _openPlayer(_api('/stream/' + token), '🎬 Video');
   }
 
@@ -223,34 +228,146 @@ const PlayerModule = (() => {
     4: 'MEDIA_ERR_SRC_NOT_SUPPORTED - is URL/format ko browser support nahi karta (galat URL ho sakta hai)',
   };
 
+  function _toast(msg, type) {
+    if (typeof showToast === 'function') showToast(msg, type || 'info');
+    else alert(msg);
+  }
+
+  function _formatTime(sec) {
+    sec = isFinite(sec) && sec > 0 ? sec : 0;
+    const h = Math.floor(sec / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    const s = Math.floor(sec % 60);
+    const mm = h > 0 ? String(m).padStart(2, '0') : String(m);
+    const ss = String(s).padStart(2, '0');
+    return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
+  }
+
   // Local (device se select ki gayi) file ka blob URL yahan track karte
   // hain - closePlayer() par revoke karna zaroori hai warna memory leak
   // hoti rehti hai (har naye file select par purana blob RAM mein reh
   // jaata, tab band hone tak).
   let _activeBlobUrl = null;
+  let _diagTimer = null;
+
+  // FEATURE: kabhi-kabhi video.onerror kabhi fire hi nahi hota - file
+  // "successfully" load ho jaati hai par ek track (video ya audio) us
+  // device/browser ke codec se decode hi nahi ho paata (jaise HEVC video
+  // jo purane Android WebView support nahi karte, par AAC audio chal
+  // jaata hai) - result: sirf awaaz, tasveer nahi (ya ulta). Ye koi
+  // MEDIA_ERROR nahi hai, isliye alag se detect karna padta hai.
+  function _hasAudioTrack(video) {
+    if (typeof video.mozHasAudio === 'boolean') return video.mozHasAudio;
+    if (typeof video.webkitAudioDecodedByteCount === 'number') return video.webkitAudioDecodedByteCount > 0;
+    if (video.audioTracks && typeof video.audioTracks.length === 'number') return video.audioTracks.length > 0;
+    return null; // is browser mein pata karne ka koi tareeka nahi hai
+  }
+
+  function _runDiagnostics(video, warnEl) {
+    clearTimeout(_diagTimer);
+    if (!warnEl) return;
+    warnEl.classList.add('hidden');
+    _diagTimer = setTimeout(() => {
+      if (video.paused || video.ended || video.readyState < 2) return;
+      const hasVideo = video.videoWidth > 0 && video.videoHeight > 0;
+      const hasAudio = _hasAudioTrack(video);
+      let msg = null;
+      if (!hasVideo) {
+        msg = '⚠️ Sirf awaaz chal rahi hai, tasveer nahi dikh rahi - is file ka video is device/browser ke codec se decode nahi ho pa raha. Koi doosra browser (Chrome) ya device try karo.';
+      } else if (hasAudio === false) {
+        msg = '⚠️ Sirf tasveer dikh rahi hai, awaaz nahi aa rahi - is file ka audio is device/browser ke codec se decode nahi ho pa raha.';
+      }
+      if (msg) { warnEl.textContent = msg; warnEl.classList.remove('hidden'); }
+    }, 2500);
+  }
 
   function _openPlayer(streamUrl, title) {
     const modal = document.getElementById('pl-modal');
     const video = document.getElementById('pl-video');
+    const wrap = document.getElementById('pl-video-wrap');
     const titleEl = document.getElementById('pl-video-title');
     const errEl = document.getElementById('pl-video-error');
+    const warnEl = document.getElementById('pl-video-warning');
+    const loadingEl = document.getElementById('pl-video-loading');
     if (!modal || !video) return;
     if (titleEl) titleEl.textContent = title;
     if (errEl) { errEl.classList.add('hidden'); errEl.textContent = ''; }
+    if (warnEl) { warnEl.classList.add('hidden'); warnEl.textContent = ''; }
+    if (loadingEl) loadingEl.classList.remove('hidden');
+    if (wrap) wrap.classList.remove('pl-rotated');
+    document.getElementById('pl-lang-panel')?.classList.add('hidden');
+    document.getElementById('pl-cc-panel')?.classList.add('hidden');
 
     video.onerror = () => {
       const err = video.error;
       const detail = err ? (_MEDIA_ERROR_TEXT[err.code] || `Unknown error code ${err.code}`) : 'Unknown error';
       console.error('[Player] video playback error:', err, '| src:', streamUrl);
+      if (loadingEl) loadingEl.classList.add('hidden');
       if (errEl) {
         errEl.textContent = '⚠️ Video load nahi ho paya - ' + detail;
         errEl.classList.remove('hidden');
       }
     };
+    // Pehla frame ready hote hi spinner hata dete hain - 'loadeddata' se
+    // pehle video area khaali/black dikhta tha, ab spinner user ko batata
+    // hai ki load ho raha hai.
+    video.onloadeddata = () => { if (loadingEl) loadingEl.classList.add('hidden'); };
+    video.onplaying = () => _runDiagnostics(video, warnEl);
 
     video.src = streamUrl;
     modal.classList.remove('hidden');
     video.play().catch(() => { /* autoplay block ho sakta hai - controls se chala sakte hain */ });
+
+    _updateLangButton(_currentItem);
+    _populateUpNext(title);
+  }
+
+  /* ── Language variants (agar isi title ki alag-alag language mein
+     multiple files upload hui hain to catalog API `languages: [...]`
+     bhejta hai) ── */
+  function _updateLangButton(item) {
+    const btn = document.getElementById('pl-ctrl-lang');
+    const panel = document.getElementById('pl-lang-panel');
+    if (!btn || !panel) return;
+    const langs = (item && Array.isArray(item.languages)) ? item.languages.filter(Boolean) : [];
+    if (langs.length > 1) {
+      btn.classList.remove('hidden');
+      panel.innerHTML = langs.map(l => `<div class="pl-pick-item" data-lang="${_esc(l)}">${_esc(l)}</div>`).join('');
+    } else {
+      btn.classList.add('hidden');
+      panel.classList.add('hidden');
+      panel.innerHTML = '';
+    }
+  }
+
+  /* ── "Aur videos" - already loaded catalog se strip banata hai, taaki
+     playing video band kiye bina koi doosra video choose kiya ja sake ── */
+  function _populateUpNext(excludeTitle) {
+    const box = document.getElementById('pl-upnext');
+    const row = document.getElementById('pl-upnext-row');
+    if (!box || !row) return;
+    if (!_items.length) {
+      // Deep-link se seedha khula ho sakta hai jab catalog abhi load hi
+      // nahi hua - background mein load karke phir se try karte hain.
+      box.classList.add('hidden');
+      if (!_loading) loadCatalog('').then(() => _populateUpNext(excludeTitle));
+      return;
+    }
+    const pick = _items.filter(it => it.name !== excludeTitle).slice(0, 20);
+    if (!pick.length) { box.classList.add('hidden'); row.innerHTML = ''; return; }
+    row.innerHTML = pick.map(it => {
+      const thumbSrc = it.thumb_id ? _api('/api/thumbnail?id=' + encodeURIComponent(it.thumb_id)) : null;
+      return `
+      <div class="pl-upnext-card" data-title="${_esc(it.name)}">
+        <div class="pl-upnext-thumb">
+          ${thumbSrc
+            ? `<img src="${_esc(thumbSrc)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{textContent:'🎬'}))">`
+            : '🎬'}
+        </div>
+        <div class="pl-upnext-title">${_esc(it.name)}</div>
+      </div>`;
+    }).join('');
+    box.classList.remove('hidden');
   }
 
   /* ── Apne device se file select karke chalana (koi bot/API involved nahi -
@@ -270,28 +387,169 @@ const PlayerModule = (() => {
       _activeBlobUrl = null;
     }
     _activeBlobUrl = URL.createObjectURL(file);
+    _currentItem = null; // local file ke liye koi language/up-next data nahi hai
     _openPlayer(_activeBlobUrl, '📂 ' + file.name);
+    document.getElementById('pl-upnext')?.classList.add('hidden');
   }
 
   function closePlayer() {
     const modal = document.getElementById('pl-modal');
     const video = document.getElementById('pl-video');
+    const wrap = document.getElementById('pl-video-wrap');
+    const loadingEl = document.getElementById('pl-video-loading');
+    clearTimeout(_diagTimer);
     if (video) {
       video.pause();
       video.removeAttribute('src');
       video.load();
     }
+    if (wrap) wrap.classList.remove('pl-rotated', 'pl-ctrls-visible');
     if (modal) modal.classList.add('hidden');
+    if (loadingEl) loadingEl.classList.add('hidden');
+    if (document.fullscreenElement) document.exitFullscreen?.();
     if (_activeBlobUrl) {
       URL.revokeObjectURL(_activeBlobUrl);
       _activeBlobUrl = null;
     }
   }
 
+  /* ── Custom (YouTube-style) control bar - native `controls` jaan-bujh
+     kar use nahi kiya, kyunki kai devices (jaise MIUI/Xiaomi WebView) apna
+     khud ka floating system player thop dete hain jo rotate/language/CC
+     jaisa kuch support nahi karta. Ye ek hi baar (module load par) wire
+     hota hai - DOM elements poori session mein wahi rehte hain. ── */
+  function _wireControls() {
+    const wrap = document.getElementById('pl-video-wrap');
+    const video = document.getElementById('pl-video');
+    if (!wrap || !video) return;
+
+    const seek = document.getElementById('pl-ctrl-seek');
+    const timeEl = document.getElementById('pl-ctrl-time');
+    const playBtn = document.getElementById('pl-ctrl-playpause');
+    const centerBtn = document.getElementById('pl-ctrl-center');
+    const volBtn = document.getElementById('pl-ctrl-vol');
+    const rotateBtn = document.getElementById('pl-ctrl-rotate');
+    const fsBtn = document.getElementById('pl-ctrl-fullscreen');
+    const ccBtn = document.getElementById('pl-ctrl-cc');
+    const langBtn = document.getElementById('pl-ctrl-lang');
+    const langPanel = document.getElementById('pl-lang-panel');
+    const ccPanel = document.getElementById('pl-cc-panel');
+
+    let _hideTimer = null;
+    let _scrubbing = false;
+
+    function showControls() {
+      wrap.classList.add('pl-ctrls-visible');
+      clearTimeout(_hideTimer);
+      if (!video.paused) _hideTimer = setTimeout(() => wrap.classList.remove('pl-ctrls-visible'), 3000);
+    }
+    function updatePlayIcon() {
+      const icon = video.paused ? '▶' : '⏸';
+      if (playBtn) playBtn.textContent = icon;
+      if (centerBtn) centerBtn.textContent = icon;
+    }
+
+    wrap.addEventListener('click', (e) => {
+      if (e.target.closest('.pl-controls, .pl-ctrl-center, .pl-pick-panel, .pl-modal-close')) return;
+      if (video.paused) video.play().catch(() => {}); else video.pause();
+      showControls();
+    });
+
+    video.addEventListener('play', () => { updatePlayIcon(); showControls(); });
+    video.addEventListener('pause', () => { updatePlayIcon(); showControls(); clearTimeout(_hideTimer); });
+    video.addEventListener('ended', () => { updatePlayIcon(); wrap.classList.add('pl-ctrls-visible'); });
+
+    [playBtn, centerBtn].forEach(btn => btn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (video.paused) video.play().catch(() => {}); else video.pause();
+      showControls();
+    }));
+
+    video.addEventListener('loadedmetadata', () => {
+      if (timeEl) timeEl.textContent = _formatTime(0) + ' / ' + _formatTime(video.duration || 0);
+    });
+    video.addEventListener('timeupdate', () => {
+      if (_scrubbing) return;
+      const dur = video.duration || 0;
+      if (seek) seek.value = dur ? String((video.currentTime / dur) * 1000) : '0';
+      if (timeEl) timeEl.textContent = _formatTime(video.currentTime) + ' / ' + _formatTime(dur);
+    });
+
+    seek?.addEventListener('input', () => {
+      _scrubbing = true;
+      const dur = video.duration || 0;
+      if (dur && timeEl) timeEl.textContent = _formatTime((seek.value / 1000) * dur) + ' / ' + _formatTime(dur);
+      showControls();
+    });
+    seek?.addEventListener('change', () => {
+      const dur = video.duration || 0;
+      if (dur) video.currentTime = (seek.value / 1000) * dur;
+      _scrubbing = false;
+    });
+
+    volBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      video.muted = !video.muted;
+      volBtn.textContent = video.muted ? '🔇' : '🔊';
+      showControls();
+    });
+
+    rotateBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      wrap.classList.toggle('pl-rotated');
+      showControls();
+    });
+
+    fsBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (document.fullscreenElement) {
+        document.exitFullscreen?.();
+      } else {
+        (wrap.requestFullscreen || wrap.webkitRequestFullscreen)?.call(wrap);
+        // Fullscreen ke andar hi landscape lock kaam karta hai (browser
+        // policy) - is baaki jagah try karne se sirf console error aata hai.
+        screen.orientation?.lock?.('landscape').catch(() => {});
+      }
+      showControls();
+    });
+    document.addEventListener('fullscreenchange', () => {
+      if (fsBtn) fsBtn.textContent = document.fullscreenElement ? '⤢' : '⛶';
+      if (!document.fullscreenElement) screen.orientation?.unlock?.();
+    });
+
+    ccBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const tracks = video.textTracks;
+      if (!tracks || tracks.length === 0) {
+        _toast('Is video ke liye abhi subtitles/captions available nahi hain।', 'info');
+        return;
+      }
+      const t = tracks[0];
+      const turningOn = t.mode !== 'showing';
+      t.mode = turningOn ? 'showing' : 'hidden';
+      ccBtn.classList.toggle('pl-cc-active', turningOn);
+    });
+
+    langBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      ccPanel?.classList.add('hidden');
+      langPanel?.classList.toggle('hidden');
+    });
+    langPanel?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const item = e.target.closest('.pl-pick-item');
+      if (!item || !_currentItem) return;
+      langPanel.classList.add('hidden');
+      playTitle(_currentItem.name, { language: item.dataset.lang });
+    });
+  }
+
   /* ── Event delegation (grid + search box dono dynamically render hote hain) ── */
   document.addEventListener('click', (e) => {
     const card = e.target.closest('.pl-card');
     if (card) playTitle(card.dataset.title);
+    const upnextCard = e.target.closest('.pl-upnext-card');
+    if (upnextCard) playTitle(upnextCard.dataset.title);
   });
 
   document.addEventListener('input', (e) => {
@@ -312,6 +570,8 @@ const PlayerModule = (() => {
     _playLocalFile(file);
     e.target.value = ''; // reset - taaki wahi file dobara select karne par bhi 'change' fire ho
   });
+
+  _wireControls();
 
   return { loadCatalog, playTitle, closePlayer, openDirectToken, playLocalFile: _playLocalFile };
 })();
