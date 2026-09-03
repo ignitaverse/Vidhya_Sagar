@@ -257,7 +257,8 @@ const ProfileModule = (() => {
     tile.innerHTML = `
       <div class="friend-tile-avatar">${_avatarHtml(f)}</div>
       <div class="friend-tile-name">${f.username ? '@' + f.username : f.name}</div>`;
-    tile.addEventListener('click', () => window.SocialModule?.openUserProfile(f.id));
+    // FIX: window.SocialModule bug - SocialModule top-level const hai.
+    tile.addEventListener('click', () => { if (typeof SocialModule !== 'undefined') SocialModule.openUserProfile(f.id); });
     return tile;
   }
 
@@ -278,7 +279,7 @@ const ProfileModule = (() => {
           <div class="fr-name">${r.from.name}</div>
           <button class="fr-accept">✓</button>
           <button class="fr-decline">✕</button>`;
-        row.querySelector('.fr-name').addEventListener('click', () => window.SocialModule?.openUserProfile(r.from.id));
+        row.querySelector('.fr-name').addEventListener('click', () => { if (typeof SocialModule !== 'undefined') SocialModule.openUserProfile(r.from.id); });
         row.querySelector('.fr-accept').addEventListener('click', () => _respondRequest(r.from.id, 'accept', row));
         row.querySelector('.fr-decline').addEventListener('click', () => _respondRequest(r.from.id, 'decline', row));
         box.appendChild(row);

@@ -127,7 +127,9 @@ function closeSubScreen(id) {
   if (i !== -1) _subStack.splice(i, 1);
   // Some screens run background polling that must stop no matter how the screen closes
   // (explicit back arrow, hardware/ESC back, or switching tabs) — not just their own button.
-  if (id === 'screen-dm-thread') window.SocialModule?.stopDmPolling?.();
+  // FIX: SocialModule bhi top-level `const` hai (window.SocialModule
+  // nahi banta) - PlayerModule waali hi wajah se, isliye typeof check.
+  if (id === 'screen-dm-thread' && typeof SocialModule !== 'undefined') SocialModule.stopDmPolling?.();
   if (id === 'screen-online-game') window.OnlineGames?.stopPolling?.();
 }
 
@@ -636,9 +638,10 @@ async function init() {
   GamesModule.init();
   SocialModule.init();
 
-  // FIX: bind typing submit button
+  // FIX: bind typing submit button (aur `window.TypingModule` bug fix -
+  // TypingModule bhi top-level const hai, window ka property nahi banta)
   document.getElementById('btn-typing-submit-main')?.addEventListener('click', () => {
-    if (window.TypingModule && typeof TypingModule.submitEarly === 'function') {
+    if (typeof TypingModule !== 'undefined' && typeof TypingModule.submitEarly === 'function') {
       TypingModule.submitEarly();
     }
   });
@@ -662,8 +665,17 @@ async function init() {
   hideLoader();
 
   if (_deepLinkWatchToken) {
-    console.log('[Player] deep-link watch token mila:', _deepLinkWatchToken, '| PlayerModule ready:', !!window.PlayerModule);
-    if (window.PlayerModule) {
+    // FIX (asli root cause #3): player.js mein `const PlayerModule = (() =>
+    // {...})()` top-level const hai - VS_CONFIG waali hi wajah se ye
+    // KABHI `window.PlayerModule` nahi banta, chahe player.js load ho
+    // chuka ho. Isliye `if (window.PlayerModule)` hamesha false aata
+    // tha aur deep-link redirect silently skip ho jaata tha - token
+    // sahi hone, files deploy hone, env var sahi hone ke baad bhi sirf
+    // Home page dikhti thi. Ab `typeof` se bare identifier check karte
+    // hain (jo same-page global scope se available hota hai), jaisa
+    // `_api()` mein VS_CONFIG ke liye pehle se kiya hua hai.
+    console.log('[Player] deep-link watch token mila:', _deepLinkWatchToken, '| PlayerModule ready:', typeof PlayerModule !== 'undefined');
+    if (typeof PlayerModule !== 'undefined') {
       switchTab('player');
       PlayerModule.openDirectToken(_deepLinkWatchToken);
     }
