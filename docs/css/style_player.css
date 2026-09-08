@@ -222,6 +222,9 @@
 }
 .pl-ctrl-btn:hover, .pl-ctrl-btn:active { opacity: 1; background: rgba(255,255,255,.12); }
 #pl-ctrl-cc.pl-cc-active { color: var(--blue3); font-weight: 900; }
+/* FEATURE (naya): speed button ("2.5x" jaisa text) baaki 30px-wide icon
+   buttons se chaudा hona chahiye, warna text clip ho jaata। */
+.pl-ctrl-speed { width: auto; min-width: 34px; padding: 0 6px; font-size: .78rem; font-weight: 700; }
 .pl-ctrl-time { color: #fff; font-size: .72rem; opacity: .9; white-space: nowrap; padding: 0 2px; }
 .pl-ctrl-spacer { flex: 1; }
 
@@ -239,6 +242,14 @@
 }
 .pl-pick-item:hover { background: rgba(59,130,246,.18); }
 .pl-pick-item.active { color: var(--blue3); font-weight: 800; }
+/* FEATURE (naya): CC panel ka "koi caption nahi" message - clickable nahi
+   dikhna chahiye, aur poora sentence hai isliye wrap hona chahiye (nowrap
+   se chhote mobile screen par overflow ho jaata). */
+.pl-pick-item.pl-pick-empty {
+  cursor: default; white-space: normal; max-width: 200px;
+  color: var(--text2); font-size: .76rem;
+}
+.pl-pick-item.pl-pick-empty:hover { background: none; }
 
 .pl-video-footer {
   display: flex; align-items: flex-start; gap: 9px;

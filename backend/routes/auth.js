@@ -22,7 +22,7 @@ router.post('/signup', async (req,res) => {
     const username = await User.generateUniqueUsername(name);
     const user = await User.create({ name,email,password,username });
     res.status(201).json({ success:true, token:genToken(user._id), user:userObj(user) });
-  } catch(e) { res.status(500).json({ success:false, message:e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 // LOGIN
@@ -36,13 +36,13 @@ router.post('/login', async (req,res) => {
     user.lastActive = new Date();
     await user.save({ validateBeforeSave:false });
     res.json({ success:true, token:genToken(user._id), user:userObj(user) });
-  } catch(e) { res.status(500).json({ success:false, message:e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 // ME
 router.get('/me', protect, async (req,res) => {
   try { res.json({ success:true, user:userObj(req.user) }); }
-  catch(e) { res.status(500).json({ success:false, message:e.message }); }
+  catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 // CHECK USERNAME AVAILABILITY
@@ -53,7 +53,7 @@ router.get('/check-username', async (req, res) => {
       return res.json({ success:true, available:false, message:'3-30 chars, letters/numbers/underscore only' });
     const exists = await User.findOne({ username: u }).select('_id').lean();
     res.json({ success:true, available: !exists });
-  } catch(e) { res.status(500).json({ success:false, message:e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 // UPDATE PROFILE
@@ -94,7 +94,7 @@ router.put('/profile', protect, async (req,res) => {
     if (avatar)                 user.avatar    = avatar;
     await user.save();
     res.json({ success:true, user:userObj(user) });
-  } catch(e) { res.status(500).json({ success:false, message:e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 // CHANGE PASSWORD
@@ -109,7 +109,7 @@ router.put('/password', protect, async (req,res) => {
     user.password = newPassword;
     await user.save();
     res.json({ success:true, message:'Password changed!' });
-  } catch(e) { res.status(500).json({ success:false, message:e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 // UPDATE PRIVACY SETTINGS
@@ -122,7 +122,7 @@ router.put('/privacy', protect, async (req,res) => {
     if (showLastSeen  !== undefined) user.showLastSeen  = showLastSeen;
     await user.save();
     res.json({ success:true, message:'Privacy updated' });
-  } catch(e) { res.status(500).json({ success:false, message:e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 // DEACTIVATE
@@ -131,7 +131,7 @@ router.put('/deactivate', protect, async (req,res) => {
     req.user.isDeactivated = true;
     await req.user.save({ validateBeforeSave:false });
     res.json({ success:true, message:'Account deactivated' });
-  } catch(e) { res.status(500).json({ success:false, message:e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 // DELETE ACCOUNT
@@ -148,7 +148,7 @@ router.delete('/account', protect, async (req,res) => {
       User2.findByIdAndDelete(uid)
     ]);
     res.json({ success:true, message:'Account deleted' });
-  } catch(e) { res.status(500).json({ success:false, message:e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 module.exports = router;

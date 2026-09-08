@@ -28,11 +28,14 @@ const PlayerModule = (() => {
     return id;
   }
 
-  function _esc(s) {
-    const d = document.createElement('div');
-    d.textContent = (s === null || s === undefined) ? '' : String(s);
-    return d.innerHTML;
-  }
+  // FIX: pehle DOM-based tha (div.textContent -> div.innerHTML), jo TEXT
+  // NODE serialization use karta hai - wo " character ko escape NAHI
+  // karta. Isi function ka result yahin file mein attribute ke andar bhi
+  // likha jaata hai (jaise data-title="${_esc(it.name)}") - agar kisi
+  // catalog item ke naam mein " ho, to wo attribute se bahar nikal ke
+  // arbitrary HTML inject kar sakta tha. Ab canonical, attribute-safe
+  // escapeHtml() par delegate (dekho js/shared.js).
+  function _esc(s) { return escapeHtml(s); }
 
   function _api(path) {
     // FIX (asli root cause): config.js mein `const VS_CONFIG` hai - top-level
@@ -119,6 +122,12 @@ const PlayerModule = (() => {
   /* ── Play (pehli baar anonymous, dusri baar se login zaroori) ── */
   const FREE_WATCH_FLAG = 'vs_player_used_free_watch';
   let _currentItem = null; // abhi khula hua catalog item (language/up-next ke liye)
+  // FEATURE (naya, language-switch fix ke liye zaroori): is session mein
+  // abhi jo video khula hai wo 'anon' (free-watch) ya 'member' (login+
+  // cooldown) raaste se aaya - dekho _switchLanguage() neeche, isse pata
+  // chalta hai ki language badalte waqt WAHI raasta dobara istemaal karna
+  // hai, poora gate (free-watch-flag / cooldown-check) dobara nahi.
+  let _lastWatchMode = null;
 
   async function playTitle(title, opts) {
     if (!title) return;
@@ -142,6 +151,7 @@ const PlayerModule = (() => {
 
         if (data.success) {
           localStorage.setItem(FREE_WATCH_FLAG, '1');
+          _lastWatchMode = 'anon';
           _openPlayer(_api(data.stream_url), title);
           return;
         }
@@ -177,6 +187,7 @@ const PlayerModule = (() => {
       const data = await res.json();
 
       if (data.success) {
+        _lastWatchMode = 'member';
         _openPlayer(_api(data.stream_url), title);
         return;
       }
@@ -208,6 +219,62 @@ const PlayerModule = (() => {
     }
     banner.classList.remove('hidden');
     banner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  // FIX (real bug): pehle language-panel se koi language chunte hi wapas
+  // playTitle() call hota tha - jo poora gate (FREE_WATCH_FLAG check,
+  // "pehla video free tha, login karo" wala alert) FIR SE chala deta tha,
+  // chahe user isi title ko ABHI-ABHI legitimately unlock kar chuka ho.
+  // Matlab: agar wo anonymous user apna EK free-watch pehle hi use kar
+  // chuka tha (isi video ko kholne mein), to sirf AUDIO LANGUAGE badalne
+  // par bhi "login karo" wala prompt aa jaata - confusing aur galat, kyuki
+  // ye naya video nahi hai. Ab language-switch usi WATCH-MODE ('anon' ya
+  // 'member', jo pehle se is title ko unlock kar chuka hai) ko seedha
+  // dobara istemaal karta hai, poora gate dobara nahi chalata.
+  async function _switchLanguage(lang) {
+    if (!_currentItem) return;
+    const title = _currentItem.name;
+
+    if (_lastWatchMode !== 'anon' && _lastWatchMode !== 'member') {
+      // Safety net - kabhi is state mein aana nahi chahiye (lang button
+      // sirf _currentItem set hone par hi dikhta hai, dekho
+      // _updateLangButton), lekin agar aa bhi jaaye to poore flow se
+      // (sahi gating ke saath) guzarna behtar hai chup-chaap fail hone se.
+      return playTitle(title, { language: lang });
+    }
+
+    try {
+      let data;
+      if (_lastWatchMode === 'member') {
+        if (typeof token === 'undefined' || !token) return playTitle(title, { language: lang });
+        const res = await fetch((VS_CONFIG.API || '').replace(/\/$/, '') + '/api/player/watch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ title: title, language: lang }),
+        });
+        data = await res.json();
+      } else {
+        const res = await fetch(_api('/api/web-watch'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: title, visitor_id: _getVisitorId(), language: lang }),
+        });
+        data = await res.json();
+      }
+
+      if (data.success) {
+        _openPlayer(_api(data.stream_url), title);
+        return;
+      }
+      if (data.reason === 'cooldown') {
+        _showCooldown(data.next_allowed_at);
+      } else {
+        alert(data.message || 'Is language mein video load nahi ho paayi।');
+      }
+    } catch (e) {
+      console.warn('[Player] language switch failed:', e.message);
+      alert('Language switch nahi ho paaya, dobara try karein।');
+    }
   }
 
   /* ── Deep-link se aaya token (Telegram ke Watch Online button se) -
@@ -297,6 +364,12 @@ const PlayerModule = (() => {
     if (wrap) wrap.classList.remove('pl-rotated');
     document.getElementById('pl-lang-panel')?.classList.add('hidden');
     document.getElementById('pl-cc-panel')?.classList.add('hidden');
+    document.getElementById('pl-speed-panel')?.classList.add('hidden');
+    document.getElementById('pl-ctrl-cc')?.classList.remove('pl-cc-active');
+    _applySpeed(1); // FEATURE (naya): har naya video 1x se shuru ho -
+    // playbackRate <video> element par KHUD persist hoti hai jab tak
+    // explicitly reset na karein, isliye pichhle video par 2x lagाya ho
+    // to naya video bhi chup-chaap 2x mein hi chalne lagta.
 
     video.onerror = () => {
       const err = video.error;
@@ -338,6 +411,66 @@ const PlayerModule = (() => {
       panel.classList.add('hidden');
       panel.innerHTML = '';
     }
+  }
+
+  /* ── FEATURE (naya): Playback speed - 1x/1.5x/2x/2.5x/3x (options khud
+     index.html mein #pl-speed-panel ke andar hain, kyunki ye list kabhi
+     badalti nahi) ── */
+  function _applySpeed(rate) {
+    const video = document.getElementById('pl-video');
+    const btn = document.getElementById('pl-ctrl-speed');
+    const panel = document.getElementById('pl-speed-panel');
+    if (video) video.playbackRate = rate;
+    if (btn) btn.textContent = rate + 'x'; // JS mein 1 -> "1", 1.5 -> "1.5" - trailing .0 nahi aata
+    if (panel) {
+      panel.querySelectorAll('.pl-pick-item').forEach(el => {
+        el.classList.toggle('active', Number(el.dataset.speed) === rate);
+      });
+    }
+  }
+
+  /* ── FEATURE (rebuilt): Captions/Subtitles ── pehle ye button sirf
+     video.textTracks[0] ko on/off karta tha (koi choice nahi, koi label
+     nahi). Ab poori list dikhate hain agar file ke andar embedded WebVTT/
+     TTML tracks hon.
+     ZAROORI LIMITATION (transparently note kar rahe hain): browsers
+     zyadatar Telegram-se-aayi MP4/MKV files ke andar muxed .srt/.ass
+     subtitles ko HTML5 <video> ke textTracks se EXPOSE nahi karte - ye
+     sirf tab kaam karta hai jab file mein WebVTT jaisa browser-native
+     format embed ho, jo bahut kam hota hai. Alag-alag language ki asli
+     subtitle FILES chunne ke liye backend (bot) ko har title ke saath
+     unke .srt/.vtt bhi catalog mein dena hoga - abhi wo data hi nahi
+     bhejta, isliye ye UI zyadatar "is video mein koi caption nahi hai"
+     hi dikhayegi, jab tak koi file khud hi browser-readable track na
+     rakhti ho. ── */
+  function _populateCcPanel(video, panel) {
+    if (!panel) return;
+    const tracks = video.textTracks;
+    const n = tracks ? tracks.length : 0;
+    if (!n) {
+      panel.innerHTML = '<div class="pl-pick-item pl-pick-empty">Is video mein koi caption/subtitle nahi hai</div>';
+      return;
+    }
+    let html = '<div class="pl-pick-item" data-cc="off">Off</div>';
+    for (let i = 0; i < n; i++) {
+      const label = tracks[i].label || tracks[i].language || `Track ${i + 1}`;
+      html += `<div class="pl-pick-item" data-cc="${i}">${_esc(label)}</div>`;
+    }
+    panel.innerHTML = html;
+    _syncCcActive(video, panel);
+  }
+
+  function _syncCcActive(video, panel) {
+    if (!panel) return;
+    const tracks = video.textTracks;
+    let activeIdx = -1;
+    for (let i = 0; i < (tracks ? tracks.length : 0); i++) {
+      if (tracks[i].mode === 'showing') { activeIdx = i; break; }
+    }
+    panel.querySelectorAll('.pl-pick-item[data-cc]').forEach(el => {
+      const v = el.dataset.cc;
+      el.classList.toggle('active', v === String(activeIdx) || (v === 'off' && activeIdx === -1));
+    });
   }
 
   /* ── "Aur videos" - already loaded catalog se strip banata hai, taaki
@@ -432,8 +565,14 @@ const PlayerModule = (() => {
     const fsBtn = document.getElementById('pl-ctrl-fullscreen');
     const ccBtn = document.getElementById('pl-ctrl-cc');
     const langBtn = document.getElementById('pl-ctrl-lang');
+    const speedBtn = document.getElementById('pl-ctrl-speed');
     const langPanel = document.getElementById('pl-lang-panel');
     const ccPanel = document.getElementById('pl-cc-panel');
+    const speedPanel = document.getElementById('pl-speed-panel');
+
+    function _closeOtherPanels(except) {
+      [langPanel, ccPanel, speedPanel].forEach(p => { if (p && p !== except) p.classList.add('hidden'); });
+    }
 
     let _hideTimer = null;
     let _scrubbing = false;
@@ -517,30 +656,63 @@ const PlayerModule = (() => {
       if (!document.fullscreenElement) screen.orientation?.unlock?.();
     });
 
+    // FEATURE (rebuilt): CC button ab ek panel kholta hai (jaise Language)
+    // jisme video ke ANDAR jitne bhi text-tracks embedded hon un sabki
+    // list dikhti hai (pehle sirf tracks[0] ko blindly on/off karta tha,
+    // koi choice ya label nahi tha). Dekho _populateCcPanel() ka comment
+    // upar - kab ye kaam karega uski limitation bhi wahin likhi hai.
     ccBtn?.addEventListener('click', (e) => {
       e.stopPropagation();
+      _closeOtherPanels(ccPanel);
+      if (!ccPanel) return;
+      if (ccPanel.classList.contains('hidden')) _populateCcPanel(video, ccPanel);
+      ccPanel.classList.toggle('hidden');
+      showControls();
+    });
+    ccPanel?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const item = e.target.closest('.pl-pick-item');
+      if (!item || item.classList.contains('pl-pick-empty')) return;
       const tracks = video.textTracks;
-      if (!tracks || tracks.length === 0) {
-        _toast('Is video ke liye abhi subtitles/captions available nahi hain।', 'info');
-        return;
+      for (let i = 0; i < (tracks ? tracks.length : 0); i++) tracks[i].mode = 'disabled';
+      const val = item.dataset.cc;
+      if (val !== 'off' && tracks && tracks[Number(val)]) {
+        tracks[Number(val)].mode = 'showing';
+        ccBtn?.classList.add('pl-cc-active');
+      } else {
+        ccBtn?.classList.remove('pl-cc-active');
       }
-      const t = tracks[0];
-      const turningOn = t.mode !== 'showing';
-      t.mode = turningOn ? 'showing' : 'hidden';
-      ccBtn.classList.toggle('pl-cc-active', turningOn);
+      _syncCcActive(video, ccPanel);
+      ccPanel.classList.add('hidden');
     });
 
     langBtn?.addEventListener('click', (e) => {
       e.stopPropagation();
-      ccPanel?.classList.add('hidden');
+      _closeOtherPanels(langPanel);
       langPanel?.classList.toggle('hidden');
+      showControls();
     });
     langPanel?.addEventListener('click', (e) => {
       e.stopPropagation();
       const item = e.target.closest('.pl-pick-item');
       if (!item || !_currentItem) return;
       langPanel.classList.add('hidden');
-      playTitle(_currentItem.name, { language: item.dataset.lang });
+      _switchLanguage(item.dataset.lang);
+    });
+
+    // FEATURE (naya): Playback speed - 1x / 1.5x / 2x / 2.5x / 3x
+    speedBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      _closeOtherPanels(speedPanel);
+      speedPanel?.classList.toggle('hidden');
+      showControls();
+    });
+    speedPanel?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const item = e.target.closest('.pl-pick-item');
+      if (!item) return;
+      _applySpeed(Number(item.dataset.speed));
+      speedPanel.classList.add('hidden');
     });
   }
 

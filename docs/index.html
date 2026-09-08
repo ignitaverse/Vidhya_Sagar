@@ -396,15 +396,23 @@
               <span class="pl-ctrl-spacer"></span>
               <button type="button" id="pl-ctrl-lang" class="pl-ctrl-btn pl-ctrl-lang hidden" aria-label="Language">🌐</button>
               <button type="button" id="pl-ctrl-cc" class="pl-ctrl-btn" aria-label="Captions">CC</button>
+              <button type="button" id="pl-ctrl-speed" class="pl-ctrl-btn pl-ctrl-speed" aria-label="Playback speed">1x</button>
               <button type="button" id="pl-ctrl-vol" class="pl-ctrl-btn" aria-label="Mute/Unmute">🔊</button>
               <button type="button" id="pl-ctrl-rotate" class="pl-ctrl-btn" aria-label="Rotate">⟳</button>
               <button type="button" id="pl-ctrl-fullscreen" class="pl-ctrl-btn" aria-label="Fullscreen">⛶</button>
             </div>
           </div>
 
-          <!-- Language / CC choose panels -->
+          <!-- Language / CC / Speed choose panels -->
           <div id="pl-lang-panel" class="pl-pick-panel hidden"></div>
           <div id="pl-cc-panel" class="pl-pick-panel hidden"></div>
+          <div id="pl-speed-panel" class="pl-pick-panel hidden">
+            <div class="pl-pick-item" data-speed="1">1x</div>
+            <div class="pl-pick-item" data-speed="1.5">1.5x</div>
+            <div class="pl-pick-item" data-speed="2">2x</div>
+            <div class="pl-pick-item" data-speed="2.5">2.5x</div>
+            <div class="pl-pick-item" data-speed="3">3x</div>
+          </div>
 
           <button class="pl-modal-close" onclick="PlayerModule.closePlayer()">✕</button>
         </div>
@@ -1405,6 +1413,7 @@
 <!-- Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <!-- App Scripts -->
+<script src="js/shared.js?v=20260901"></script>
 <script src="js/config.js?v=20260901"></script>
 <script src="js/app.js?v=20260901"></script>
 <script src="js/quiz.js?v=20260901"></script>

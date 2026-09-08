@@ -91,7 +91,7 @@ app.get('/quiz/states', async (req, res) => {
       opts_en: r.options_en ? (typeof r.options_en === 'string' ? JSON.parse(r.options_en) : r.options_en) : undefined,
     }));
     res.json({ success: true, data: questions, remaining: total - questions.length });
-  } catch(e) { res.status(500).json({ success: false, message: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 app.get('/quiz/states/categories', async (req, res) => {
@@ -101,7 +101,7 @@ app.get('/quiz/states/categories', async (req, res) => {
       args: []
     });
     res.json({ success: true, categories: r.rows.map(x => x.category) });
-  } catch(e) { res.status(500).json({ success: false, message: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 app.get('/quiz/:subject/categories', async (req, res) => {
@@ -113,7 +113,7 @@ app.get('/quiz/:subject/categories', async (req, res) => {
       args: []
     });
     res.json({ success: true, categories: r.rows.map(x => x.category) });
-  } catch(e) { res.status(500).json({ success: false, message: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 app.get('/quiz/:subject', async (req, res) => {
@@ -147,7 +147,7 @@ app.get('/quiz/:subject', async (req, res) => {
       opts_en: r.options_en ? (typeof r.options_en === 'string' ? JSON.parse(r.options_en) : r.options_en) : undefined,
     }));
     res.json({ success: true, data: questions, remaining: total - questions.length });
-  } catch(e) { res.status(500).json({ success: false, message: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 // ══════════════════════════════════════════
@@ -179,7 +179,7 @@ app.get('/api/users/search', async (req, res) => {
         joinedAt: u.joinedAt,
       }))
     });
-  } catch(e) { res.status(500).json({ success: false, message: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 // ══════════════════════════════════════════
@@ -197,7 +197,7 @@ app.get('/api/stats', async (req, res) => {
       QH.countDocuments()
     ]);
     res.json({ success: true, totalUsers, liveGuests: guestPings.size, totalQuizzes });
-  } catch(e) { res.status(500).json({ success: false, message: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 app.post('/api/stats/ping', (req, res) => {
@@ -260,7 +260,7 @@ Use simple language. Add emojis occasionally for friendliness. The student's nam
     }
 
     res.json({ success: true, reply });
-  } catch(e) { res.status(500).json({ success: false, message: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 // ══════════════════════════════════════════
@@ -273,7 +273,7 @@ app.get('/api/chat', async (req, res) => {
     const ChatMessage = require('./models/ChatMessage');
     const msgs = await ChatMessage.find().sort({ createdAt: -1 }).limit(60);
     res.json({ success: true, messages: msgs.reverse() });
-  } catch(e) { res.status(500).json({ success: false, message: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 app.post('/api/chat', async (req, res) => {
@@ -289,7 +289,7 @@ app.post('/api/chat', async (req, res) => {
       message: message.trim()
     });
     res.status(201).json({ success: true, message: msg });
-  } catch(e) { res.status(500).json({ success: false, message: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 // ══════════════════════════════════════════
@@ -300,7 +300,7 @@ app.get('/api/notifications', async (req, res) => {
     const Notif = require('./models/Notification');
     const items = await Notif.find().sort({ pinned: -1, createdAt: -1 }).limit(20);
     res.json({ success: true, notifications: items });
-  } catch(e) { res.status(500).json({ success: false, message: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 app.put('/api/notifications/read', async (req, res) => {
@@ -318,7 +318,7 @@ app.post('/api/notifications', async (req, res) => {
     const Notif = require('./models/Notification');
     const n = await Notif.create({ title, body, type: type || 'announcement', pinned: !!pinned });
     res.status(201).json({ success: true, notification: n });
-  } catch(e) { res.status(500).json({ success: false, message: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 // Admin: delete notification
@@ -330,7 +330,7 @@ app.delete('/api/notifications/:id', async (req, res) => {
     const Notif = require('./models/Notification');
     await Notif.findByIdAndDelete(req.params.id);
     res.json({ success: true });
-  } catch(e) { res.status(500).json({ success: false, message: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 // ══════════════════════════════════════════
@@ -340,7 +340,7 @@ app.get('/api/feedback', async (req, res) => {
   try {
     const FB = require('./models/Feedback');
     res.json({ success: true, feedback: await FB.find().sort({ postedAt: -1 }).limit(20) });
-  } catch(e) { res.status(500).json({ success: false, message: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 app.post('/api/feedback', async (req, res) => {
@@ -353,7 +353,7 @@ app.post('/api/feedback', async (req, res) => {
     const FB = require('./models/Feedback');
     const fb = await FB.create({ userId: user._id, name: user.name, message: message.trim(), rating: Number(rating) || 5 });
     res.status(201).json({ success: true, feedback: fb });
-  } catch(e) { res.status(500).json({ success: false, message: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 app.delete('/api/feedback/:id', async (req, res) => {
@@ -366,7 +366,7 @@ app.delete('/api/feedback/:id', async (req, res) => {
     if (fb.userId?.toString() !== user._id.toString()) return res.status(403).json({ success: false, message: 'Forbidden' });
     await fb.deleteOne();
     res.json({ success: true });
-  } catch(e) { res.status(500).json({ success: false, message: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 // ══════════════════════════════════════════

@@ -84,7 +84,14 @@ const ChatModule=(()=>{
     if(isMe){
       row.innerHTML=`<div class="chat-bub">${replyHtml}<div class="chat-txt">${_e(msg.message||msg.text||'')}</div><div class="chat-meta-row"><span class="chat-tm">${time}</span><span class="chat-tks">✓✓</span></div></div>`;
     }else{
-      row.innerHTML=`<div class="chat-av">${msg.userAvatar||'🎓'}</div><div class="chat-bub">${replyHtml}<span class="chat-sender">${msg.userName||'User'}</span><div class="chat-txt">${_e(msg.message||msg.text||'')}</div><div class="chat-meta-row"><span class="chat-tm">${time}</span></div></div>`;
+      // FIX (real bug): userName/userAvatar user ki apni profile se aate
+      // hain (free-text field, koi HTML-sanitization backend mein nahi) -
+      // pehle yahan ${msg.message} to escape ho raha tha lekin bilkul
+      // agal-bagal ${msg.userName} bina escape ke seedhe innerHTML mein
+      // ja raha tha. Koi bhi user apna naam `<img src=x onerror=...>`
+      // jaisa rakh ke GROUP CHAT dekhne wale HAR user ke browser mein
+      // apna code chala sakta tha (stored XSS). Ab dono _e() se guzarte hain.
+      row.innerHTML=`<div class="chat-av">${_e(msg.userAvatar||'🎓')}</div><div class="chat-bub">${replyHtml}<span class="chat-sender">${_e(msg.userName||'User')}</span><div class="chat-txt">${_e(msg.message||msg.text||'')}</div><div class="chat-meta-row"><span class="chat-tm">${time}</span></div></div>`;
     }
 
     /* Swipe to reply */
@@ -255,9 +262,9 @@ const ChatModule=(()=>{
     setTimeout(()=>document.getElementById('ai-inp')?.focus(),300);
   }
 
-  function _e(s){
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/\n/g,'<br>');
-  }
+  // Escaping ab canonical escapeHtml() se aati hai (dekho js/shared.js) -
+  // behavior wahi hai, bas \n->  chat-bubble ke liye yahin rakha hai.
+  function _e(s) { return escapeHtml(s).replace(/\n/g, '<br>'); }
 
   window.openAIChat=openAIChat;
   window.openGroupChat=openGroupChat;

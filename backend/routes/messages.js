@@ -65,7 +65,7 @@ router.get('/conversations', protect, async (req, res) => {
     }).filter(c => c.user); // drop threads whose other user was deleted
 
     res.json({ success: true, conversations });
-  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 /* ── THREAD WITH ONE USER ── */
@@ -98,7 +98,7 @@ router.get('/:userId', protect, async (req, res) => {
         createdAt: m.createdAt, readAt: m.readAt,
       })),
     });
-  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 /* ── SEND MESSAGE ── */
@@ -129,7 +129,7 @@ router.post('/:userId', protect, async (req, res) => {
       success: true,
       message: { id: dm._id, sender: dm.sender, recipient: dm.recipient, message: dm.message, mine: true, createdAt: dm.createdAt },
     });
-  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 module.exports = router;

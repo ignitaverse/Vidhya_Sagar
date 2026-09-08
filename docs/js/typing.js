@@ -667,13 +667,10 @@ const TypingModule = (() => {
   }
 
   /* ── Helpers ── */
-  function _esc(s) {
-    return String(s)
-      .replace(/&/g,'&amp;')
-      .replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;')
-      .replace(/"/g,'&quot;');
-  }
+  // Ab canonical escapeHtml() par delegate (dekho js/shared.js) - behavior
+  // wahi hai (ye file pehle se hi quotes escape kar rahi thi), bas ab
+  // implementation ek hi jagah se aati hai.
+  function _esc(s) { return escapeHtml(s); }
 
   /* ══════════════════════════════════
      INIT

@@ -28,9 +28,7 @@ router.post('/watch', protect, async (req, res) => {
     });
     const data = await upstream.json();
     res.status(upstream.status).json(data);
-  } catch (e) {
-    res.status(500).json({ success: false, message: e.message });
-  }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 module.exports = router;

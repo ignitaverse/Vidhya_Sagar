@@ -10,14 +10,14 @@ router.post('/save', protect, async (req,res) => {
     const percentage = Math.round((score/total)*100);
     const entry = await QuizHistory.create({ user:req.user._id,subject,subCategory,state,score,total,percentage,timeTaken });
     res.status(201).json({ success:true, entry });
-  } catch(e) { res.status(500).json({ success:false, message:e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 router.get('/', protect, async (req,res) => {
   try {
     const history = await QuizHistory.find({user:req.user._id}).sort({playedAt:-1}).limit(50);
     res.json({ success:true, count:history.length, history });
-  } catch(e) { res.status(500).json({ success:false, message:e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 router.delete('/:id', protect, async (req,res) => {
@@ -28,7 +28,7 @@ router.delete('/:id', protect, async (req,res) => {
       return res.status(403).json({ success:false, message:'Forbidden' });
     await entry.deleteOne();
     res.json({ success:true });
-  } catch(e) { res.status(500).json({ success:false, message:e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 module.exports = router;

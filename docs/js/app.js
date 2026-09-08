@@ -48,7 +48,11 @@ function showToast(msg, type = 'info') {
   if (!t) return;
   const icons = { success: '✅', error: '❌', info: '💡', warn: '⚠️' };
   const icon = icons[type] || icons.info;
-  t.innerHTML = `<span>${icon}</span> ${msg}`;
+  // FIX (real bug): showToast() poore app mein har jagah se call hota hai,
+  // kai jagah user-controlled text ke saath (jaise games.js: kisi opponent
+  // ke naam ke saath "X join ho gaya!" - naam profile se aata hai, free-text
+  // hai). Pehle msg seedha innerHTML mein jaata tha - ab escape karte hain.
+  t.innerHTML = `<span>${icon}</span> ${escapeHtml(msg)}`;
   t.className = `toast ${type}`;
   t.classList.remove('hidden');
   clearTimeout(t._t);
@@ -90,7 +94,19 @@ function hideLoader() {
 let _subStack = [];
 
 function switchTab(tab) {
-  document.querySelectorAll('.sub-screen.open').forEach(s => s.classList.remove('open'));
+  // FIX (real bug - Player me video atakne/buffer hone ki sabse badi
+  // wajah): pehle yahan sirf DOM class hataayi jaati thi
+  // (`s.classList.remove('open')`), closeSubScreen() kabhi call hi nahi
+  // hota tha. Isse DM-thread ka 4-second poll (social.js) aur online-game
+  // ka 800-millisecond poll (games.js) - dono ONLY closeSubScreen() ke
+  // andar stop hote hain - agar user in-mein-se kisi screen se seedha
+  // bottom-nav se "Player" tab par aa jaaye (back-button dabaye bina), to
+  // wo polling background mein HAMESHA chalti reh jaati thi, chahe user
+  // ab video dekh raha ho. Har 800ms ek naya network request - mobile
+  // data par video ke liye bandwidth/CPU chheenta reh jaata, jisse video
+  // baar-baar buffer/atakti thi. Ab har open sub-screen ko closeSubScreen()
+  // se hi band karte hain, taaki uski polling bhi sahi se ruke.
+  document.querySelectorAll('.sub-screen.open').forEach(s => closeSubScreen(s.id));
   _subStack = [];
   ChatModule.stopPolling();
   document.querySelectorAll('.tab-screen').forEach(s => s.classList.remove('active'));
@@ -541,7 +557,9 @@ async function doUserSearch(q) {
       </div>`).join('');
   } catch (e) { drop.innerHTML = `<div style="padding:14px;text-align:center;color:var(--rose);font-size:.82rem">${e.message}</div>`; }
 }
-function _escH(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+// FIX: pehle sirf &, <, > escape karta tha (" nahi) - dekho js/shared.js
+// ke comment. Ab canonical, attribute-safe escapeHtml() par delegate.
+function _escH(s) { return escapeHtml(s); }
 
 /* ── Password Toggle ── */
 window.togglePw = function (id, btn) {

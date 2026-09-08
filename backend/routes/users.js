@@ -101,7 +101,7 @@ router.get('/me/friend-requests', protect, async (req, res) => {
       success: true,
       requests: requests.map(r => ({ friendshipId: r._id, from: publicUser(r.requester), createdAt: r.createdAt })),
     });
-  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 router.get('/by-username/:username', optionalAuth, async (req, res) => {
@@ -111,7 +111,7 @@ router.get('/by-username/:username', optionalAuth, async (req, res) => {
     const profile = await buildProfileResponse(target, req.user?._id);
     if (!profile) return res.status(404).json({ success: false, message: 'User not found' });
     res.json({ success: true, user: profile });
-  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 /* ══════════════════════════════════════
@@ -127,7 +127,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
     const profile = await buildProfileResponse(target, req.user?._id);
     if (!profile) return res.status(404).json({ success: false, message: 'User not found' });
     res.json({ success: true, user: profile });
-  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 router.get('/:id/friends', optionalAuth, async (req, res) => {
@@ -157,7 +157,7 @@ router.get('/:id/friends', optionalAuth, async (req, res) => {
     });
 
     res.json({ success: true, friends });
-  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 /* ══════════════════════════════════════
@@ -197,7 +197,7 @@ router.post('/:id/friend-request', protect, async (req, res) => {
 
     await Friendship.create({ requester: req.user._id, recipient: targetId, status: 'pending' });
     res.status(201).json({ success: true, status: 'pending_sent', message: 'Friend request भेजी गई ✅' });
-  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 router.post('/:id/friend-accept', protect, async (req, res) => {
@@ -208,14 +208,14 @@ router.post('/:id/friend-accept', protect, async (req, res) => {
     rel.respondedAt = new Date();
     await rel.save();
     res.json({ success: true, status: 'friends', message: 'Friend request accept हुई 🎉' });
-  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 router.post('/:id/friend-decline', protect, async (req, res) => {
   try {
     await Friendship.deleteOne({ requester: req.params.id, recipient: req.user._id, status: 'pending' });
     res.json({ success: true, status: 'none' });
-  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 router.delete('/:id/friend', protect, async (req, res) => {
@@ -228,7 +228,7 @@ router.delete('/:id/friend', protect, async (req, res) => {
       ],
     });
     res.json({ success: true, status: 'none' });
-  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 module.exports = router;

@@ -160,9 +160,7 @@ router.post('/create', protect, async (req, res) => {
     await redis.set(roomKey(roomId), JSON.stringify(room), { ex: ROOM_TTL });
 
     res.json({ success: true, roomId, room });
-  } catch (e) {
-    res.status(500).json({ success: false, message: e.message });
-  }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 /* ── JOIN ROOM ── */
@@ -191,9 +189,7 @@ router.post('/join', protect, async (req, res) => {
     await setActivePointers(room.hostId, room.guestId, room.id);
 
     res.json({ success: true, room });
-  } catch (e) {
-    res.status(500).json({ success: false, message: e.message });
-  }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 /* ── GET ROOM STATE (Polling) ── */
@@ -210,9 +206,7 @@ router.get('/:roomId', protect, async (req, res) => {
     if (!raw) return res.status(404).json({ success: false, message: 'Room expired या नहीं मिला' });
     const room = typeof raw === 'string' ? JSON.parse(raw) : raw;
     res.json({ success: true, room });
-  } catch (e) {
-    res.status(500).json({ success: false, message: e.message });
-  }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 /* ── MAKE MOVE ── */
@@ -320,9 +314,7 @@ router.post('/:roomId/move', protect, async (req, res) => {
     await redis.set(roomKey(room.id), JSON.stringify(room), { ex: ROOM_TTL });
 
     res.json({ success: true, room });
-  } catch (e) {
-    res.status(500).json({ success: false, message: e.message });
-  }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 /* ── LEAVE / FORFEIT ── */
@@ -362,9 +354,7 @@ router.post('/:roomId/leave', protect, async (req, res) => {
     }
 
     res.json({ success: true, winner: room.winner });
-  } catch (e) {
-    res.status(500).json({ success: false, message: e.message });
-  }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 /* ── GAME HISTORY (permanent, from MongoDB) ── */
@@ -390,9 +380,7 @@ router.get('/history/me', protect, async (req, res) => {
     }));
 
     res.json({ success: true, history: withResult });
-  } catch (e) {
-    res.status(500).json({ success: false, message: e.message });
-  }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 /* ── LEADERBOARD (from MongoDB) ── */
@@ -444,9 +432,7 @@ router.get('/leaderboard/top', async (req, res) => {
       .slice(0, 20);
 
     res.json({ success: true, leaderboard });
-  } catch (e) {
-    res.status(500).json({ success: false, message: e.message });
-  }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 
@@ -502,9 +488,7 @@ router.post('/matchmake', protect, async (req, res) => {
 
       return res.json({ success: true, matched: false });
     }
-  } catch(e) {
-    res.status(500).json({ success:false, message: e.message });
-  }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 /* ── CHECK MATCH (polling by waiting player) ── */
@@ -523,9 +507,7 @@ router.get('/matchmake/check/:gameType', protect, async (req, res) => {
       mySymbol: data.symbol,
       isHost: true
     });
-  } catch(e) {
-    res.status(500).json({ success:false, message:e.message });
-  }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 /* ── CANCEL MATCHMAKING ── */
@@ -545,9 +527,7 @@ router.post('/matchmake/cancel', protect, async (req, res) => {
       await redis.expire(qKey, 90);
     }
     res.json({ success:true });
-  } catch(e) {
-    res.status(500).json({ success:false, message:e.message });
-  }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 /* ── WATCH LIVE: is this user currently in an active game? ── */
@@ -563,9 +543,7 @@ router.get('/active/:userId', protect, async (req, res) => {
       success: true, active: true, roomId: room.id, gameType: room.game,
       host: room.host, guest: room.guest,
     });
-  } catch(e) {
-    res.status(500).json({ success:false, message:e.message });
-  }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 /* ── REMATCH: create a fresh room with the same two players ── */
@@ -614,9 +592,7 @@ router.post('/:roomId/rematch', protect, async (req, res) => {
     await redis.set(roomKey(oldRoom.id), JSON.stringify(oldRoom), { ex: 600 }); // 10 min grace window
 
     res.json({ success: true, roomId, room: newRoom, isHost: true });
-  } catch(e) {
-    res.status(500).json({ success:false, message:e.message });
-  }
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
 module.exports = router;

@@ -8,12 +8,16 @@ const SocialModule = (() => {
   let dmPollTimer = null;
 
   function _avatarHtml(u) {
-    if (u?.photo) return `<img src="${u.photo}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">`;
-    return u?.avatar || '🎓';
+    // FIX (real bug): u.photo backend mein bina format-validation ke store
+    // hoti hai (koi regex/validate() User model mein nahi) - pehle yahan
+    // seedhe src="${u.photo}" mein daal diya jaata tha, bina escape kiye.
+    if (u?.photo) return `<img src="${_e(u.photo)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">`;
+    return _e(u?.avatar || '🎓');
   }
-  function _e(s) {
-    return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/\n/g,'<br>');
-  }
+  // Escaping ab canonical escapeHtml() se aati hai (dekho js/shared.js) -
+  // behavior wahi hai, bas \n->  chat-bubble ke liye yahin rakha hai
+  // (ye ek general escaper ka kaam nahi, is file-specific formatting hai).
+  function _e(s) { return escapeHtml(s).replace(/\n/g, '<br>'); }
 
   /* ══════════════════════════════════════
      VIEW A USER'S PROFILE (Instagram-style)

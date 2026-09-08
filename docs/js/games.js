@@ -743,7 +743,9 @@ const GamesModule = (() => {
 
   /* ── Helpers ── */
   function _el(id) { return document.getElementById(id); }
-  function _esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  // FIX: pehle sirf &, <, > escape karta tha (" nahi) - dekho js/shared.js
+  // ke comment. Ab canonical, attribute-safe escapeHtml() par delegate.
+  function _esc(s) { return escapeHtml(s); }
 
   /* ── Open functions ── */
   function openNumberGame() { openSubScreen('screen-number-game'); NG.reset(); }
