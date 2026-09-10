@@ -373,7 +373,12 @@
     <div class="modal-ov hidden" id="pl-modal">
       <div class="pl-modal-box">
         <div id="pl-video-wrap">
-          <video id="pl-video" playsinline webkit-playsinline preload="metadata"></video>
+          <!-- FEATURE (naya): "auto" browser ko shuru se hi zyada
+               aggressively buffer karne ka hint deta hai (pehle "metadata"
+               tha, jo sirf duration/dimensions jaanne ke liye kaafi data
+               lata, video content nahi) - smart-buffering (player.js) ke
+               paas isse zyada "material" milta hai kaam karne ke liye. -->
+          <video id="pl-video" playsinline webkit-playsinline preload="auto"></video>
 
           <div id="pl-video-loading" class="pl-video-loading hidden">
             <div class="pl-spinner"></div>

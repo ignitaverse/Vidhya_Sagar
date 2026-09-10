@@ -370,6 +370,7 @@ const PlayerModule = (() => {
     // playbackRate <video> element par KHUD persist hoti hai jab tak
     // explicitly reset na karein, isliye pichhle video par 2x lagाya ho
     // to naya video bhi chup-chaap 2x mein hi chalne lagta.
+    _resetSmartBuffering(); // FEATURE (naya) - dekho comment neeche
 
     video.onerror = () => {
       const err = video.error;
@@ -427,6 +428,106 @@ const PlayerModule = (() => {
         el.classList.toggle('active', Number(el.dataset.speed) === rate);
       });
     }
+  }
+
+  /* ══════════════════════════════════════════════════════════════
+     FEATURE (naya): "Smart buffering" - YouTube jaisa smooth playback
+
+     Plain <video> tag ko JS se "exactly 2 minute buffer karke rakho"
+     bolne ka koi seedha browser API nahi hai (wo sirf Media Source
+     Extensions se milta hai, jiske liye video-server ko CORS + Range
+     headers support karne padte - aur MKV files ke liye zyadatar
+     browsers mein kaam hi nahi karta, is site ki bahut si files MKV
+     hain). Isliye asli fix DIFFERENT angle se: browser ka DEFAULT
+     behavior ye hai ki 'waiting' (buffer khatam) ke baad jaise hi
+     THODA sa naya data aata hai, TURANT resume kar deta hai - dheeli/
+     unstable connection par isse baar-baar "chipak-chipak" (bahut
+     saari CHHOTI atkan) hoti hai: thoda chala, phir turant ruka,
+     thoda chala, phir turant ruka...
+
+     Real players (YouTube jaisा) aisa nahi karte - beech mein rukne
+     par TURANT resume nahi karte, pehle ek margin (aage ka buffer)
+     jama hone dete hain, phir EK HI BAAR mein resume karte hain.
+     Isse chhoti-chhoti bahut saari atkan ki jagah, kam aur SAAF pause
+     milte hain - overall zyada "chipakta" hua nahi, zyada "smooth"
+     lagta hai, bhale hi total buffering time waisa hi rahe।
+
+     Target 2 minute (jo maanga gaya tha) rakha hai, LEKIN saath mein
+     ek max-wait cap bhi hai - agar connection itni dheemi hai ki 2
+     minute ka data hi 12 second mein nahi aa sakta, to hum utni der
+     hi rukenge jitna cap allow kare, phir jitna mila utne se resume
+     kar denge - warna genuinely slow connection par player "atka hua
+     ya toota hua" jaisa lagta (kayi minute ka freeze), jo ulta bura
+     UX hoga.
+  ════════════════════════════════════════════════════════════════ */
+  const SMART_BUF_RESUME_TARGET_SEC = 120; // "2 minute aage" - jo maanga gaya
+  const SMART_BUF_MAX_WAIT_MS = 12000;     // itni der (real seconds) se zyada kabhi nahi rokenge
+
+  let _smartBuf = { timer: null, waitingSince: 0, autoPaused: false };
+
+  function _clearSmartBufTimer() {
+    if (_smartBuf.timer) { clearInterval(_smartBuf.timer); _smartBuf.timer = null; }
+  }
+
+  function _resetSmartBuffering() {
+    _clearSmartBufTimer();
+    _smartBuf.autoPaused = false;
+    _smartBuf.waitingSince = 0;
+    document.getElementById('pl-video-loading')?.classList.add('hidden');
+  }
+
+  function _bufferedAheadSeconds(video) {
+    const t = video.currentTime;
+    const buf = video.buffered;
+    for (let i = 0; i < buf.length; i++) {
+      if (t >= buf.start(i) && t <= buf.end(i)) return buf.end(i) - t;
+    }
+    return 0;
+  }
+
+  function _setupSmartBuffering(video) {
+    const loadingEl = document.getElementById('pl-video-loading');
+
+    video.addEventListener('waiting', () => {
+      // Seek karte waqt bhi 'waiting' aata hai (naya position load ho raha
+      // hota hai) - wo normal hai, usmein dakhal nahi dena, warna seek
+      // karna hi "atka hua" jaisa lagega.
+      if (video.seeking) return;
+
+      _smartBuf.waitingSince = Date.now();
+      _smartBuf.autoPaused = true;
+      video.pause(); // FIX ka core: turant-resume rokte hain, khud control lete hain
+      if (loadingEl) loadingEl.classList.remove('hidden'); // "buffering" saaf dikhta hai, "toota hua" nahi
+
+      _clearSmartBufTimer();
+      _smartBuf.timer = setInterval(() => {
+        const aheadSec = _bufferedAheadSeconds(video);
+        const waitedMs = Date.now() - _smartBuf.waitingSince;
+        const targetReached = aheadSec >= SMART_BUF_RESUME_TARGET_SEC;
+        const capReached = waitedMs >= SMART_BUF_MAX_WAIT_MS;
+        if (targetReached || capReached || video.ended) {
+          _clearSmartBufTimer();
+          if (loadingEl) loadingEl.classList.add('hidden');
+          if (_smartBuf.autoPaused && !video.ended) {
+            _smartBuf.autoPaused = false;
+            video.play().catch(() => {});
+          } else {
+            _smartBuf.autoPaused = false;
+          }
+        }
+      }, 400);
+    });
+
+    // User KHUD pause kare (hamari buffering-wait ke alawa), to hamara
+    // auto-resume cancel ho jaaye - warna user pause kare aur video khud
+    // hi thodi der baad wapas chalne lage, bahut ajeeb UX hoga.
+    video.addEventListener('pause', () => { if (!_smartBuf.autoPaused) _clearSmartBufTimer(); });
+    video.addEventListener('playing', () => {
+      _smartBuf.autoPaused = false;
+      _clearSmartBufTimer();
+      if (loadingEl) loadingEl.classList.add('hidden');
+    });
+    video.addEventListener('seeking', () => { _smartBuf.autoPaused = false; _clearSmartBufTimer(); });
   }
 
   /* ── FEATURE (rebuilt): Captions/Subtitles ── pehle ye button sirf
@@ -555,6 +656,8 @@ const PlayerModule = (() => {
     const wrap = document.getElementById('pl-video-wrap');
     const video = document.getElementById('pl-video');
     if (!wrap || !video) return;
+
+    _setupSmartBuffering(video); // FEATURE (naya) - dekho definition ka comment upar
 
     const seek = document.getElementById('pl-ctrl-seek');
     const timeEl = document.getElementById('pl-ctrl-time');

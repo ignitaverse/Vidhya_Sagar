@@ -92,6 +92,24 @@ function hideLoader() {
    NAVIGATION
 ══════════════════════════════════════ */
 let _subStack = [];
+// FEATURE (bug-fix ke liye zaroori): saare .sub-screen elements CSS mein
+// EK hi fixed z-index:150 share karte hain (dekho style_futuristic.css /
+// style_additions.css). Isliye jab do sub-screens EK saath ".open" ho
+// jaate (jaise "chat box" khula ho aur upar se Notification/Profile bhi
+// khol diya), sirf ye tay hota tha ki DOM mein kaun BAAD mein likha hai -
+// user ne ABHI kisko khola, uska koi asar nahi padta tha. Chat-list/
+// group-chat DOM mein Profile/Notifications ke BAAD aate hain, isliye
+// Chat hamesha upar rehta, aur Notification/Profile bilkul chhup jaate
+// the (taps bhi wahan tak nahi pahunchte, kyunki upar wala screen poori
+// jagah cover kar leta hai) - user ko lagta "tap karne se kuchh khulta hi
+// nahi". Back dabane par sirf STACK ka TOP band hota, jo chhupa hua wala
+// hi ho sakta tha - isliye screen "atki" jaisi dikhti thi. Fix: har naye
+// open par ek badhta hua z-index dete hain, taaki jo SABSE AAKHIR mein
+// khula ho wahi HAMESHA sabse upar dikhe - DOM order se ab koi farak
+// nahi padta. (Nested navigation jaisa Profile->Account Info->Theme
+// bilkul waisे hi kaam karta rahega - stack/back-logic bilkul nahi badla,
+// sirf PAINT order sahi kiya hai.)
+let _subZCounter = 150;
 
 function switchTab(tab) {
   // FIX (real bug - Player me video atakne/buffer hone ki sabse badi
@@ -130,6 +148,7 @@ function openSubScreen(id) {
   const el = document.getElementById(id);
   if (!el) return;
   el.classList.add('open');
+  el.style.zIndex = String(++_subZCounter); // dekho _subZCounter ka comment upar
   _subStack.push(id);
   history.pushState({ id, type: 'sub' }, '', '#s');
   setTimeout(() => { el.scrollTop = 0; }, 30);
@@ -139,6 +158,7 @@ function closeSubScreen(id) {
   const el = document.getElementById(id);
   if (!el) return;
   el.classList.remove('open');
+  el.style.zIndex = ''; // CSS ke default (150) par wapas - agli baar khulne par naya, sahi z-index milega
   const i = _subStack.lastIndexOf(id);
   if (i !== -1) _subStack.splice(i, 1);
   // Some screens run background polling that must stop no matter how the screen closes
