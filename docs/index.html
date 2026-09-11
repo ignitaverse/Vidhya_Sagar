@@ -372,6 +372,13 @@
     <!-- PLAYER MODAL (video) -->
     <div class="modal-ov hidden" id="pl-modal">
       <div class="pl-modal-box">
+        <!-- FEATURE (naya): branded header + "NOW PLAYING" info -->
+        <div class="pl-brand-bar"><span class="pl-brand-play">▶</span> VidyaSagar</div>
+        <div class="pl-nowplaying">
+          <div class="pl-nowplaying-tag"><span class="pl-live-dot"></span> NOW PLAYING</div>
+          <div id="pl-video-title" class="pl-nowplaying-title"></div>
+          <div id="pl-video-size" class="pl-nowplaying-size hidden"></div>
+        </div>
         <div id="pl-video-wrap">
           <!-- FEATURE (naya): "auto" browser ko shuru se hi zyada
                aggressively buffer karne ka hint deta hai (pehle "metadata"
@@ -401,34 +408,45 @@
               <span class="pl-ctrl-spacer"></span>
               <button type="button" id="pl-ctrl-lang" class="pl-ctrl-btn pl-ctrl-lang hidden" aria-label="Language">🌐</button>
               <button type="button" id="pl-ctrl-cc" class="pl-ctrl-btn" aria-label="Captions">CC</button>
-              <button type="button" id="pl-ctrl-speed" class="pl-ctrl-btn pl-ctrl-speed" aria-label="Playback speed">1x</button>
+              <button type="button" id="pl-ctrl-settings" class="pl-ctrl-btn" aria-label="Settings">⚙️</button>
               <button type="button" id="pl-ctrl-vol" class="pl-ctrl-btn" aria-label="Mute/Unmute">🔊</button>
               <button type="button" id="pl-ctrl-rotate" class="pl-ctrl-btn" aria-label="Rotate">⟳</button>
               <button type="button" id="pl-ctrl-fullscreen" class="pl-ctrl-btn" aria-label="Fullscreen">⛶</button>
             </div>
           </div>
 
-          <!-- Language / CC / Speed choose panels -->
+          <!-- Language / CC / Settings choose panels -->
           <div id="pl-lang-panel" class="pl-pick-panel hidden"></div>
           <div id="pl-cc-panel" class="pl-pick-panel hidden"></div>
-          <div id="pl-speed-panel" class="pl-pick-panel hidden">
-            <div class="pl-pick-item" data-speed="1">1x</div>
-            <div class="pl-pick-item" data-speed="1.5">1.5x</div>
-            <div class="pl-pick-item" data-speed="2">2x</div>
-            <div class="pl-pick-item" data-speed="2.5">2.5x</div>
-            <div class="pl-pick-item" data-speed="3">3x</div>
-          </div>
+          <div id="pl-settings-panel" class="pl-pick-panel pl-settings-panel hidden"></div>
 
           <button class="pl-modal-close" onclick="PlayerModule.closePlayer()">✕</button>
-        </div>
-        <div class="pl-video-footer">
-          <span class="pl-video-live-dot"></span>
-          <div id="pl-video-title" class="pl-video-title"></div>
         </div>
 
         <div id="pl-upnext" class="pl-upnext hidden">
           <div class="pl-upnext-label">🎬 और वीडियो</div>
           <div id="pl-upnext-row" class="pl-upnext-row"></div>
+        </div>
+
+        <!-- FEATURE (naya): "Watch on Your Favorite Player" - native apps
+             (VLC/MX Player waghera) mein seedha kholne ke buttons. Sirf
+             Android par dikhta hai (dekho _renderFavoritePlayerGrid). -->
+        <div class="pl-fav-section hidden" id="pl-fav-section">
+          <div class="pl-fav-divider"><span>📱 Watch on Your Favorite Player</span></div>
+          <div class="pl-fav-grid" id="pl-fav-grid"></div>
+        </div>
+
+        <!-- FEATURE (naya): Help & Support -->
+        <div class="pl-help-box">
+          <div class="pl-help-head">ℹ️ Help &amp; Support</div>
+          <div class="pl-help-card">
+            <div class="pl-help-card-title">▶ Having Playback Issues?</div>
+            <div class="pl-help-card-body">Agar video atak rahi hai, to upar diye gaye <b>VLC</b> ya <b>MX Player</b> button se khol kar dekhein - seamless playback milega, audio-track switching aur subtitle support ke saath.</div>
+          </div>
+          <div class="pl-help-card">
+            <div class="pl-help-card-title">📩 Need Assistance?</div>
+            <div class="pl-help-card-body">Koi bhi dikkat ho to humein Telegram par batayein - jaldi madad milegi.</div>
+          </div>
         </div>
       </div>
     </div>

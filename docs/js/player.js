@@ -152,7 +152,7 @@ const PlayerModule = (() => {
         if (data.success) {
           localStorage.setItem(FREE_WATCH_FLAG, '1');
           _lastWatchMode = 'anon';
-          _openPlayer(_api(data.stream_url), title);
+          _openPlayer(_api(data.stream_url), title, data.file_size);
           return;
         }
         if (data.reason === 'login_required') {
@@ -188,7 +188,7 @@ const PlayerModule = (() => {
 
       if (data.success) {
         _lastWatchMode = 'member';
-        _openPlayer(_api(data.stream_url), title);
+        _openPlayer(_api(data.stream_url), title, data.file_size);
         return;
       }
       if (data.reason === 'cooldown') {
@@ -263,7 +263,7 @@ const PlayerModule = (() => {
       }
 
       if (data.success) {
-        _openPlayer(_api(data.stream_url), title);
+        _openPlayer(_api(data.stream_url), title, data.file_size);
         return;
       }
       if (data.reason === 'cooldown') {
@@ -348,28 +348,43 @@ const PlayerModule = (() => {
     }, 2500);
   }
 
-  function _openPlayer(streamUrl, title) {
+  let _currentStreamUrl = null; // FEATURE (naya): favorite-player grid / download / copy-link ke liye
+
+  function _formatFileSize(bytes) {
+    if (!bytes || bytes <= 0) return null;
+    const gb = bytes / (1024 * 1024 * 1024);
+    if (gb >= 1) return gb.toFixed(2) + ' GB';
+    const mb = bytes / (1024 * 1024);
+    return mb.toFixed(0) + ' MB';
+  }
+
+  function _openPlayer(streamUrl, title, fileSizeBytes) {
     const modal = document.getElementById('pl-modal');
     const video = document.getElementById('pl-video');
     const wrap = document.getElementById('pl-video-wrap');
     const titleEl = document.getElementById('pl-video-title');
+    const sizeEl = document.getElementById('pl-video-size');
     const errEl = document.getElementById('pl-video-error');
     const warnEl = document.getElementById('pl-video-warning');
     const loadingEl = document.getElementById('pl-video-loading');
     if (!modal || !video) return;
+    _currentStreamUrl = streamUrl;
     if (titleEl) titleEl.textContent = title;
+    if (sizeEl) {
+      const label = _formatFileSize(fileSizeBytes);
+      sizeEl.textContent = label ? ('💾 ' + label) : '';
+      sizeEl.classList.toggle('hidden', !label);
+    }
+    _renderFavoritePlayerGrid();
     if (errEl) { errEl.classList.add('hidden'); errEl.textContent = ''; }
     if (warnEl) { warnEl.classList.add('hidden'); warnEl.textContent = ''; }
     if (loadingEl) loadingEl.classList.remove('hidden');
     if (wrap) wrap.classList.remove('pl-rotated');
     document.getElementById('pl-lang-panel')?.classList.add('hidden');
     document.getElementById('pl-cc-panel')?.classList.add('hidden');
-    document.getElementById('pl-speed-panel')?.classList.add('hidden');
+    document.getElementById('pl-settings-panel')?.classList.add('hidden');
     document.getElementById('pl-ctrl-cc')?.classList.remove('pl-cc-active');
-    _applySpeed(1); // FEATURE (naya): har naya video 1x se shuru ho -
-    // playbackRate <video> element par KHUD persist hoti hai jab tak
-    // explicitly reset na karein, isliye pichhle video par 2x lagाya ho
-    // to naya video bhi chup-chaap 2x mein hi chalne lagta.
+    _resetPlayerVisualSettings(); // FEATURE (naya): speed/aspect/flip/subtitle-offset sab 1 video se dusre video mein carry NAHI hone chahiye
     _resetSmartBuffering(); // FEATURE (naya) - dekho comment neeche
 
     video.onerror = () => {
@@ -399,6 +414,99 @@ const PlayerModule = (() => {
   /* ── Language variants (agar isi title ki alag-alag language mein
      multiple files upload hui hain to catalog API `languages: [...]`
      bhejta hai) ── */
+  /* ══════════════════════════════════════════════════════════════
+     FEATURE (naya): "Watch on Your Favorite Player" - VLC/MX Player
+     jaise NATIVE apps mein khud stream URL khol dete hain. Ye web
+     player se KAHIN zyada smooth chalte hain (hardware decoding,
+     apna adaptive buffering, MKV/HEVC jaisi cheezein bhi bina dikkat)
+     - is site ke apne player ki kisi bhi buffering-limitation se
+     bilkul bahar. Sirf Android par kaam karta hai (Android ka
+     `intent:` URI scheme use karte hain) - iOS/desktop par ye grid
+     hi nahi dikhta (dekho _isAndroid).
+
+     Package names verify kiye hain (official docs/APK listings se,
+     andaza nahi lagaya): VLC = org.videolan.vlc, MX Player (free) =
+     com.mxtech.videoplayer.ad, KM Player = com.kmplayer, PLAYit =
+     com.playit.videoplayer, XPlayer = video.player.videoplayer.
+     "nPlayer" iOS-first app hai, Android par bharosemand nahi -
+     iski jagah generic "More Players" (koi bhi installed app chuनने
+     ke liye Android ka apna chooser) diya hai.
+  ══════════════════════════════════════════════════════════════ */
+  const EXTERNAL_PLAYERS = [
+    { name: 'VLC Player', icon: '🟠', pkg: 'org.videolan.vlc' },
+    { name: 'MX Player', icon: '🔵', pkg: 'com.mxtech.videoplayer.ad' },
+    { name: 'KM Player', icon: '🟣', pkg: 'com.kmplayer' },
+    { name: 'PLAYit', icon: '🔴', pkg: 'com.playit.videoplayer' },
+    { name: 'XPlayer', icon: '🟢', pkg: 'video.player.videoplayer' },
+  ];
+
+  function _isAndroid() {
+    return /Android/i.test(navigator.userAgent || '');
+  }
+
+  function _openInExternalPlayer(pkg) {
+    if (!_currentStreamUrl) return;
+    // Deep-link (file:// blob wale local playback ya deep-link token
+    // mein) relative ho sakta hai - poora absolute URL chahiye external
+    // app ko dene ke liye.
+    const absUrl = new URL(_currentStreamUrl, window.location.href).href;
+    const title = encodeURIComponent((_currentItem && _currentItem.name) || document.title || 'Video');
+    const fallback = encodeURIComponent(`https://play.google.com/store/apps/details?id=${pkg}`);
+    window.location.href = `intent:${absUrl}#Intent;package=${pkg};S.title=${title};S.browser_fallback_url=${fallback};end`;
+  }
+
+  function _openInAnyPlayer() {
+    if (!_currentStreamUrl) return;
+    const absUrl = new URL(_currentStreamUrl, window.location.href).href;
+    // Koi specific package nahi - Android khud "kis app se kholna hai"
+    // wala chooser dikhata hai, jitne bhi video players installed hon.
+    window.location.href = `intent:${absUrl}#Intent;type=video/*;end`;
+  }
+
+  function _downloadCurrentVideo() {
+    if (!_currentStreamUrl) return;
+    // FIX: cross-origin video URL par `<a download>` attribute browsers
+    // ignore kar dete hain (sirf same-origin par kaam karta hai) - isliye
+    // seedha stream URL par ?download=1 laga kar navigate karte hain;
+    // server (web.py) ab Content-Disposition: attachment header bhejta
+    // hai, jo cross-origin hone ke bawajood browser ka native "Save
+    // File" download shuru karta hai.
+    const sep = _currentStreamUrl.includes('?') ? '&' : '?';
+    window.location.href = _currentStreamUrl + sep + 'download=1';
+  }
+
+  async function _copyStreamLink() {
+    if (!_currentStreamUrl) return;
+    const absUrl = new URL(_currentStreamUrl, window.location.href).href;
+    try {
+      await navigator.clipboard.writeText(absUrl);
+      if (typeof showToast === 'function') showToast('Link copy ho gaya ✅', 'success');
+    } catch (e) {
+      if (typeof showToast === 'function') showToast('Copy nahi ho paya, dobara try karein', 'error');
+    }
+  }
+
+  function _renderFavoritePlayerGrid() {
+    const grid = document.getElementById('pl-fav-grid');
+    const section = document.getElementById('pl-fav-section');
+    if (!grid || !section) return;
+    // FIX: local device file (📂 button se) ka URL ek blob: URL hota hai -
+    // ye sirf ISI browser tab ki memory mein valid hai, koi bhi ALAG app
+    // (VLC/MX Player) ise access nahi kar sakta. Aisi video ke liye grid
+    // dikhana hi galat hoga (har button fail hota).
+    const isBlob = (_currentStreamUrl || '').startsWith('blob:');
+    if (!_isAndroid() || isBlob) { section.classList.add('hidden'); return; }
+    section.classList.remove('hidden');
+
+    const tiles = EXTERNAL_PLAYERS.map(p =>
+      `<button type="button" class="pl-fav-tile" data-pkg="${_esc(p.pkg)}"><span class="pl-fav-icon">${p.icon}</span>${_esc(p.name)}</button>`
+    );
+    tiles.push('<button type="button" class="pl-fav-tile" data-action="more"><span class="pl-fav-icon">📲</span>More Players</button>');
+    tiles.push('<button type="button" class="pl-fav-tile" data-action="download"><span class="pl-fav-icon">⬇️</span>Download</button>');
+    tiles.push('<button type="button" class="pl-fav-tile" data-action="copy"><span class="pl-fav-icon">🔗</span>Copy Link</button>');
+    grid.innerHTML = tiles.join('');
+  }
+
   function _updateLangButton(item) {
     const btn = document.getElementById('pl-ctrl-lang');
     const panel = document.getElementById('pl-lang-panel');
@@ -414,19 +522,135 @@ const PlayerModule = (() => {
     }
   }
 
-  /* ── FEATURE (naya): Playback speed - 1x/1.5x/2x/2.5x/3x (options khud
-     index.html mein #pl-speed-panel ke andar hain, kyunki ye list kabhi
-     badalti nahi) ── */
+  /* ── FEATURE (naya): Settings gear - Play Speed / Aspect Ratio /
+     Video Flip / Subtitle Offset, sab EK hi drill-down panel mein
+     (jaise reference image mein: gear -> list -> tap se sub-list) ── */
+  let _currentSpeed = 1;
+  const ASPECT_RATIOS = [
+    { key: 'default', label: 'Default', fit: 'contain' },
+    { key: 'fill', label: 'Fill (Stretch)', fit: 'fill' },
+    { key: 'cover', label: 'Cover (Zoom)', fit: 'cover' },
+  ];
+  const VIDEO_FLIPS = [
+    { key: 'normal', label: 'Normal', css: 'none' },
+    { key: 'h', label: 'Horizontal', css: 'scaleX(-1)' },
+    { key: 'v', label: 'Vertical', css: 'scaleY(-1)' },
+  ];
+  let _currentAspect = ASPECT_RATIOS[0];
+  let _currentFlip = VIDEO_FLIPS[0];
+  let _settingsView = 'root'; // 'root' | 'speed' | 'aspect' | 'flip'
+  let _subtitleOffsetSec = 0;
+  // Cue timings sirf EK baar shift karne se compounding-error hoti hai
+  // (offset dobara badlo to purane shift par NAYA shift jud jaata) -
+  // isliye HAR track ke ORIGINAL (bina-shift) cue times yahan yaad
+  // rakhte hain, aur har baar offset badalne par UNHI se dobara calculate
+  // karte hain.
+  let _subtitleOriginalCues = null; // WeakMap<TextTrack, [{cue, start, end}]>
+
   function _applySpeed(rate) {
+    _currentSpeed = rate;
     const video = document.getElementById('pl-video');
-    const btn = document.getElementById('pl-ctrl-speed');
-    const panel = document.getElementById('pl-speed-panel');
     if (video) video.playbackRate = rate;
-    if (btn) btn.textContent = rate + 'x'; // JS mein 1 -> "1", 1.5 -> "1.5" - trailing .0 nahi aata
-    if (panel) {
-      panel.querySelectorAll('.pl-pick-item').forEach(el => {
-        el.classList.toggle('active', Number(el.dataset.speed) === rate);
+    if (_settingsView === 'root') _renderSettingsPanel();
+  }
+
+  function _applyAspect(ratio) {
+    if (!ratio) return;
+    _currentAspect = ratio;
+    const video = document.getElementById('pl-video');
+    if (video) video.style.objectFit = ratio.fit;
+  }
+
+  function _applyFlip(flip) {
+    if (!flip) return;
+    _currentFlip = flip;
+    const video = document.getElementById('pl-video');
+    if (video) video.style.transform = flip.css === 'none' ? '' : flip.css;
+  }
+
+  function _resetPlayerVisualSettings() {
+    _applySpeed(1);
+    _applyAspect(ASPECT_RATIOS[0]);
+    _applyFlip(VIDEO_FLIPS[0]);
+    _subtitleOffsetSec = 0;
+    _subtitleOriginalCues = new WeakMap();
+    _settingsView = 'root';
+    document.getElementById('pl-settings-panel')?.classList.add('hidden');
+  }
+
+  function _applySubtitleOffset(deltaSec) {
+    _subtitleOffsetSec = deltaSec;
+    const video = document.getElementById('pl-video');
+    if (!video || !_subtitleOriginalCues) return;
+    const tracks = video.textTracks;
+    for (let i = 0; i < (tracks ? tracks.length : 0); i++) {
+      const track = tracks[i];
+      if (track.mode !== 'showing' || !track.cues) continue;
+      // Pehli baar is track ke liye original timings yaad rakho.
+      if (!_subtitleOriginalCues.has(track)) {
+        const originals = [];
+        for (let c = 0; c < track.cues.length; c++) {
+          originals.push({ cue: track.cues[c], start: track.cues[c].startTime, end: track.cues[c].endTime });
+        }
+        _subtitleOriginalCues.set(track, originals);
+      }
+      for (const { cue, start, end } of _subtitleOriginalCues.get(track)) {
+        cue.startTime = start + deltaSec;
+        cue.endTime = end + deltaSec;
+      }
+    }
+  }
+
+  function _renderSettingsPanel() {
+    const panel = document.getElementById('pl-settings-panel');
+    if (!panel) return;
+    const speedLabel = _currentSpeed === 1 ? 'Normal' : (_currentSpeed + 'x');
+
+    if (_settingsView === 'root') {
+      panel.innerHTML = `
+        <div class="pl-settings-row" data-nav="speed">
+          <span class="pl-settings-row-icon">▶</span>
+          <span class="pl-settings-row-label">Play Speed</span>
+          <span class="pl-settings-row-value">${_esc(speedLabel)} ›</span>
+        </div>
+        <div class="pl-settings-row" data-nav="aspect">
+          <span class="pl-settings-row-icon">◀▶</span>
+          <span class="pl-settings-row-label">Aspect Ratio</span>
+          <span class="pl-settings-row-value">${_esc(_currentAspect.label)} ›</span>
+        </div>
+        <div class="pl-settings-row" data-nav="flip">
+          <span class="pl-settings-row-icon">⫩</span>
+          <span class="pl-settings-row-label">Video Flip</span>
+          <span class="pl-settings-row-value">${_esc(_currentFlip.label)} ›</span>
+        </div>
+        <div class="pl-settings-row pl-settings-offset-row">
+          <span class="pl-settings-row-icon">☰</span>
+          <span class="pl-settings-row-label">Subtitle Offset</span>
+          <span class="pl-settings-row-value" id="pl-offset-value">${_subtitleOffsetSec}s</span>
+        </div>
+        <input type="range" id="pl-offset-slider" class="pl-offset-slider" min="-10" max="10" step="0.5" value="${_subtitleOffsetSec}">`;
+      const slider = document.getElementById('pl-offset-slider');
+      slider?.addEventListener('input', () => {
+        const val = Number(slider.value);
+        _applySubtitleOffset(val);
+        const valueEl = document.getElementById('pl-offset-value');
+        if (valueEl) valueEl.textContent = val + 's';
       });
+    } else if (_settingsView === 'speed') {
+      panel.innerHTML = '<div class="pl-settings-back">‹ Back</div>' +
+        [1, 1.5, 2, 2.5, 3].map(s =>
+          `<div class="pl-pick-item ${s === _currentSpeed ? 'active' : ''}" data-speed="${s}">${s === 1 ? 'Normal' : s + 'x'}</div>`
+        ).join('');
+    } else if (_settingsView === 'aspect') {
+      panel.innerHTML = '<div class="pl-settings-back">‹ Back</div>' +
+        ASPECT_RATIOS.map(r =>
+          `<div class="pl-pick-item ${r.key === _currentAspect.key ? 'active' : ''}" data-aspect="${r.key}">${_esc(r.label)}</div>`
+        ).join('');
+    } else if (_settingsView === 'flip') {
+      panel.innerHTML = '<div class="pl-settings-back">‹ Back</div>' +
+        VIDEO_FLIPS.map(f =>
+          `<div class="pl-pick-item ${f.key === _currentFlip.key ? 'active' : ''}" data-flip="${f.key}">${_esc(f.label)}</div>`
+        ).join('');
     }
   }
 
@@ -622,7 +846,7 @@ const PlayerModule = (() => {
     }
     _activeBlobUrl = URL.createObjectURL(file);
     _currentItem = null; // local file ke liye koi language/up-next data nahi hai
-    _openPlayer(_activeBlobUrl, '📂 ' + file.name);
+    _openPlayer(_activeBlobUrl, '📂 ' + file.name, file.size);
     document.getElementById('pl-upnext')?.classList.add('hidden');
   }
 
@@ -659,6 +883,19 @@ const PlayerModule = (() => {
 
     _setupSmartBuffering(video); // FEATURE (naya) - dekho definition ka comment upar
 
+    // FEATURE (naya): "Watch on Your Favorite Player" grid - EK BAAR wire
+    // hota hai (event delegation), kyunki tiles har _openPlayer() par
+    // dobara render hote hain (_renderFavoritePlayerGrid).
+    document.getElementById('pl-fav-grid')?.addEventListener('click', (e) => {
+      const tile = e.target.closest('.pl-fav-tile');
+      if (!tile) return;
+      const action = tile.dataset.action;
+      if (action === 'download') _downloadCurrentVideo();
+      else if (action === 'copy') _copyStreamLink();
+      else if (action === 'more') _openInAnyPlayer();
+      else if (tile.dataset.pkg) _openInExternalPlayer(tile.dataset.pkg);
+    });
+
     const seek = document.getElementById('pl-ctrl-seek');
     const timeEl = document.getElementById('pl-ctrl-time');
     const playBtn = document.getElementById('pl-ctrl-playpause');
@@ -668,13 +905,13 @@ const PlayerModule = (() => {
     const fsBtn = document.getElementById('pl-ctrl-fullscreen');
     const ccBtn = document.getElementById('pl-ctrl-cc');
     const langBtn = document.getElementById('pl-ctrl-lang');
-    const speedBtn = document.getElementById('pl-ctrl-speed');
+    const settingsBtn = document.getElementById('pl-ctrl-settings');
     const langPanel = document.getElementById('pl-lang-panel');
     const ccPanel = document.getElementById('pl-cc-panel');
-    const speedPanel = document.getElementById('pl-speed-panel');
+    const settingsPanel = document.getElementById('pl-settings-panel');
 
     function _closeOtherPanels(except) {
-      [langPanel, ccPanel, speedPanel].forEach(p => { if (p && p !== except) p.classList.add('hidden'); });
+      [langPanel, ccPanel, settingsPanel].forEach(p => { if (p && p !== except) p.classList.add('hidden'); });
     }
 
     let _hideTimer = null;
@@ -803,20 +1040,47 @@ const PlayerModule = (() => {
       _switchLanguage(item.dataset.lang);
     });
 
-    // FEATURE (naya): Playback speed - 1x / 1.5x / 2x / 2.5x / 3x
-    speedBtn?.addEventListener('click', (e) => {
+    // FEATURE (naya): Settings gear - Play Speed / Aspect Ratio / Video
+    // Flip / Subtitle Offset, ek hi panel mein "drill-down" list ke
+    // roop mein (jaise reference image mein) - dekho _renderSettingsPanel().
+    settingsBtn?.addEventListener('click', (e) => {
       e.stopPropagation();
-      _closeOtherPanels(speedPanel);
-      speedPanel?.classList.toggle('hidden');
+      _closeOtherPanels(settingsPanel);
+      if (!settingsPanel) return;
+      const wasHidden = settingsPanel.classList.contains('hidden');
+      if (wasHidden) { _settingsView = 'root'; _renderSettingsPanel(); }
+      settingsPanel.classList.toggle('hidden');
       showControls();
     });
-    speedPanel?.addEventListener('click', (e) => {
+    settingsPanel?.addEventListener('click', (e) => {
       e.stopPropagation();
-      const item = e.target.closest('.pl-pick-item');
-      if (!item) return;
-      _applySpeed(Number(item.dataset.speed));
-      speedPanel.classList.add('hidden');
+      const back = e.target.closest('.pl-settings-back');
+      if (back) { _settingsView = 'root'; _renderSettingsPanel(); return; }
+
+      const row = e.target.closest('.pl-settings-row[data-nav]');
+      if (row) { _settingsView = row.dataset.nav; _renderSettingsPanel(); return; }
+
+      const speedItem = e.target.closest('[data-speed]');
+      if (speedItem) { _applySpeed(Number(speedItem.dataset.speed)); _settingsView = 'root'; _renderSettingsPanel(); return; }
+
+      const aspectItem = e.target.closest('[data-aspect]');
+      if (aspectItem) {
+        _applyAspect(ASPECT_RATIOS.find(r => r.key === aspectItem.dataset.aspect));
+        _settingsView = 'root'; _renderSettingsPanel();
+        return;
+      }
+
+      const flipItem = e.target.closest('[data-flip]');
+      if (flipItem) {
+        _applyFlip(VIDEO_FLIPS.find(f => f.key === flipItem.dataset.flip));
+        _settingsView = 'root'; _renderSettingsPanel();
+        return;
+      }
     });
+    // Slider apna 'input' event chahiye (drag karte waqt live update) -
+    // ye click listener se catch nahi hota, isliye alag se, aur panel ke
+    // dobara render hone par bhi kaam kare isliye event-delegation nahi,
+    // seedha render ke baad (dekho _renderSettingsPanel) wire karte hain.
   }
 
   /* ── Event delegation (grid + search box dono dynamically render hote hain) ── */

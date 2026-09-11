@@ -1,7 +1,28 @@
 const express       = require('express');
 const TypingHistory = require('../models/TypingHistory');
+const TypingExam    = require('../models/TypingExam');
+const TypingPassage = require('../models/TypingPassage');
 const { protect }   = require('../middleware/authMiddleware');
 const router        = express.Router();
+
+// FEATURE (naya): Exam list - Supabase ke fallback ke roop mein (dekho
+// docs/js/typing.js -> _fetchExamsWithFallback). Login zaroori nahi -
+// Supabase ka anon-key read bhi public hi hota hai, isliye yahan bhi
+// public rakha (protect middleware nahi).
+router.get('/exams', async (req, res) => {
+  try {
+    const exams = await TypingExam.find().sort({ name: 1 });
+    res.json({ success: true, exams });
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
+});
+
+// Ek exam ke saare passages
+router.get('/passages/:examId', async (req, res) => {
+  try {
+    const passages = await TypingPassage.find({ examId: req.params.examId }).sort({ createdAt: 1 });
+    res.json({ success: true, passages });
+  } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }
+});
 
 // Save result
 router.post('/save', protect, async (req,res) => {

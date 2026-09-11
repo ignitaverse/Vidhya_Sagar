@@ -102,6 +102,13 @@
   padding: 0 0 18px; position: relative; margin: 0 auto;
   box-shadow: 0 -8px 40px rgba(0,0,0,.5);
   animation: sheetUp .3s var(--spring);
+  /* FIX: naya content (brand-bar/now-playing/favorite-player-grid/help)
+     video ke aas-paas add hua hai - pehle modal apni height content ke
+     hisaab se hi badhata tha, koi cap ya scroll nahi tha, isliye chhote
+     screens par neeche wala content viewport se bahar/inaccessible ho
+     sakta tha. `.modal-sheet` (isi site ka doosra modal type) ki tarah
+     hi max-height + scroll de diya. */
+  max-height: 95vh; overflow-y: auto;
 }
 @media (min-width: 640px) {
   #pl-modal.modal-ov { align-items: center; justify-content: center; }
@@ -222,9 +229,6 @@
 }
 .pl-ctrl-btn:hover, .pl-ctrl-btn:active { opacity: 1; background: rgba(255,255,255,.12); }
 #pl-ctrl-cc.pl-cc-active { color: var(--blue3); font-weight: 900; }
-/* FEATURE (naya): speed button ("2.5x" jaisa text) baaki 30px-wide icon
-   buttons se chaudा hona chahiye, warna text clip ho jaata। */
-.pl-ctrl-speed { width: auto; min-width: 34px; padding: 0 6px; font-size: .78rem; font-weight: 700; }
 .pl-ctrl-time { color: #fff; font-size: .72rem; opacity: .9; white-space: nowrap; padding: 0 2px; }
 .pl-ctrl-spacer { flex: 1; }
 
@@ -251,21 +255,93 @@
 }
 .pl-pick-item.pl-pick-empty:hover { background: none; }
 
-.pl-video-footer {
-  display: flex; align-items: flex-start; gap: 9px;
-  padding: 16px 18px 0;
+/* FEATURE (naya): Settings gear ka drill-down panel (Play Speed /
+   Aspect Ratio / Video Flip / Subtitle Offset) */
+.pl-settings-panel { min-width: 230px; max-width: 78vw; }
+.pl-settings-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 8px; border-radius: 8px; cursor: pointer;
 }
-.pl-video-live-dot {
-  flex: none; width: 8px; height: 8px; border-radius: 50%;
-  background: var(--blue2); margin-top: 6px;
-  box-shadow: 0 0 8px var(--blue2), 0 0 0 3px rgba(59,130,246,.15);
+.pl-settings-row:hover { background: rgba(59,130,246,.18); }
+.pl-settings-row-icon { flex: none; width: 20px; text-align: center; font-size: .88rem; }
+.pl-settings-row-label { flex: 1; font-size: .82rem; color: var(--text); }
+.pl-settings-row-value { font-size: .78rem; color: var(--text2); white-space: nowrap; }
+.pl-settings-offset-row { cursor: default; }
+.pl-settings-offset-row:hover { background: none; }
+.pl-settings-back {
+  padding: 9px 8px; margin-bottom: 4px; border-bottom: 1px solid var(--border);
+  font-size: .8rem; color: var(--blue3); font-weight: 700; cursor: pointer;
 }
-.pl-video-title {
-  color: var(--text); font-family: var(--ff-head); font-size: 1.02rem;
-  font-weight: 700; line-height: 1.4;
+.pl-offset-slider {
+  width: 100%; margin: 6px 0 4px; accent-color: var(--blue2); cursor: pointer;
 }
 
-/* ── "Aur videos" - neeche scrollable strip, playing hue video ko band
+/* FEATURE (naya): "Watch on Your Favorite Player" - external-app grid */
+.pl-fav-section.hidden { display: none; }
+.pl-fav-divider {
+  display: flex; align-items: center; gap: 10px; margin: 20px 18px 12px;
+  color: var(--text2); font-size: .78rem; font-weight: 700;
+}
+.pl-fav-divider::before, .pl-fav-divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--border2);
+}
+.pl-fav-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 18px;
+}
+.pl-fav-tile {
+  display: flex; align-items: center; gap: 10px; padding: 13px 14px;
+  background: var(--card); border: 1.5px solid var(--border2); border-radius: 12px;
+  color: var(--text); font-size: .84rem; font-weight: 600; cursor: pointer;
+  transition: .15s;
+}
+.pl-fav-tile:hover, .pl-fav-tile:active { border-color: var(--blue2); background: var(--card3); }
+.pl-fav-icon { font-size: 1.1rem; }
+
+/* FEATURE (naya): Help & Support */
+.pl-help-box { margin: 22px 18px 0; }
+.pl-help-head {
+  display: flex; align-items: center; gap: 8px; font-weight: 800;
+  font-size: .88rem; color: var(--text); margin-bottom: 12px;
+}
+.pl-help-card {
+  background: rgba(99,179,237,.06); border-left: 3px solid var(--blue2);
+  border-radius: 10px; padding: 12px 14px; margin-bottom: 10px;
+}
+.pl-help-card-title { font-weight: 700; font-size: .82rem; color: var(--text); margin-bottom: 4px; }
+.pl-help-card-body { font-size: .78rem; color: var(--text2); line-height: 1.5; }
+.pl-help-card-body b { color: var(--blue3); }
+
+/* FEATURE (naya): branded header + "NOW PLAYING" info block (video se
+   PEHLE, jaisa reference design mein hai) */
+.pl-brand-bar {
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 14px 18px 4px; font-family: var(--ff-head); font-weight: 800;
+  font-size: .92rem; letter-spacing: .04em; color: var(--purple2);
+}
+.pl-brand-play { color: var(--blue2); }
+.pl-nowplaying { padding: 10px 18px 14px; text-align: center; }
+.pl-nowplaying-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: .68rem; font-weight: 800; letter-spacing: .08em;
+  color: var(--rose2); text-transform: uppercase; margin-bottom: 8px;
+}
+.pl-live-dot {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--rose2);
+  box-shadow: 0 0 8px var(--rose2); animation: plLiveDotPulse 1.6s ease-in-out infinite;
+}
+@keyframes plLiveDotPulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+.pl-nowplaying-title {
+  color: var(--text); font-family: var(--ff-head); font-size: 1.05rem;
+  font-weight: 700; line-height: 1.4; word-break: break-word;
+}
+.pl-nowplaying-size {
+  display: inline-block; margin-top: 10px; padding: 5px 14px;
+  border-radius: 999px; background: rgba(99,179,237,.12);
+  border: 1px solid var(--border2); font-size: .76rem; color: var(--text2);
+}
+.pl-nowplaying-size.hidden { display: none; }
+
+/* ── \"Aur videos\" - neeche scrollable strip, playing hue video ko band
    kiye bina koi doosra video choose kiya ja sake ── */
 .pl-upnext { padding: 18px 0 4px; }
 .pl-upnext.hidden { display: none; }

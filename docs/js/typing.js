@@ -50,32 +50,83 @@ const TypingModule = (() => {
     if (!grid) return;
     grid.innerHTML = '<div class="vs-loading-text" style="grid-column:1/-1">Loading exams…</div>';
 
+    _exams = await _fetchExamsWithFallback();
+    _renderExamGrid(_exams);
+    _bindSearch();
+    _bindCatTabs();
+  }
+
+  // FEATURE (naya): TEEN-tier fallback - Supabase (primary) -> apna
+  // MongoDB backend (naya, doosra database - Owner isme seedhe passages/
+  // exams daal sakta hai bina Supabase chhue - dekho backend/routes/
+  // typing.js aur seedTypingContent.js) -> hardcoded (aakhri safety net,
+  // agar dono database down/khaali hon tab bhi kuchh dikhta rahe).
+  async function _fetchExamsWithFallback() {
     try {
       const sb = _getSupabase();
-      let exams = [];
-
       if (sb) {
         const { data, error } = await sb.from('exams').select('*').order('name');
         if (error) throw new Error(error.message);
-        exams = data || [];
-      } else {
-        // Fallback offline exams
-        exams = _offlineExams();
+        if (data && data.length) return data;
       }
-
-      _exams = exams;
-      _renderExamGrid(_exams);
-      _bindSearch();
-      _bindCatTabs();
-
-    } catch(e) {
-      // Use offline exams on any error
-      _exams = _offlineExams();
-      _renderExamGrid(_exams);
-      _bindSearch();
-      _bindCatTabs();
-      console.warn('Supabase exams failed, using offline:', e.message);
+    } catch (e) {
+      console.warn('Supabase exams failed, trying backend:', e.message);
     }
+    try {
+      const json = await apiFetch('/api/typing/exams');
+      if (json.exams && json.exams.length) {
+        return json.exams.map(e => ({
+          id: e.examId, name: e.name, category: e.category, minWpm: e.minWpm,
+          minAcc: e.minAcc, timeMins: e.timeMins, languages: e.languages,
+          emoji: e.emoji, color: e.color,
+        }));
+      }
+    } catch (e) {
+      console.warn('Backend exams failed, using offline:', e.message);
+    }
+    return _offlineExams();
+  }
+
+  // FEATURE (naya): _fetchExamsWithFallback() jaisa hi teen-tier - Supabase
+  // -> apna MongoDB backend -> hardcoded.
+  async function _fetchPassagesWithFallback(examId) {
+    try {
+      const sb = _getSupabase();
+      if (sb) {
+        const { data, error } = await sb
+          .from('passages')
+          .select('id, title, text, language, word_count, difficulty')
+          .eq('exam_id', examId)
+          .order('created_at');
+        if (error) throw new Error(error.message);
+        if (data && data.length) {
+          return data.map(p => ({
+            id: p.id, title: p.title || 'Passage', text: p.text,
+            language: p.language || 'english',
+            wordCount: p.word_count || p.text.trim().split(/\s+/).length,
+            difficulty: _normDifficulty(p.difficulty),
+            examId,
+          }));
+        }
+      }
+    } catch (e) {
+      console.warn('Supabase passages failed, trying backend:', e.message);
+    }
+    try {
+      const json = await apiFetch('/api/typing/passages/' + encodeURIComponent(examId));
+      if (json.passages && json.passages.length) {
+        return json.passages.map(p => ({
+          id: p._id, title: p.title || 'Passage', text: p.text,
+          language: p.language || 'english',
+          wordCount: p.wordCount || p.text.trim().split(/\s+/).length,
+          difficulty: _normDifficulty(p.difficulty),
+          examId,
+        }));
+      }
+    } catch (e) {
+      console.warn('Backend passages failed, using offline:', e.message);
+    }
+    return _offlinePassages(examId);
   }
 
   /* Offline exam data (when Supabase not configured) */
@@ -195,30 +246,7 @@ const TypingModule = (() => {
     if (!list) return;
     list.innerHTML = '<div class="vs-loading-text">Loading passages…</div>';
 
-    let passages = [];
-    try {
-      const sb = _getSupabase();
-      if (sb) {
-        const { data, error } = await sb
-          .from('passages')
-          .select('id, title, text, language, word_count, difficulty')
-          .eq('exam_id', examId)
-          .order('created_at');
-        if (error) throw new Error(error.message);
-        passages = (data || []).map(p => ({
-          id: p.id, title: p.title||'Passage', text: p.text,
-          language: p.language||'english',
-          wordCount: p.word_count || p.text.trim().split(/\s+/).length,
-          difficulty: _normDifficulty(p.difficulty),
-          examId
-        }));
-      } else {
-        passages = _offlinePassages(examId);
-      }
-    } catch(e) {
-      passages = _offlinePassages(examId);
-    }
-
+    const passages = await _fetchPassagesWithFallback(examId);
     window._currentPassages = passages;
     if (countPill) countPill.textContent = passages.length + ' passages';
 
