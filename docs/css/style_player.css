@@ -134,7 +134,20 @@
   background: #000;
 }
 #pl-video-wrap.pl-rotated #pl-video {
-  width: 100vh; max-height: 100vw; max-width: none;
+  /* FIX (real bug): pehle `width: 100vh` ke saath `max-height: 100vw`
+     (height EXPLICITLY set nahi) diya tha - browser <video> (jaisi
+     replaced element) ke apne intrinsic aspect-ratio ko respect karte
+     hue height AUTO compute karta hai, aur agar wo max-height se zyada
+     nikle to sirf height clamp nahi hoti - WIDTH bhi wapas us naye
+     (chhote) height ke hisaab se recompute ho jaati hai, taaki video
+     ka apna aspect-ratio bana rahe. Isse rotate karne par video screen
+     bharने ki jagah ek chhote se "parde" (frame) mein simat jaata tha.
+     Ab WIDTH aur HEIGHT dono EXPLICITLY (max- nahi, seedhe) set hain,
+     taaki box hamesha poore viewport jitna hi bane - andar ka video
+     `object-fit` se fit hota hai (letterbox ho sakta hai agar aspect-
+     ratio match na kare, par box khud kabhi chhota nahi hota). */
+  width: 100vh; height: 100vw; max-width: none; max-height: none;
+  object-fit: contain;
   transform: rotate(90deg);
 }
 
@@ -150,7 +163,7 @@
 /* Loading spinner - jab tak video ka pehla frame load na ho */
 .pl-video-loading {
   position: absolute; inset: 0; z-index: 2;
-  display: flex; align-items: center; justify-content: center;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
   background: radial-gradient(circle at center, rgba(10,18,32,.6), rgba(0,0,0,.85));
   pointer-events: none;
 }
@@ -161,6 +174,27 @@
   animation: plSpin .8s linear infinite;
 }
 @keyframes plSpin { to { transform: rotate(360deg); } }
+/* FEATURE (naya): "% wala animation" - user ko batata hai ki data
+   GENUINELY load ho raha hai (technical problem nahi), chahe pehli
+   baar video khulते waqt ho ya beech mein buffer khatam hone par
+   (dekho player.js -> _updateLoadingPercent, dono jagah reuse hota hai). */
+.pl-video-loading-pct {
+  color: #fff; font-size: .82rem; font-weight: 700;
+  background: rgba(0,0,0,.4); padding: 4px 12px; border-radius: 999px;
+  min-width: 20px; text-align: center;
+}
+.pl-video-loading-pct:empty { display: none; }
+
+/* FEATURE (naya): video khulte hi direct play NAHI hoti - pehle thumbnail
+   (poster) + ek bada, hamesha-visible play button dikhta hai; loading/
+   controls sab tab tak chhupe rehte hain jab tak user khud tap na kare. */
+#pl-video-wrap.pl-not-started .pl-ctrl-center {
+  opacity: 1; width: 74px; height: 74px; font-size: 1.6rem;
+  background: rgba(29,110,245,.85); border-color: rgba(255,255,255,.35);
+  box-shadow: 0 4px 22px rgba(29,110,245,.5);
+}
+#pl-video-wrap.pl-not-started .pl-controls,
+#pl-video-wrap.pl-not-started .pl-video-loading { display: none; }
 
 .pl-video-error {
   position: absolute; left: 10px; right: 10px; bottom: 66px; z-index: 4;

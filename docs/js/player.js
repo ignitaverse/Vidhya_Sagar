@@ -358,6 +358,28 @@ const PlayerModule = (() => {
     return mb.toFixed(0) + ' MB';
   }
 
+  let _loadTimeoutTimer = null;
+
+  function _clearLoadTimeout() {
+    if (_loadTimeoutTimer) { clearTimeout(_loadTimeoutTimer); _loadTimeoutTimer = null; }
+  }
+
+  // FEATURE (naya): "% wala animation" - initial load AUR beech-mein-
+  // stall (dekho _setupSmartBuffering) dono jagah reuse hota hai, taaki
+  // user ko hamesha pata rahe ki ye genuinely data la raha hai, atka
+  // hua/toota hua nahi.
+  function _updateLoadingPercent(video) {
+    const pctEl = document.getElementById('pl-video-loading-pct');
+    if (!pctEl) return;
+    if (!video.duration || !isFinite(video.duration) || !video.buffered || video.buffered.length === 0) {
+      pctEl.textContent = ''; // duration abhi pata nahi - sirf spinner dikhta rahega
+      return;
+    }
+    const bufferedEnd = video.buffered.end(video.buffered.length - 1);
+    const percent = Math.min(100, Math.round((bufferedEnd / video.duration) * 100));
+    pctEl.textContent = percent + '%';
+  }
+
   function _openPlayer(streamUrl, title, fileSizeBytes) {
     const modal = document.getElementById('pl-modal');
     const video = document.getElementById('pl-video');
@@ -367,6 +389,7 @@ const PlayerModule = (() => {
     const errEl = document.getElementById('pl-video-error');
     const warnEl = document.getElementById('pl-video-warning');
     const loadingEl = document.getElementById('pl-video-loading');
+    const pctEl = document.getElementById('pl-video-loading-pct');
     if (!modal || !video) return;
     _currentStreamUrl = streamUrl;
     if (titleEl) titleEl.textContent = title;
@@ -378,7 +401,8 @@ const PlayerModule = (() => {
     _renderFavoritePlayerGrid();
     if (errEl) { errEl.classList.add('hidden'); errEl.textContent = ''; }
     if (warnEl) { warnEl.classList.add('hidden'); warnEl.textContent = ''; }
-    if (loadingEl) loadingEl.classList.remove('hidden');
+    if (loadingEl) loadingEl.classList.add('hidden'); // FIX: pehle video khulte hi turant spinner dikhta tha - ab tap se pehle kuch load hi nahi hota
+    if (pctEl) pctEl.textContent = '';
     if (wrap) wrap.classList.remove('pl-rotated');
     document.getElementById('pl-lang-panel')?.classList.add('hidden');
     document.getElementById('pl-cc-panel')?.classList.add('hidden');
@@ -386,11 +410,41 @@ const PlayerModule = (() => {
     document.getElementById('pl-ctrl-cc')?.classList.remove('pl-cc-active');
     _resetPlayerVisualSettings(); // FEATURE (naya): speed/aspect/flip/subtitle-offset sab 1 video se dusre video mein carry NAHI hone chahiye
     _resetSmartBuffering(); // FEATURE (naya) - dekho comment neeche
+    _clearLoadTimeout();
+
+    // FIX (real bug): pehle video khulte hi turant `video.src` set karke
+    // `.play()` call ho jaata tha - koi thumbnail/poster ka mauka hi
+    // nahi milta tha, seedha (kabhi kaale screen ke saath) play/buffer
+    // shuru ho jaata. Ab pehle sirf ek THUMBNAIL (agar catalog se mila
+    // ho) aur ek bada play-button dikhate hain - src tabhi set hota hai
+    // jab user khud tap kare (dekho _startPlayback neeche, aur playBtn/
+    // centerBtn ke click handler mein).
+    video.removeAttribute('src');
+    video.load();
+    const thumbId = _currentItem && _currentItem.thumb_id;
+    video.poster = thumbId ? _api('/api/thumbnail?id=' + encodeURIComponent(thumbId)) : '';
+    if (wrap) wrap.classList.add('pl-not-started');
+
+    modal.classList.remove('hidden');
+    _updateLangButton(_currentItem);
+    _populateUpNext(title);
+  }
+
+  function _startPlayback() {
+    const video = document.getElementById('pl-video');
+    const wrap = document.getElementById('pl-video-wrap');
+    const errEl = document.getElementById('pl-video-error');
+    const warnEl = document.getElementById('pl-video-warning');
+    const loadingEl = document.getElementById('pl-video-loading');
+    if (!video || !_currentStreamUrl) return;
+    if (wrap) wrap.classList.remove('pl-not-started');
+    if (loadingEl) loadingEl.classList.remove('hidden');
 
     video.onerror = () => {
+      _clearLoadTimeout();
       const err = video.error;
       const detail = err ? (_MEDIA_ERROR_TEXT[err.code] || `Unknown error code ${err.code}`) : 'Unknown error';
-      console.error('[Player] video playback error:', err, '| src:', streamUrl);
+      console.error('[Player] video playback error:', err, '| src:', _currentStreamUrl);
       if (loadingEl) loadingEl.classList.add('hidden');
       if (errEl) {
         errEl.textContent = '⚠️ Video load nahi ho paya - ' + detail;
@@ -400,15 +454,24 @@ const PlayerModule = (() => {
     // Pehla frame ready hote hi spinner hata dete hain - 'loadeddata' se
     // pehle video area khaali/black dikhta tha, ab spinner user ko batata
     // hai ki load ho raha hai.
-    video.onloadeddata = () => { if (loadingEl) loadingEl.classList.add('hidden'); };
+    video.onloadeddata = () => { _clearLoadTimeout(); if (loadingEl) loadingEl.classList.add('hidden'); };
     video.onplaying = () => _runDiagnostics(video, warnEl);
+    video.onprogress = () => _updateLoadingPercent(video);
 
-    video.src = streamUrl;
-    modal.classList.remove('hidden');
+    // FEATURE (naya): agar pehla frame hi kaafi der (20 second) mein na
+    // aaye - na error, na data - to user ko andhere mein mat rakho,
+    // saaf warning do (complaint: "warna wait na karna pade").
+    _clearLoadTimeout();
+    _loadTimeoutTimer = setTimeout(() => {
+      if (video.readyState < 2 && warnEl) {
+        warnEl.textContent = '⚠️ Video load hone mein arsa lag raha hai - connection dheemi ho sakti hai. Thoda aur intezaar karein, ya upar diye VLC/MX Player button se try karein.';
+        warnEl.classList.remove('hidden');
+      }
+    }, 20000);
+
+    video.src = _currentStreamUrl;
+    video.load();
     video.play().catch(() => { /* autoplay block ho sakta hai - controls se chala sakte hain */ });
-
-    _updateLangButton(_currentItem);
-    _populateUpNext(title);
   }
 
   /* ── Language variants (agar isi title ki alag-alag language mein
@@ -856,12 +919,13 @@ const PlayerModule = (() => {
     const wrap = document.getElementById('pl-video-wrap');
     const loadingEl = document.getElementById('pl-video-loading');
     clearTimeout(_diagTimer);
+    _clearLoadTimeout(); // FEATURE (naya) - stale timer agli baar modal khulne se pehle na chal jaaye
     if (video) {
       video.pause();
       video.removeAttribute('src');
       video.load();
     }
-    if (wrap) wrap.classList.remove('pl-rotated', 'pl-ctrls-visible');
+    if (wrap) wrap.classList.remove('pl-rotated', 'pl-ctrls-visible', 'pl-not-started');
     if (modal) modal.classList.add('hidden');
     if (loadingEl) loadingEl.classList.add('hidden');
     if (document.fullscreenElement) document.exitFullscreen?.();
@@ -928,9 +992,20 @@ const PlayerModule = (() => {
       if (centerBtn) centerBtn.textContent = icon;
     }
 
+    // FIX (real bug - complaint: "kabhi tap karne pe play/stop dono ho
+    // jaate hain, sirf button se hona chahiye"): pehle yahan tap karne
+    // par bhi play/pause TOGGLE ho jaata tha - poore video area mein
+    // kahin bhi tap karo. Isse do dikkatein: (1) galti se tap hote hi
+    // playback toggle ho jaata, aur (2) smart-buffering (dekho
+    // _setupSmartBuffering) jab buffer jama karne ke liye khud video
+    // ko pause karke rakhta, tab user ka ek "sirf controls dekhne wala"
+    // tap bhi turant .play() force kar deta - jisse buffer poora hone
+    // se PEHLE hi resume ho jaata, aur turant dobara ruk jaata (yahi
+    // "play aur stop dono" wala flicker tha). Ab tap sirf controls
+    // dikhata/chhupata hai - play/pause SIRF dedicated button se.
     wrap.addEventListener('click', (e) => {
       if (e.target.closest('.pl-controls, .pl-ctrl-center, .pl-pick-panel, .pl-modal-close')) return;
-      if (video.paused) video.play().catch(() => {}); else video.pause();
+      if (wrap.classList.contains('pl-not-started')) return; // poster state mein tap sirf play-button se hi kaam kare
       showControls();
     });
 
@@ -940,6 +1015,10 @@ const PlayerModule = (() => {
 
     [playBtn, centerBtn].forEach(btn => btn?.addEventListener('click', (e) => {
       e.stopPropagation();
+      // FEATURE (naya): pehla tap (abhi tak src set hi nahi hua - poster
+      // state) -> load+play shuru karo. Uske baad har tap normal
+      // play/pause toggle hai.
+      if (!video.src) { _startPlayback(); return; }
       if (video.paused) video.play().catch(() => {}); else video.pause();
       showControls();
     }));
