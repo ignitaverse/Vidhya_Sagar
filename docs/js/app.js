@@ -11,6 +11,25 @@
 // URL ke saath kuch bhi ho, humare paas token pehle se surakshit hai.
 const _deepLinkWatchToken = new URLSearchParams(window.location.search).get('watch');
 
+// FEATURE (naya, maanga gaya): "video ek baar khulne ke baad history mein
+// chad jaati hai, wapas 'back' karne par dubara khul jaati hai - ye nahi
+// hona chahiye". Ye asal mein browser ka "bfcache" (back-forward cache)
+// hai: jab user site chhod kar (kisi doosri app/site par ja kar) PHIR
+// "back" se laut ta hai, kai mobile browsers POORA JAVASCRIPT dobara
+// chalane ki bajaye EXACT PURANI state (player khula, video ka src set,
+// waghera) seedha memory se wapas dikha dete hain - koi naya page-load
+// hota hi nahi, isliye normal band/cleanup wala code kabhi chalta hi
+// nahi. Isse video "dubara access" ho jaati hai jabki user ja chuka tha.
+window.addEventListener('pagehide', () => {
+  if (typeof PlayerModule !== 'undefined') PlayerModule.closePlayer();
+});
+window.addEventListener('pageshow', (e) => {
+  // e.persisted === true matlab ye ASLI naya load nahi, bfcache se
+  // wapas dikhaya gaya page hai - player kahin bhi khula reh gaya ho
+  // to use zabardasti band kar dete hain (dubara access nahi hone dete).
+  if (e.persisted && typeof PlayerModule !== 'undefined') PlayerModule.closePlayer();
+});
+
 let token    = localStorage.getItem('vs_token') || null;
 let userData = JSON.parse(localStorage.getItem('vs_user') || 'null');
 

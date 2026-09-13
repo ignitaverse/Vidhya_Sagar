@@ -185,6 +185,27 @@
 }
 .pl-video-loading-pct:empty { display: none; }
 
+/* FIX (complaint: "video ki display bhi fade ho jaati hai"): beech-
+   playback stall ke liye poore-screen dim overlay ki jagah sirf ek
+   chhota corner badge - current frame poori tarah dikhta rehta hai
+   (dekho player.js -> _setupSmartBuffering). Shuru mein (poster ke
+   upar) poora-dim wala default hi rehta hai (kuch dikhane layak hai hi
+   nahi abhi). */
+.pl-video-loading.pl-loading-inline {
+  inset: auto; top: 10px; left: 10px; right: auto; bottom: auto;
+  width: auto; flex-direction: row; gap: 8px; padding: 8px 12px;
+  border-radius: 999px; background: rgba(0,0,0,.65);
+  backdrop-filter: blur(4px); justify-content: flex-start;
+}
+.pl-video-loading.pl-loading-inline .pl-spinner { width: 16px; height: 16px; border-width: 2px; }
+.pl-video-loading.pl-loading-inline .pl-video-loading-pct { font-size: .72rem; padding: 0; background: none; }
+
+/* FIX (complaint: buffering ke dauraan "pause" wala button galat dikhta
+   tha, jaise video chal rahi ho): buffering ke waqt center button hata
+   dete hain - kam confusing hai ek button na dikhana, "galat" icon
+   dikhane se. */
+#pl-video-wrap.pl-buffering .pl-ctrl-center { display: none; }
+
 /* FEATURE (naya): video khulte hi direct play NAHI hoti - pehle thumbnail
    (poster) + ek bada, hamesha-visible play button dikhta hai; loading/
    controls sab tab tak chhupe rehte hain jab tak user khud tap na kare. */

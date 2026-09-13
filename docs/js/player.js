@@ -403,7 +403,7 @@ const PlayerModule = (() => {
     if (warnEl) { warnEl.classList.add('hidden'); warnEl.textContent = ''; }
     if (loadingEl) loadingEl.classList.add('hidden'); // FIX: pehle video khulte hi turant spinner dikhta tha - ab tap se pehle kuch load hi nahi hota
     if (pctEl) pctEl.textContent = '';
-    if (wrap) wrap.classList.remove('pl-rotated');
+    if (wrap) wrap.classList.remove('pl-rotated', 'pl-buffering');
     document.getElementById('pl-lang-panel')?.classList.add('hidden');
     document.getElementById('pl-cc-panel')?.classList.add('hidden');
     document.getElementById('pl-settings-panel')?.classList.add('hidden');
@@ -718,103 +718,65 @@ const PlayerModule = (() => {
   }
 
   /* ══════════════════════════════════════════════════════════════
-     FEATURE (naya): "Smart buffering" - YouTube jaisa smooth playback
+     FIX (real bug - complaint: "video pause ho jaati hai, dubara chalu
+     nahi ho rahi"): Pichhle round mein yahan ek "smart buffering" tha -
+     buffer khatam hone par video ko KHUD `.pause()` kar deta, aur ek
+     healthy margin (buffer aage) jama hone ka intezaar karta, phir
+     resume karta - taaki baar-baar ki chhoti atkan ki jagah kam, saaf
+     pause milein.
 
-     Plain <video> tag ko JS se "exactly 2 minute buffer karke rakho"
-     bolne ka koi seedha browser API nahi hai (wo sirf Media Source
-     Extensions se milta hai, jiske liye video-server ko CORS + Range
-     headers support karne padte - aur MKV files ke liye zyadatar
-     browsers mein kaam hi nahi karta, is site ki bahut si files MKV
-     hain). Isliye asli fix DIFFERENT angle se: browser ka DEFAULT
-     behavior ye hai ki 'waiting' (buffer khatam) ke baad jaise hi
-     THODA sa naya data aata hai, TURANT resume kar deta hai - dheeli/
-     unstable connection par isse baar-baar "chipak-chipak" (bahut
-     saari CHHOTI atkan) hoti hai: thoda chala, phir turant ruka,
-     thoda chala, phir turant ruka...
+     ASLI PROBLEM: zyadatar browsers (khaaskar mobile par) VIDEO PAUSE
+     hote hi background download bhi DHEEMA/BAND kar dete hain (data-
+     saving optimization) - matlab jis buffer ka hum intezaar kar rahe
+     the, wo `.pause()` karne ki wajah se hi badhna ROOK jaata! Isse
+     video "pause ho jaati hai lekin dubara chalu nahi hoti" jaisi
+     permanent-atki-hui state mein phas jaati thi - bilkul ulta jo
+     chahiye tha.
 
-     Real players (YouTube jaisा) aisa nahi karte - beech mein rukne
-     par TURANT resume nahi karte, pehle ek margin (aage ka buffer)
-     jama hone dete hain, phir EK HI BAAR mein resume karte hain.
-     Isse chhoti-chhoti bahut saari atkan ki jagah, kam aur SAAF pause
-     milte hain - overall zyada "chipakta" hua nahi, zyada "smooth"
-     lagta hai, bhale hi total buffering time waisa hi rahe।
-
-     Target 2 minute (jo maanga gaya tha) rakha hai, LEKIN saath mein
-     ek max-wait cap bhi hai - agar connection itni dheemi hai ki 2
-     minute ka data hi 12 second mein nahi aa sakta, to hum utni der
-     hi rukenge jitna cap allow kare, phir jitna mila utne se resume
-     kar denge - warna genuinely slow connection par player "atka hua
-     ya toota hua" jaisa lagta (kayi minute ka freeze), jo ulta bura
-     UX hoga.
+     FIX: ab hum video ko KABHI khud pause NAHI karte. Browser jo bhi
+     apna default "waiting -> jaise hi data mile turant resume" wala
+     kaam kare, use hone dete hain (isi se download bhi chalta rehta
+     hai) - hum sirf ek SAAF "buffering..." indicator (spinner + %)
+     dikhate hain jab tak wo state chale, taaki user ko pata rahe ye
+     genuinely data la raha hai, atka/toota hua nahi.
   ════════════════════════════════════════════════════════════════ */
-  const SMART_BUF_RESUME_TARGET_SEC = 120; // "2 minute aage" - jo maanga gaya
-  const SMART_BUF_MAX_WAIT_MS = 12000;     // itni der (real seconds) se zyada kabhi nahi rokenge
-
-  let _smartBuf = { timer: null, waitingSince: 0, autoPaused: false };
-
-  function _clearSmartBufTimer() {
-    if (_smartBuf.timer) { clearInterval(_smartBuf.timer); _smartBuf.timer = null; }
-  }
-
   function _resetSmartBuffering() {
-    _clearSmartBufTimer();
-    _smartBuf.autoPaused = false;
-    _smartBuf.waitingSince = 0;
-    document.getElementById('pl-video-loading')?.classList.add('hidden');
-  }
-
-  function _bufferedAheadSeconds(video) {
-    const t = video.currentTime;
-    const buf = video.buffered;
-    for (let i = 0; i < buf.length; i++) {
-      if (t >= buf.start(i) && t <= buf.end(i)) return buf.end(i) - t;
-    }
-    return 0;
+    const loadingEl = document.getElementById('pl-video-loading');
+    loadingEl?.classList.add('hidden');
+    loadingEl?.classList.remove('pl-loading-inline');
   }
 
   function _setupSmartBuffering(video) {
     const loadingEl = document.getElementById('pl-video-loading');
+    const wrap = document.getElementById('pl-video-wrap');
 
     video.addEventListener('waiting', () => {
-      // Seek karte waqt bhi 'waiting' aata hai (naya position load ho raha
-      // hota hai) - wo normal hai, usmein dakhal nahi dena, warna seek
-      // karna hi "atka hua" jaisa lagega.
-      if (video.seeking) return;
-
-      _smartBuf.waitingSince = Date.now();
-      _smartBuf.autoPaused = true;
-      video.pause(); // FIX ka core: turant-resume rokte hain, khud control lete hain
-      if (loadingEl) loadingEl.classList.remove('hidden'); // "buffering" saaf dikhta hai, "toota hua" nahi
-
-      _clearSmartBufTimer();
-      _smartBuf.timer = setInterval(() => {
-        const aheadSec = _bufferedAheadSeconds(video);
-        const waitedMs = Date.now() - _smartBuf.waitingSince;
-        const targetReached = aheadSec >= SMART_BUF_RESUME_TARGET_SEC;
-        const capReached = waitedMs >= SMART_BUF_MAX_WAIT_MS;
-        if (targetReached || capReached || video.ended) {
-          _clearSmartBufTimer();
-          if (loadingEl) loadingEl.classList.add('hidden');
-          if (_smartBuf.autoPaused && !video.ended) {
-            _smartBuf.autoPaused = false;
-            video.play().catch(() => {});
-          } else {
-            _smartBuf.autoPaused = false;
-          }
-        }
-      }, 400);
+      if (video.seeking) return; // seek karte waqt 'waiting' normal hai, usmein dakhal nahi
+      if (loadingEl) {
+        // FIX (complaint: "video ki display bhi fade ho jaati hai"): shuru
+        // mein (poster ke upar) poori tarah dim karna theek hai - kuch
+        // dikhane layak hai hi nahi abhi. Lekin BEECH mein (currentTime>0)
+        // video ka CURRENT FRAME already dikh raha hota hai - use poori
+        // tarah kaale overlay se dhakna hi "fade ho jaana" wala bug tha.
+        // Isliye beech-mein-stall par sirf ek chhota corner-badge
+        // dikhate hain (dekho .pl-loading-inline CSS), poora screen dim
+        // nahi karte.
+        loadingEl.classList.toggle('pl-loading-inline', video.currentTime > 0.5);
+        loadingEl.classList.remove('hidden');
+      }
+      wrap?.classList.add('pl-buffering'); // FIX (complaint: pause-icon galat dikhta tha) - dekho CSS comment
     });
-
-    // User KHUD pause kare (hamari buffering-wait ke alawa), to hamara
-    // auto-resume cancel ho jaaye - warna user pause kare aur video khud
-    // hi thodi der baad wapas chalne lage, bahut ajeeb UX hoga.
-    video.addEventListener('pause', () => { if (!_smartBuf.autoPaused) _clearSmartBufTimer(); });
     video.addEventListener('playing', () => {
-      _smartBuf.autoPaused = false;
-      _clearSmartBufTimer();
       if (loadingEl) loadingEl.classList.add('hidden');
+      wrap?.classList.remove('pl-buffering');
     });
-    video.addEventListener('seeking', () => { _smartBuf.autoPaused = false; _clearSmartBufTimer(); });
+    // Video khud pause/ended ho (user ne button dabaya, ya khatam hui) to
+    // bhi buffering-indicator hata do - warna paused video par bhi
+    // "buffering" dikhta reh sakta hai.
+    video.addEventListener('pause', () => {
+      if (loadingEl) loadingEl.classList.add('hidden');
+      wrap?.classList.remove('pl-buffering');
+    });
   }
 
   /* ── FEATURE (rebuilt): Captions/Subtitles ── pehle ye button sirf
@@ -925,7 +887,7 @@ const PlayerModule = (() => {
       video.removeAttribute('src');
       video.load();
     }
-    if (wrap) wrap.classList.remove('pl-rotated', 'pl-ctrls-visible', 'pl-not-started');
+    if (wrap) wrap.classList.remove('pl-rotated', 'pl-ctrls-visible', 'pl-not-started', 'pl-buffering');
     if (modal) modal.classList.add('hidden');
     if (loadingEl) loadingEl.classList.add('hidden');
     if (document.fullscreenElement) document.exitFullscreen?.();
@@ -984,7 +946,7 @@ const PlayerModule = (() => {
     function showControls() {
       wrap.classList.add('pl-ctrls-visible');
       clearTimeout(_hideTimer);
-      if (!video.paused) _hideTimer = setTimeout(() => wrap.classList.remove('pl-ctrls-visible'), 3000);
+      if (!video.paused) _hideTimer = setTimeout(() => wrap.classList.remove('pl-ctrls-visible'), 5000);
     }
     function updatePlayIcon() {
       const icon = video.paused ? '▶' : '⏸';
@@ -1009,7 +971,18 @@ const PlayerModule = (() => {
       showControls();
     });
 
-    video.addEventListener('play', () => { updatePlayIcon(); showControls(); });
+    // FIX (real bug - complaint: "video ke neeche player ke buttons nahi
+    // aa rahe"): pehle 'play' event par hi showControls() (3-second
+    // auto-hide timer) chal jaata tha - lekin 'play' event .play() CALL
+    // hote hi turant fire hota hai, video ke ASLI frame render hone se
+    // BAHUT PEHLE (jab tak buffering/loading chal rahi ho). Matlab
+    // 3-second ka timer video dikhne se pehle hi shuru ho jaata, aur
+    // video ACTUALLY chalne tak controls pehle hi gayab ho chuke hote -
+    // user ko kabhi dikhte hi nahi the. Ab timer 'playing' (jab video
+    // GENUINELY frame render kar raha ho) se shuru hota hai, aur duration
+    // bhi thoda badhaya hai.
+    video.addEventListener('play', () => { updatePlayIcon(); });
+    video.addEventListener('playing', () => { updatePlayIcon(); showControls(); });
     video.addEventListener('pause', () => { updatePlayIcon(); showControls(); clearTimeout(_hideTimer); });
     video.addEventListener('ended', () => { updatePlayIcon(); wrap.classList.add('pl-ctrls-visible'); });
 
