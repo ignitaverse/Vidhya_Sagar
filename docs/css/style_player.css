@@ -121,9 +121,24 @@
   position: relative; width: 100%; background: #000;
   border-radius: var(--r3) var(--r3) 0 0; overflow: hidden;
   box-shadow: inset 0 0 0 1px rgba(96,165,250,.18), 0 0 40px rgba(29,110,245,.10);
+  /* FIX (real bug - complaint: "player half screen mein aa raha hai",
+     khaas kar WIDE/desktop screens par): wrapper ka apna ek NISHCHIT
+     shape (16:9) hona chahiye jo sirf WIDTH par nirbhar ho - agar
+     iske bajaye VIDEO khud apni width:100% + max-height:70vh se size
+     leta (jaisa pehle tha), to CSS spec ke mutabik jab height us
+     max-height se zyada nikalti (jo WIDE screens par aam hai), sirf
+     height clamp nahi hoti - WIDTH BHI wapas chhoti ho jaati hai
+     (video apna intrinsic aspect-ratio bachaye rakhne ke liye) -
+     bacha hua poora WRAPPER khaali/kaala reh jaata, video sirf
+     beech mein ek chhote "half screen" jaise hisse mein simat jaata.
+     Ab wrapper khud hi apna size tay karta hai (sirf width se), video
+     bas 100%/100% bhar deta hai - object-fit letterbox/pillarbox
+     sambhal leta hai agar kisi file ka apna ratio 16:9 se alag ho. */
+  aspect-ratio: 16 / 9;
+  max-height: 70vh;
 }
 @media (min-width: 640px) { #pl-video-wrap { border-radius: var(--r3); } }
-#pl-video { width: 100%; max-height: 70vh; display: block; background: #000; }
+#pl-video { width: 100%; height: 100%; object-fit: contain; display: block; background: #000; }
 
 /* Manual rotate (Screen Orientation API bahut restricted hai bina
    fullscreen ke, isliye CSS transform se hi landscape-jaisa view dete
