@@ -4,8 +4,17 @@ const ProfileModule = (() => {
   let selectedAvatar = '🎓';
 
   function _avatarHtml(user) {
-    if (user?.photo) return `<img src="${user.photo}" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">`;
-    return user?.avatar || '🎓';
+    // FIX (real bug - stored XSS): ye function apne aap ke avatar/photo ke
+    // saath-saath FRIENDS aur friend-request bhejne walon ke liye bhi
+    // use hota hai (dekho _friendTile aur loadFriendRequests neeche) -
+    // lekin pehle bilkul bhi escape nahi karta tha, jabki isi naam ka
+    // social.js ka apna _avatarHtml() pehle se escapeHtml() use karta
+    // tha. `photo` backend mein data-URI-format-check se gaurded hai
+    // (dekho backend/routes/auth.js), lekin `avatar` field ab bhi ek
+    // free-text jaisi hi dikh sakti thi kisi purane/direct API-call se -
+    // isliye dono jagah escape defense-in-depth ke taur par zaroori hai.
+    if (user?.photo) return `<img src="${escapeHtml(user.photo)}" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">`;
+    return escapeHtml(user?.avatar || '🎓');
   }
 
   function init() {
@@ -254,9 +263,13 @@ const ProfileModule = (() => {
   function _friendTile(f) {
     const tile = document.createElement('div');
     tile.className = 'friend-tile';
+    // FIX (real bug - stored XSS): f.username/f.name yahan seedhe innerHTML
+    // mein jaate the, bina escape kiye - ye kisi FRIEND ka naam hai, jo
+    // apna naam free-text mein kuch bhi rakh sakta tha (server-side koi
+    // HTML-stripping nahi hoti naam par). Ab escapeHtml() se guzarte hain.
     tile.innerHTML = `
       <div class="friend-tile-avatar">${_avatarHtml(f)}</div>
-      <div class="friend-tile-name">${f.username ? '@' + f.username : f.name}</div>`;
+      <div class="friend-tile-name">${f.username ? '@' + escapeHtml(f.username) : escapeHtml(f.name)}</div>`;
     // FIX: window.SocialModule bug - SocialModule top-level const hai.
     tile.addEventListener('click', () => { if (typeof SocialModule !== 'undefined') SocialModule.openUserProfile(f.id); });
     return tile;
@@ -274,9 +287,13 @@ const ProfileModule = (() => {
       reqs.forEach(r => {
         const row = document.createElement('div');
         row.className = 'fr-row';
+        // FIX (real bug - stored XSS): r.from.name unescaped tha - ye
+        // koi bhi ARBITRARY user ho sakta hai jisne friend-request bheja
+        // (attacker ko victim se friend hone ki zaroorat bhi nahi, sirf
+        // request bhejna kaafi tha). Ab escapeHtml() se guzarta hai.
         row.innerHTML = `
           <div class="friend-tile-avatar" style="width:38px;height:38px;font-size:1.2rem">${_avatarHtml(r.from)}</div>
-          <div class="fr-name">${r.from.name}</div>
+          <div class="fr-name">${escapeHtml(r.from.name)}</div>
           <button class="fr-accept">✓</button>
           <button class="fr-decline">✕</button>`;
         row.querySelector('.fr-name').addEventListener('click', () => { if (typeof SocialModule !== 'undefined') SocialModule.openUserProfile(r.from.id); });
@@ -424,7 +441,7 @@ const ProfileModule = (() => {
         });
         list.appendChild(card);
       });
-    } catch(e) { list.innerHTML = `<div class="vs-empty">${e.message}</div>`; }
+    } catch(e) { list.innerHTML = `<div class="vs-empty">${escapeHtml(e.message)}</div>`; }
   }
 
   async function loadTypingHistory() {
@@ -463,7 +480,7 @@ const ProfileModule = (() => {
           </div>`;
         list.appendChild(card);
       });
-    } catch(e) { list.innerHTML = `<div class="vs-empty">${e.message}</div>`; }
+    } catch(e) { list.innerHTML = `<div class="vs-empty">${escapeHtml(e.message)}</div>`; }
   }
 
   window.openEmojiPicker = () => { render(); openSubScreen('screen-account-info'); };

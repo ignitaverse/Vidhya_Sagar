@@ -468,14 +468,22 @@ async function loadNotifications() {
       const isRead = readIds.includes(String(n._id));
       const card = document.createElement('div');
       card.className = `notif-card${isRead ? '' : ' unread'}${n.pinned ? ' pinned' : ''}`;
-      card.innerHTML = `<div class="notif-title">${n.pinned ? '📌 ' : ''}${n.title}</div><div class="notif-body">${n.body}</div><div class="notif-date">${d2}</div>`;
+      // FIX (real bug - stored XSS): n.title/n.body aate hain backend
+      // /api/notifications se (Owner/Admin panel se likhe jaate hain) -
+      // pehle seedha innerHTML mein jaate the. Agar kabhi admin account
+      // compromise ho ya galti se koi HTML/script waala text type ho
+      // jaaye, to wo HAR user ke browser mein chal jaata (stored XSS,
+      // sabse khatarnaak type - ek jagah inject karo, sab affected).
+      // Ab escapeHtml() se guzarte hain, jaisa baaki poore app mein
+      // user-controlled text ke saath hota hai.
+      card.innerHTML = `<div class="notif-title">${n.pinned ? '📌 ' : ''}${_escH(n.title)}</div><div class="notif-body">${_escH(n.body)}</div><div class="notif-date">${d2}</div>`;
       list.appendChild(card);
     });
     const allIds = items.map(n => String(n._id));
     localStorage.setItem('vs_read_notifs', JSON.stringify(allIds));
     if (badge) badge.classList.add('hidden');
     apiFetch('/api/notifications/read', { method: 'PUT' }).catch(() => { });
-  } catch (e) { list.innerHTML = `<div class="vs-empty">${e.message}</div>`; }
+  } catch (e) { list.innerHTML = `<div class="vs-empty">${_escH(e.message)}</div>`; }
 }
 
 
@@ -504,7 +512,7 @@ async function loadInlineLeaderboard() {
     list.innerHTML = lb.map((p, i) => `
       <div class="lb-row ${i < 3 ? 'top3' : ''}">
         <div class="lb-rank">${medals[i] || '#'+(i+1)}</div>
-        <div class="lb-av">${p.avatar || '🎓'}</div>
+        <div class="lb-av">${_escH(p.avatar || '🎓')}</div>
         <div class="lb-info"><div class="lb-name">${_escH(p.name)}</div><div class="lb-sub">${p.wins}W · ${p.losses}L · ${p.draws}D</div></div>
         <div class="lb-pts"><span>${p.points}</span><small>pts</small></div>
       </div>`).join('');
@@ -534,13 +542,25 @@ function renderSearchHistory() {
     list.innerHTML = '<div class="vs-empty">कोई recent search नहीं</div>';
     return;
   }
+  // FIX (real bug): pehle query seedha `onclick="applySearchFromHistory('${q}')"`
+  // mein string-concat hoti thi - sirf single-quote (') escape hoti thi.
+  // Agar kisi purani search mein " ya </script> jaisa kuch ho (jaise
+  // "iPhone 15" ya HTML jaisa dikhne wala text), to wo attribute/tag se
+  // BAAHAR nikal ke arbitrary HTML/JS inject kar sakta tha (self-XSS -
+  // apni hi search history se). Ab data-attribute + event delegation
+  // (poore app mein jo pattern already use hota hai, jaise player.js) -
+  // koi string-concat-into-HTML nahi, isliye koi bhi character safe hai.
   list.innerHTML = h.map(q => `
-    <div class="sh-row" onclick="applySearchFromHistory('${q.replace(/'/g,"\'")}')">
+    <div class="sh-row" data-query="${_escH(q)}">
       <span class="sh-icon">🔍</span>
-      <span class="sh-text">${q}</span>
+      <span class="sh-text">${_escH(q)}</span>
       <span class="sh-arrow">→</span>
     </div>`).join('');
 }
+document.addEventListener('click', (e) => {
+  const row = e.target.closest('.sh-row');
+  if (row) applySearchFromHistory(row.dataset.query);
+});
 window.applySearchFromHistory = function(q) {
   const inp = document.getElementById('user-search-inp');
   if (inp) { inp.value = q; inp.dispatchEvent(new Event('input')); }
@@ -586,16 +606,26 @@ async function doUserSearch(q) {
     const d = await apiFetch(`/api/users/search?q=${encodeURIComponent(q)}`);
     const users = d.users || [];
     if (!users.length) { drop.innerHTML = '<div style="padding:14px;text-align:center;color:var(--text3);font-size:.82rem">No students found</div>'; return; }
+    // FIX (real bug): u.photo pehle seedha `src="${u.photo}"` mein jaata
+    // tha (agar photo URL mein " ho to attribute se bahar nikal sakta
+    // tha), aur u.id ek inline onclick mein string-concat hota tha. Ab
+    // dono attribute-safe escapeHtml() se guzarte hain, aur click ek
+    // data-attribute + delegated listener (neeche) se hota hai - koi bhi
+    // ID/URL value safe hai, chahe usme kuch bhi character ho.
     drop.innerHTML = users.map(u => `
-      <div style="display:flex;align-items:center;gap:11px;padding:12px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .15s" onmouseover="this.style.background='rgba(59,130,246,.08)'" onmouseout="this.style.background=''" onclick="openUserProfile('${u.id}')">
-        <div style="width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;overflow:hidden">${u.photo ? `<img src="${u.photo}" style="width:100%;height:100%;object-fit:cover">` : (u.avatar || '🎓')}</div>
+      <div class="vs-search-result-row" data-user-id="${_escH(u.id)}" style="display:flex;align-items:center;gap:11px;padding:12px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .15s" onmouseover="this.style.background='rgba(59,130,246,.08)'" onmouseout="this.style.background=''">
+        <div style="width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;overflow:hidden">${u.photo ? `<img src="${_escH(u.photo)}" style="width:100%;height:100%;object-fit:cover">` : (u.avatar || '🎓')}</div>
         <div>
           <div style="font-weight:700;font-size:.88rem">${_escH(u.name)}</div>
           <div style="font-size:.72rem;color:var(--text3)">${u.username ? '@'+_escH(u.username) : _escH(u.examPrep || 'Student')}</div>
         </div>
       </div>`).join('');
-  } catch (e) { drop.innerHTML = `<div style="padding:14px;text-align:center;color:var(--rose);font-size:.82rem">${e.message}</div>`; }
+  } catch (e) { drop.innerHTML = `<div style="padding:14px;text-align:center;color:var(--rose);font-size:.82rem">${_escH(e.message)}</div>`; }
 }
+document.addEventListener('click', (e) => {
+  const row = e.target.closest('.vs-search-result-row');
+  if (row && row.dataset.userId) openUserProfile(row.dataset.userId);
+});
 // FIX: pehle sirf &, <, > escape karta tha (" nahi) - dekho js/shared.js
 // ke comment. Ab canonical, attribute-safe escapeHtml() par delegate.
 function _escH(s) { return escapeHtml(s); }

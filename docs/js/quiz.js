@@ -119,7 +119,7 @@ const QuizModule = (() => {
         wrap.appendChild(row);
       });
       if(!cats.length)wrap.innerHTML='<div class="vs-empty">No categories found</div>';
-    }catch(e){wrap.innerHTML=`<div class="vs-empty">${e.message}</div>`;}
+    }catch(e){wrap.innerHTML=`<div class="vs-empty">${escapeHtml(e.message)}</div>`;}
   }
 
   function startStateQuiz(state){

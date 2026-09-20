@@ -161,19 +161,19 @@ const PlayerModule = (() => {
           // login-flow mein badh jaate hain.
           localStorage.setItem(FREE_WATCH_FLAG, '1');
         } else {
-          alert(data.message || 'Ye video abhi available nahi hai।');
+          _toast(data.message || 'Ye video abhi available nahi hai।', 'error');
           return;
         }
       } catch (e) {
         console.warn('[Player] anonymous watch failed:', e.message);
-        alert('Kuch gadbad hui, dobara try karein।');
+        _toast('Kuch gadbad hui, dobara try karein।', 'error');
         return;
       }
     }
 
     // Doosri baar se - login zaroori.
     if (typeof token === 'undefined' || !token) {
-      alert('Pehla video free tha 🎉 - agla video dekhne ke liye login/signup karo (bilkul free hai)।');
+      _toast('Pehla video free tha 🎉 - agla video dekhne ke liye login/signup karo (bilkul free hai)।', 'info');
       if (typeof openAuth === 'function') openAuth('login');
       return;
     }
@@ -194,11 +194,11 @@ const PlayerModule = (() => {
       if (data.reason === 'cooldown') {
         _showCooldown(data.next_allowed_at);
       } else {
-        alert(data.message || 'Ye video abhi available nahi hai।');
+        _toast(data.message || 'Ye video abhi available nahi hai।', 'error');
       }
     } catch (e) {
       console.warn('[Player] member watch failed:', e.message);
-      alert('Kuch gadbad hui, dobara try karein।');
+      _toast('Kuch gadbad hui, dobara try karein।', 'error');
     }
   }
 
@@ -269,11 +269,11 @@ const PlayerModule = (() => {
       if (data.reason === 'cooldown') {
         _showCooldown(data.next_allowed_at);
       } else {
-        alert(data.message || 'Is language mein video load nahi ho paayi।');
+        _toast(data.message || 'Is language mein video load nahi ho paayi।', 'error');
       }
     } catch (e) {
       console.warn('[Player] language switch failed:', e.message);
-      alert('Language switch nahi ho paaya, dobara try karein।');
+      _toast('Language switch nahi ho paaya, dobara try karein।', 'error');
     }
   }
 
@@ -296,6 +296,14 @@ const PlayerModule = (() => {
   };
 
   function _toast(msg, type) {
+    // FIX (real bug - "smooth playback" complaint): ye helper pehle se
+    // maujood tha lekin poore file mein kabhi istemal hi nahi hota tha -
+    // har error path seedha `alert()` call karta tha. `alert()` JS thread
+    // ko BLOCK karta hai, aur agar user fullscreen mein video dekh raha
+    // ho to zyaadatar browsers alert dikhte hi fullscreen se AUTOMATICALLY
+    // bahar nikaal dete hain - matlab ek chhota transient error (jaise
+    // "language switch fail hui") bhi poora immersive playback experience
+    // tod deta tha. Ab har jagah isi non-blocking toast se guzarta hai.
     if (typeof showToast === 'function') showToast(msg, type || 'info');
     else alert(msg);
   }
@@ -825,15 +833,24 @@ const PlayerModule = (() => {
 
   /* ── "Aur videos" - already loaded catalog se strip banata hai, taaki
      playing video band kiye bina koi doosra video choose kiya ja sake ── */
-  function _populateUpNext(excludeTitle) {
+  function _populateUpNext(excludeTitle, _isRetry) {
     const box = document.getElementById('pl-upnext');
     const row = document.getElementById('pl-upnext-row');
     if (!box || !row) return;
     if (!_items.length) {
-      // Deep-link se seedha khula ho sakta hai jab catalog abhi load hi
-      // nahi hua - background mein load karke phir se try karte hain.
+      // FIX (real bug - unbounded network loop): pehle yahan agar catalog
+      // load hone ke BAAD bhi khaali hi rehta (naya deployment jisme abhi
+      // tak kuch index nahi hua, ya backend/DB ka koi transient issue jo
+      // baar-baar khaali[] hi return kare), to `_populateUpNext` khud ko
+      // FIR se call karta - jo phir se khaali paata, phir se
+      // `loadCatalog()` chalata, phir se khud ko call karta... hamesha ke
+      // liye, jab tak tab khula rahe. Har cycle mein ek real network
+      // request jaata - data/battery drain, aur server par bhi be-wajah
+      // load. Ab background-retry sirf EK BAAR hota hai; dusri baar bhi
+      // khaali mile to chup-chaap "up next" section hide reh jaata hai
+      // (kabhi crash/error nahi, bas dubara try nahi karta).
       box.classList.add('hidden');
-      if (!_loading) loadCatalog('').then(() => _populateUpNext(excludeTitle));
+      if (!_isRetry && !_loading) loadCatalog('').then(() => _populateUpNext(excludeTitle, true));
       return;
     }
     const pick = _items.filter(it => it.name !== excludeTitle).slice(0, 20);
@@ -858,7 +875,7 @@ const PlayerModule = (() => {
   function _playLocalFile(file) {
     if (!file) return;
     if (!file.type || !file.type.startsWith('video/')) {
-      alert('Sirf video files chalayi ja sakti hain।');
+      _toast('Sirf video files chalayi ja sakti hain।', 'warn');
       return;
     }
     const banner = document.getElementById('pl-cooldown-banner');
@@ -895,6 +912,18 @@ const PlayerModule = (() => {
       URL.revokeObjectURL(_activeBlobUrl);
       _activeBlobUrl = null;
     }
+    // FIX (hygiene/robustness): pehle _currentStreamUrl aur _currentItem
+    // player band hone ke baad bhi PURANI video ki value hi rakhte the -
+    // koi visible bug nahi tha (favorite-player grid modal ke andar hai,
+    // jo hidden hone par bilkul click-unreachable hai), lekin agli baar
+    // koi is code ko badle (jaise favorite-player grid ko modal se BAHAR
+    // move karna) to ye stale state chup-chaap galat video download/
+    // copy-link/external-player kara sakti thi. Ab explicitly saaf karte
+    // hain, taaki "player band hai" ka matlab hamesha "koi stream state
+    // bacha hi nahi" ho.
+    _currentStreamUrl = null;
+    _currentItem = null;
+    _lastWatchMode = null;
   }
 
   /* ── Custom (YouTube-style) control bar - native `controls` jaan-bujh

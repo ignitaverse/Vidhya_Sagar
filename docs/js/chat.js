@@ -47,7 +47,7 @@ const ChatModule=(()=>{
     try{
       const d=await apiFetch('/api/chat');
       renderMsgs(container,d.messages||[]);
-    }catch(e){container.innerHTML=`<div style="text-align:center;padding:30px;color:var(--text3)">${e.message}</div>`;}
+    }catch(e){container.innerHTML=`<div style="text-align:center;padding:30px;color:var(--text3)">${_e(e.message)}</div>`;}
   }
 
   function renderMsgs(container,msgs){
@@ -247,7 +247,7 @@ const ChatModule=(()=>{
       document.getElementById('ai-typing-ind')?.remove();
       const errRow=document.createElement('div');
       errRow.className='ai-msg-wrap';
-      errRow.innerHTML=`<div class="ai-av">🤖</div><div class="ai-bub" style="color:var(--rose)">Error: ${e.message}</div>`;
+      errRow.innerHTML=`<div class="ai-av">🤖</div><div class="ai-bub" style="color:var(--rose)">Error: ${_e(e.message)}</div>`;
       container.appendChild(errRow);
       // Give the message back so it isn't lost if it never reached the server
       if(inp && !inp.value) inp.value=text;

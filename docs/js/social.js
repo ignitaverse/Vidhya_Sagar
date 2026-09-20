@@ -39,7 +39,7 @@ const SocialModule = (() => {
       _renderUserProfile(viewedUser);
       _checkWatchLive(viewedUser.id);
     } catch (e) {
-      if (body) body.innerHTML = `<div class="vs-empty" style="padding:40px 0">${e.message}</div>`;
+      if (body) body.innerHTML = `<div class="vs-empty" style="padding:40px 0">${_e(e.message)}</div>`;
     }
   }
 
@@ -56,7 +56,7 @@ const SocialModule = (() => {
       _renderUserProfile(viewedUser);
       _checkWatchLive(viewedUser.id);
     } catch (e) {
-      if (body) body.innerHTML = `<div class="vs-empty" style="padding:40px 0">${e.message}</div>`;
+      if (body) body.innerHTML = `<div class="vs-empty" style="padding:40px 0">${_e(e.message)}</div>`;
     }
   }
 
@@ -233,7 +233,7 @@ const SocialModule = (() => {
         row.addEventListener('click', () => openDMThread(c.userId, c.user));
         list.appendChild(row);
       });
-    } catch (e) { list.innerHTML = `<div class="vs-empty">${e.message}</div>`; }
+    } catch (e) { list.innerHTML = `<div class="vs-empty">${_e(e.message)}</div>`; }
   }
 
   /* ══════════════════════════════════════
@@ -271,7 +271,7 @@ const SocialModule = (() => {
       if (nameEl) nameEl.textContent = d.user.username ? '@' + d.user.username : d.user.name;
       _renderThreadMsgs(container, d.messages || []);
     } catch (e) {
-      if (!silent) container.innerHTML = `<div class="vs-empty">${e.message}</div>`;
+      if (!silent) container.innerHTML = `<div class="vs-empty">${_e(e.message)}</div>`;
     }
   }
 

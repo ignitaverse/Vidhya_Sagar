@@ -91,7 +91,23 @@ router.put('/profile', protect, async (req,res) => {
     if (dob      !== undefined) user.dob      = dob;
     if (examPrep !== undefined) user.examPrep  = examPrep;
     if (bio      !== undefined) user.bio       = bio;
-    if (avatar)                 user.avatar    = avatar;
+// FIX (real bug - stored XSS): is route par 'avatar' ki koi validation
+// nahi thi (`if (avatar) user.avatar = avatar;`) - frontend UI sirf ek
+// FIXED emoji list (dekho profile.js ki AVATARS array) dikhata hai, lekin
+// koi bhi seedha /api/auth/profile ko call karke (browser DevTools, curl,
+// Postman - login token kaafi hai) avatar ko KUCH BHI string bana sakta
+// tha, jaise `<img src=x onerror=...>`. Ye value phir kai jagah OTHER
+// users ke browsers mein raw HTML ki tarah render hoti thi - friend
+// tiles, friend-request list, game leaderboard, online-game opponent
+// history (dekho docs/js/profile.js, games.js, app.js) - matlab EK baar
+// apna avatar "poison" karke, jo bhi is user ko friend-list/leaderboard
+// mein dekhta, uske browser mein arbitrary JS chal jaata (stored XSS,
+// bina us victim ko is user ki profile khud kholne ki bhi zaroorat).
+// Ab sirf wahi emoji allowed hain jo frontend picker mein hain - koi
+// match na kare to chup-chaap purana avatar hi rehta hai (invalid value
+// silently ignore, jaisa neeche `if (avatar)` ka intent hi tha).
+const ALLOWED_AVATARS = ['🎓','🦁','🐯','🦅','🔥','⚡','🌟','💡','🚀','🏆','💎','🎯','🛡️','🌙','🎪'];
+if (avatar && ALLOWED_AVATARS.includes(avatar)) user.avatar = avatar;
     await user.save();
     res.json({ success:true, user:userObj(user) });
   } catch (e) { console.error(e); res.status(500).json({ success: false, message: 'Server error' }); }

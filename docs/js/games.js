@@ -678,12 +678,18 @@ const GamesModule = (() => {
           else oppGroups[x.opponent].draws++;
         });
 
+        // FIX (real bug - stored XSS): s.avatar/p.avatar (yahan aur
+        // showLeaderboard() neeche, dono jagah) OTHER users ka avatar
+        // field hai - backend mein pehle iski koi validation nahi thi
+        // (ab hai, dekho backend/routes/auth.js), lekin defense-in-depth
+        // ke liye render par bhi escape zaroori hai, jaisa naam/username
+        // ke liye already hota hai (_esc(opp) neeche).
         list.innerHTML = `
           <div class="oh-section-title">👥 Opponent-wise Stats</div>
           ${Object.entries(oppGroups).map(([opp,s])=>`
             <div class="oh-opp-card">
               <div style="display:flex;align-items:center;gap:10px">
-                <span style="font-size:1.4rem">${s.avatar}</span>
+                <span style="font-size:1.4rem">${_esc(s.avatar)}</span>
                 <div class="oh-opp-name">vs ${_esc(opp)}</div>
               </div>
               <div class="oh-opp-stats">
@@ -707,7 +713,7 @@ const GamesModule = (() => {
             </div>`;
           }).join('')}`;
       } catch(e) {
-        list.innerHTML = `<div class="vs-empty">${e.message}</div>`;
+        list.innerHTML = `<div class="vs-empty">${_esc(e.message)}</div>`;
       }
     },
 
@@ -728,7 +734,7 @@ const GamesModule = (() => {
         list.innerHTML = lb.map((p,i)=>`
           <div class="lb-row ${i<3?'top3':''}">
             <div class="lb-rank">${medals[i]||'#'+(i+1)}</div>
-            <div class="lb-av">${p.avatar||'🎓'}</div>
+            <div class="lb-av">${_esc(p.avatar||'🎓')}</div>
             <div class="lb-info">
               <div class="lb-name">${_esc(p.name)}</div>
               <div class="lb-sub">${p.wins}W · ${p.losses}L · ${p.draws}D</div>
@@ -736,7 +742,7 @@ const GamesModule = (() => {
             <div class="lb-pts"><span>${p.points}</span><small>pts</small></div>
           </div>`).join('');
       } catch(e) {
-        list.innerHTML = `<div class="vs-empty">${e.message}</div>`;
+        list.innerHTML = `<div class="vs-empty">${_esc(e.message)}</div>`;
       }
     },
   };
