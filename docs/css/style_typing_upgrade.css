@@ -150,13 +150,14 @@
 /* Character colors — matching reference */
 .pc.correct  { color: #374151 !important; background: none !important; }
 .pc.wrong    { color: #dc2626 !important; background: rgba(220,38,38,.12) !important; border-radius: 2px; }
-.pc.current  { background: rgba(255,235,59,.55) !important; border-radius: 2px; }  /* yellow highlight like reference */
+/* .pc.current ab sirf EK jagah define hota hai (neeche, "cursor kahan
+   hai" fix ke comment ke paas) - sabhi themes ke liye ek saath, taaki
+   yahan aur wahan do jagah color badalna na pade. */
 .pc.pending  { color: #9ca3af !important; }
 
 /* Light theme already matches */
 [data-theme="light"] .passage-display { background: #fff !important; color: #374151 !important; }
 [data-theme="light"] .pc.correct { color: #374151 !important; }
-[data-theme="light"] .pc.current { background: rgba(255,235,59,.55) !important; }
 
 /* ── Typing input area ── */
 .typing-inp-area {
@@ -263,8 +264,33 @@
 }
 [data-theme="dark"] .pc.correct,
 :not([data-theme]) .pc.correct  { color: #22d3ee !important; background: none !important; }
+/* FIX (real bug - "cursor kahan hai pata nahi chalta"): pehle sirf ek
+   25%-opacity amber BACKGROUND tha, koi text-color/weight/motion nahi -
+   ek chhota, halka-sa tinted letter poore paragraph ke beech mein dhoondhna
+   padta tha. Teen alag CSS files isi .pc.current ko chhoti-chhoti-alag
+   opacity ke saath baar-baar define kar rahi thi (specificity fight) -
+   ab yahi EK jagah "cursor" jaisa dikhta hai: SOLID fill (wash nahi),
+   dark text upar (max contrast), aur halka pulse jo aankh khud khinch le -
+   dono themes mein same dikhta hai isliye [data-theme="dark"] /
+   :not([data-theme]) alag rakhne ki zaroorat hi nahi rahi.
+   [data-theme="light"] aur style_futuristic.css/style_additions.css ke
+   purane .pc.current background-only rules ab yahan se hamesha overridden
+   rehte hain (specificity+order dono jeet jaate hain) - unhe hata diya
+   gaya hai taaki future mein koi confuse na ho ki kaunsa rule live hai. */
 [data-theme="dark"] .pc.current,
-:not([data-theme]) .pc.current  { background: rgba(251,191,36,.25) !important; }
+[data-theme="light"] .pc.current,
+:not([data-theme]) .pc.current {
+  background: #fbbf24 !important;
+  color: #1a1a2e !important;
+  font-weight: 700 !important;
+  border-radius: 3px !important;
+  box-shadow: 0 0 0 2px rgba(251,191,36,.35), 0 2px 8px rgba(251,191,36,.5) !important;
+  animation: pc-cursor-pulse 1s ease-in-out infinite !important;
+}
+@keyframes pc-cursor-pulse {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(251,191,36,.35), 0 2px 8px rgba(251,191,36,.5); }
+  50%      { box-shadow: 0 0 0 4px rgba(251,191,36,.12), 0 2px 12px rgba(251,191,36,.7); }
+}
 [data-theme="dark"] .pc.pending,
 :not([data-theme]) .pc.pending  { color: #4a6080 !important; }
 
@@ -903,4 +929,7 @@ body.modal-open { overflow: hidden !important; }
 [data-theme="light"] .typing-inp { background: #fff !important; border-color: #d1d5db !important; color: #111827 !important; }
 [data-theme="light"] .typing-action-row { background: #f3f4f6 !important; border-top-color: #e5e7eb !important; }
 [data-theme="light"] .pc.correct { color: #1d4ed8 !important; }
-[data-theme="light"] .pc.current { background: rgba(255,235,59,.6) !important; }
+/* .pc.current: dekho consolidated rule upar (line ~280) - yahan dobara
+   define karne se wahi purani problem wapas aati (teesri jagah jahan
+   isi ek cheez ko alag-alag rakha jaata), isliye jaan-bujh kar khaali
+   chhoda gaya hai. */

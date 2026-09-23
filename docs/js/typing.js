@@ -227,12 +227,24 @@ const TypingModule = (() => {
     _setTxt('ed-lang-tag', (_currentExam.languages||['english']).map(l=>l==='english'?'EN':'HI').join('/'));
 
     // Language buttons
+    // FIX (real bug): pehle sirf woh languages dikhte the jo
+    // `exam.languages` mein listed thi - matlab jis exam ki list sirf
+    // ['english'] thi, uske liye Hindi button hi nahi banta tha. Ab
+    // HAMESHA dono buttons dikhte hain; agar chuni hui language us exam
+    // ke liye officially list nahi hai, to seedha shuru karne se pehle
+    // ek warning dikhti hai ("iske liye zaroori nahi hai, phir bhi
+    // practice karna hai to Continue karein").
     const langsEl = _el('ed-langs');
     if (langsEl) {
-      langsEl.innerHTML = (_currentExam.languages||['english']).map(l => `
-        <button onclick="TypingModule.startTest('${examId}','${l}')"
+      const supported = _currentExam.languages || ['english'];
+      const allLangs = [
+        { code: 'english', label: '🔤 English Start' },
+        { code: 'hindi',   label: '📖 Hindi Start' },
+      ];
+      langsEl.innerHTML = allLangs.map(l => `
+        <button onclick="TypingModule.requestStart('${examId}','${l.code}')"
           style="background:linear-gradient(135deg,#1a56db,#1e40af);color:#fff;border:none;border-radius:10px;padding:11px 22px;font-size:.88rem;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(26,86,219,.4);margin:4px">
-          ${l === 'english' ? '🔤 English Start' : '📖 Hindi Start'}
+          ${l.label}${supported.includes(l.code) ? '' : ' <span style="opacity:.75;font-size:.76rem">(optional)</span>'}
         </button>`).join('');
     }
 
@@ -455,8 +467,18 @@ const TypingModule = (() => {
   function _renderPassage() {
     const disp = _el('passage-display');
     if (!disp) return;
+    // FIX (real bug - "text kinaro pe chhup raha hai"): har space character
+    // pehle `&nbsp;` (NON-BREAKING space) ke roop mein render hota tha.
+    // Non-breaking space ka poora matlab hi yahi hota hai ki browser US
+    // JAGAH line kabhi na tode - lekin passage ke HAR ek space ko non-
+    // breaking bana dene se, poora paragraph browser ke liye EK hi
+    // "tootne-laayak-nahi" (unbreakable) lambi line ban jaata tha. Isliye
+    // text agli line par jaane ke bajaye box ke bahar (dayi taraf) chhupta
+    // chala jaata tha. Ab ek NORMAL space use hote hain (jo bilkul theek
+    // se dikhte/highlight hote hain, spans ke andar), jisse browser word
+    // boundaries par sahi se wrap kar paata hai - bilkul WhatsApp jaisa.
     disp.innerHTML = _chars.map((ch, i) =>
-      `<span class="pc ${i === 0 ? 'current' : 'pending'}" data-i="${i}">${ch === ' ' ? '&nbsp;' : _esc(ch)}</span>`
+      `<span class="pc ${i === 0 ? 'current' : 'pending'}" data-i="${i}">${_esc(ch)}</span>`
     ).join('');
   }
 
@@ -686,6 +708,71 @@ const TypingModule = (() => {
     closeSubScreen('screen-typing-active');
   }
 
+  /* ── FIX (naya): language button ab seedha startTest() nahi, ise call
+     karta hai - jo pehle check karta hai ki chuni hui language us exam
+     ke liye "officially" list hai ya nahi. Agar nahi, to warning dikha
+     ke user se poochta hai (Continue/Cancel); haan hai to seedha shuru. ── */
+  async function requestStart(examId, language) {
+    const exam = _exams.find(e => e.id === examId) || _currentExam;
+    const supported = (exam?.languages) || ['english'];
+    if (!supported.includes(language)) {
+      const langLabel = language === 'hindi' ? 'Hindi' : 'English';
+      const ok = await showConfirm({
+        icon: '💡',
+        title: `${langLabel} zaroori nahi hai`,
+        body: `${exam?.name || 'Is exam'} ke liye ${langLabel} typing zaroori nahi hai - asli exam mein ye nahi puchha jaata. Aap chahen to sirf practice ke liye continue kar sakte hain, ya cancel karke doosri language chun sakte hain.`,
+        okText: 'Continue anyway',
+        cancelText: 'Cancel',
+      });
+      if (!ok) return;
+    }
+    await _startWithDailyLimitCheck(examId, language);
+  }
+
+  // FIX (real enforcement - naya): free users din mein sirf 5 baar type
+  // kar sakte hain. Backend HI faisla karta hai (dekho
+  // /api/typing/start-attempt) - yahan sirf uska jawab dikhaya jaata hai,
+  // taaki koi DevTools se seedha _initTest() bula ke isse bypass na kar
+  // sake.
+  //
+  // FIX (khud apni galti pakdi gayi testing mein): pehla version yahan
+  // apiFetch() use karta tha - lekin apiFetch() har non-2xx response par
+  // `throw new Error(d.message)` kar deta hai (dekho app.js), jisme sirf
+  // `.message` bachta hai, poora JSON body (allowed/used/limit) kho jaata
+  // hai. Matlab jab limit poori ho (403), to code seedha `catch` mein
+  // chala jaata - jo pehle sirf warning log karke startTest() chala deta
+  // tha, yaani BLOCK hi kabhi lagta hi nahi tha! Ab raw fetch() se poora
+  // response (chahe 200 ho ya 403) khud padhte hain, taaki dono case sahi
+  // se handle ho.
+  async function _startWithDailyLimitCheck(examId, language) {
+    let data;
+    try {
+      const r = await fetch(`${VS_CONFIG.API}/api/typing/start-attempt`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      });
+      data = await r.json();
+    } catch (e) {
+      // Network hi down hai - practice ko block nahi karte, bas result
+      // save nahi ho payega (jo /api/typing/save khud bata dega).
+      console.warn('[Typing] daily-limit check skipped (network):', e.message);
+      startTest(examId, language);
+      return;
+    }
+    if (data && data.allowed === false) {
+      const ok = await showConfirm({
+        icon: '⏳',
+        title: 'Aaj ki free limit poori ho gayi',
+        body: data.message || `Free members din mein 5 baar hi type kar sakte hain. Kal phir try karein, ya Owner se Premium lekar unlimited practice karein.`,
+        okText: 'Owner se baat karein',
+        cancelText: 'Theek hai',
+      });
+      if (ok) { openChatList(); }
+      return;
+    }
+    startTest(examId, language);
+  }
+
   /* ── Retry same passage ── */
   function retryTest() {
     if (_currentPassage) {
@@ -729,6 +816,7 @@ const TypingModule = (() => {
     loadExams,
     openExamDetail,
     startTest,
+    requestStart,
     startFromPassage,
     _startWithText,
     submitEarly,

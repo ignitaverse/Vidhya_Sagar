@@ -10,7 +10,14 @@ const userObj  = u => ({
   bio:u.bio||'', dob:u.dob||'', examPrep:u.examPrep||'',
   nameChanges:u.nameChanges||0, usernameChanges:u.usernameChanges||0, joinedAt:u.joinedAt, lastActive:u.lastActive,
   isPublic:u.isPublic!==false, showOnline:u.showOnline!==false, showLastSeen:u.showLastSeen!==false,
-  totalQuizzes:u.totalQuizzes, totalCorrect:u.totalCorrect, totalWrong:u.totalWrong
+  totalQuizzes:u.totalQuizzes, totalCorrect:u.totalCorrect, totalWrong:u.totalWrong,
+  // FEATURE (naya): profile ke naam ke bagal diamond badge ke liye -
+  // exact premiumUntil date yahan (apni hi profile) dikhana theek hai,
+  // dekho users.js ka buildProfileResponse() jahan DOOSRE users ke liye
+  // sirf boolean bheja jaata hai (apni expiry date kisi aur ko dikhne ki
+  // zaroorat nahi).
+  isPremium: u.isPremiumActive ? u.isPremiumActive() : false,
+  premiumUntil: u.premiumUntil || null,
 });
 
 // SIGNUP

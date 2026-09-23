@@ -21,12 +21,36 @@ const userSchema = new mongoose.Schema({
   totalQuizzes:{ type: Number, default: 0 },
   totalCorrect:{ type: Number, default: 0 },
   totalWrong:  { type: Number, default: 0 },
+  // FEATURE (naya): premium subscription - koi alag "isPremium" boolean
+  // nahi rakha (wo date se out-of-sync ho sakta tha); active hai ya nahi,
+  // hamesha `premiumUntil && premiumUntil > now` se check hota hai -
+  // dekho backend/middleware/premiumStatus.js. Owner iss field ko seedha
+  // /api/premium/cancel se null kar sakta hai (subscription cancel).
+  premiumUntil:        { type: Date, default: null },
+  // FEATURE (naya): typing tab daily free-limit (5/din) ke liye counter.
+  // Naya collection banane ke bajaye seedha yahan - ek chhota daily
+  // counter hai, poori history nahi, isliye User document par hi theek
+  // baithta hai. `typingAttemptsDate` aaj ki date (YYYY-MM-DD) se match
+  // nahi karti to count 0 maana jaata hai (naya din, naya quota).
+  typingAttemptsToday: { type: Number, default: 0 },
+  typingAttemptsDate:  { type: String, default: '' },
+  // FEATURE (naya): DM messaging daily free-limit (10/din) ke liye, isi
+  // pattern mein - dekho backend/routes/messages.js.
+  messagesSentToday:   { type: Number, default: 0 },
+  messagesSentDate:    { type: String, default: '' },
 }, { timestamps: true });
 userSchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();
   this.password = await bcrypt.hash(this.password, 12); next();
 });
 userSchema.methods.matchPassword = async function(p) { return bcrypt.compare(p, this.password); };
+
+// FEATURE (naya): "premium hai ya nahi" hamesha isi se poochho - kahin
+// bhi seedha `user.premiumUntil` compare mat karo, warna kal koi grace-
+// period jaisi cheez badalni ho to har jagah dhoondhna padega.
+userSchema.methods.isPremiumActive = function() {
+  return !!(this.premiumUntil && this.premiumUntil.getTime() > Date.now());
+};
 
 /* Generate a unique username from a display name, e.g. "Sahvendra Singh" -> "sahvendra_singh_4821".
    Retries with a fresh random suffix on collision. Used at signup and to lazily backfill

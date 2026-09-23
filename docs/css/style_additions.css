@@ -165,7 +165,8 @@
 [data-theme="light"] .pc.pending { color: #94a3b8 !important; }
 [data-theme="light"] .pc.correct { color: #059669 !important; }
 [data-theme="light"] .pc.wrong   { color: #dc2626 !important; background: rgba(220,38,38,.1) !important; }
-[data-theme="light"] .pc.current { background: rgba(37,99,235,.15) !important; }
+/* .pc.current: dekho style_typing_upgrade.css - wahi ab consolidated,
+   authoritative jagah hai. */
 [data-theme="light"] .settings-row:hover { background: #f8faff !important; }
 [data-theme="light"] .settings-row::after { background: #e2e8f0 !important; }
 [data-theme="light"] .sr-track { background: #cbd5e1 !important; }

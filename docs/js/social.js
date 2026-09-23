@@ -69,7 +69,7 @@ const SocialModule = (() => {
         <div class="uprofile-header">
           <div class="uprofile-avatar">${_avatarHtml(u)}</div>
           <div class="uprofile-id">
-            <div class="uprofile-name">${_e(u.name)}</div>
+            <div class="uprofile-name">${_e(u.name)}${premiumBadgeHtml(u.isPremium)}</div>
             ${u.username ? `<div class="uprofile-username">@${_e(u.username)}</div>` : ''}
           </div>
         </div>
@@ -86,7 +86,7 @@ const SocialModule = (() => {
       <div class="uprofile-header">
         <div class="uprofile-avatar">${_avatarHtml(u)}${onlineDot}</div>
         <div class="uprofile-id">
-          <div class="uprofile-name">${_e(u.name)}</div>
+          <div class="uprofile-name">${_e(u.name)}${premiumBadgeHtml(u.isPremium)}</div>
           ${u.username ? `<div class="uprofile-username">@${_e(u.username)}</div>` : ''}
           <div class="uprofile-meta">${u.online ? 'Online अभी' : lastSeenTxt}</div>
         </div>

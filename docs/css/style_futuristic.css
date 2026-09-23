@@ -1158,12 +1158,13 @@ a { text-decoration: none; color: inherit; }
 [data-theme="light"] .passage-display { background: white !important; color: #475569 !important; }
 .pc.correct { color: var(--green2); }
 .pc.wrong { color: var(--rose2); background: rgba(244,63,94,.14); border-radius: 2px; }
-.pc.current { background: rgba(59,130,246,.22); border-radius: 2px; }
+/* .pc.current: style_typing_upgrade.css mein consolidated (loads baad
+   mein, higher specificity) - yahan dobara define karna sirf confusion
+   badhata hai, isliye hata diya gaya. */
 .pc.pending { color: var(--text2); }
 [data-theme="light"] .pc.pending { color: #94a3b8 !important; }
 [data-theme="light"] .pc.correct { color: #059669 !important; }
 [data-theme="light"] .pc.wrong { color: #dc2626 !important; background: rgba(220,38,38,.1) !important; }
-[data-theme="light"] .pc.current { background: rgba(37,99,235,.15) !important; }
 
 .typing-inp-area {
   padding: 10px 14px; border-top: 1px solid var(--border);
@@ -1527,6 +1528,10 @@ a { text-decoration: none; color: inherit; }
   color: var(--text) !important; font-size: .9rem;
   font-family: var(--ff); outline: none;
   transition: all .2s var(--ease);
+  /* FIX: ab <textarea> hai (pehle <input> tha) - inke bina text wrap
+     nahi karta / grow nahi hota / hamesha resize-handle dikhta rehta. */
+  resize: none; max-height: 120px; overflow-y: auto; line-height: 1.35;
+  min-height: 44px;
 }
 .ai-inp:focus { border-color: var(--purple) !important; background: rgba(139,92,246,.07) !important; box-shadow: 0 0 0 3px rgba(139,92,246,.12); }
 [data-theme="light"] .ai-inp { background: #f1f5f9 !important; border-color: #e2e8f0 !important; color: #0f1a2e !important; }

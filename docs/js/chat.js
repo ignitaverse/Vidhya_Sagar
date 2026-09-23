@@ -205,7 +205,19 @@ const ChatModule=(()=>{
     const inp=document.getElementById('ai-inp');
     const btn=document.getElementById('ai-send-btn');
     if(!inp||!btn)return;
-    inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();sendAIMsg();}});
+    // FIX: DM/Group chat mein ye auto-resize pehle se hai (dekho
+    // bindGroupChatInput/_bindDMInput) - AI chat mein isi pattern ko
+    // jodne se text box WhatsApp jaisa upar badhta hai jab tak type karte
+    // rahein (max 120px, uske baad andar hi scroll hota hai).
+    inp.addEventListener('input',()=>{
+      inp.style.height='auto';
+      inp.style.height=Math.min(inp.scrollHeight,120)+'px';
+    });
+    // FIX: pehle KOI bhi Enter turant send kar deta tha - textarea banne
+    // ke baad Shift+Enter se nayi line likhna zaroori hai (jaise DM/Group
+    // mein pehle se hai), warna user kabhi multi-line question hi nahi
+    // likh paata.
+    inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendAIMsg();}});
     btn.addEventListener('click',sendAIMsg);
   }
 
@@ -218,6 +230,7 @@ const ChatModule=(()=>{
     if(!text)return;
     _sendingAI=true;
     inp.value='';
+    inp.style.height='auto'; // FIX: textarea ban gaya hai ab, isliye lamba ho chuka box wapas 1-line par simat jaana chahiye
     const container=document.getElementById('ai-msgs');
 
     const userRow=document.createElement('div');

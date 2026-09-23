@@ -27,9 +27,12 @@ const VS_CONFIG = {
     databaseURL:       'https://YOUR_PROJECT-default-rtdb.firebaseio.com'
   },
 
-  /* ── Anthropic AI Chat ──
-     (backend proxy के through call होगी — key server.js में) */
-  AI_MODEL: 'claude-sonnet-4-20250514',
+  /* ── Gemini AI Chat ──
+     (backend proxy के through call होगी — key server.js में, GEMINI_API_KEY)
+     FIX: pehle Claude tha, ab Gemini - model naam yahan sirf reference ke
+     liye hai (asli model backend ke GEMINI_MODEL env var se decide hota
+     hai, taaki client-side se badla na ja sake). */
+  AI_MODEL: 'gemini-2.5-flash',
 
   /* ── App Settings ── */
   APP_NAME:    'VidyaSagar',

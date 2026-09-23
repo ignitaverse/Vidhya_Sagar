@@ -3,7 +3,7 @@ const express   = require('express');
 const mongoose  = require('mongoose');
 const jwt       = require('jsonwebtoken');
 const cors      = require('cors');
-const Anthropic = require('@anthropic-ai/sdk');
+const { GoogleGenAI } = require('@google/genai');
 const { createClient } = require('@libsql/client');
 
 const app = express();
@@ -19,8 +19,15 @@ const TABLE_MAP = {
   sanskrit:'sanskrit_quiz', current:'current_quiz',
 };
 
-// ─── ANTHROPIC (AI Chat) ───
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+// ─── GEMINI (AI Chat) ───
+// FEATURE: pehle Anthropic/Claude tha - iske liye ek paid API key
+// chahiye thi jo humare paas nahi thi, isliye AI chat kabhi kaam hi
+// nahi karta tha. Gemini (Google AI Studio - https://aistudio.google.com/apikey)
+// ka free tier hai, isliye ab wahi use ho raha hai. Model naam env var se
+// badla ja sakta hai (agar kabhi 'gemini-2.5-flash' deprecate ho jaaye),
+// bina code chhue.
+const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 
 // ─── MIDDLEWARE ───
 app.use(cors({
@@ -234,20 +241,40 @@ app.post('/api/ai/chat', async (req, res) => {
     // Build conversation history
     const sid = sessionId || uid;
     const history = aiConversations.get(sid) || [];
-    history.push({ role: 'user', content: message.trim() });
+    // FIX: Gemini ka format Anthropic se thoda alag hai - role 'assistant'
+    // nahi 'model' hota hai, aur content seedhi string nahi, `parts`
+    // array ke andar hoti hai. Isliye history yahan SEEDHE Gemini ke
+    // shape mein rakhi jaati hai (dusri jagah convert karne ki zaroorat
+    // nahi padti).
+    history.push({ role: 'user', parts: [{ text: message.trim() }] });
 
-    const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 600,
-      system: `You are VidyaSagar AI Study Buddy — a friendly and helpful assistant for Indian Government Exam students.
+    let reply;
+    if (!process.env.GEMINI_API_KEY) {
+      // FIX: pehle API key na hone par Anthropic SDK ka apna, confusing
+      // auth-error aata tha (500 + cryptic stack trace) - ab saaf, samajh
+      // aane waala message milta hai, jab tak owner GEMINI_API_KEY set
+      // nahi kar deta.
+      return res.status(503).json({ success: false, message: 'AI chat abhi set up nahi hua hai - GEMINI_API_KEY missing hai.' });
+    }
+    try {
+      const response = await genAI.models.generateContent({
+        model: GEMINI_MODEL,
+        contents: history.slice(-AI_MAX_HISTORY),
+        config: {
+          maxOutputTokens: 600, // Anthropic wale max_tokens:600 jaisa hi - jawab chhota/concise rakhta hai, cost bhi kam
+          systemInstruction: `You are VidyaSagar AI Study Buddy — a friendly and helpful assistant for Indian Government Exam students.
 Answer in Hinglish (natural mix of Hindi and English). Keep answers concise, practical, and encouraging.
 Focus on: GK, Maths, Reasoning, English, Hindi, Computer, Current Affairs, Typing practice, and exam strategies.
 Use simple language. Add emojis occasionally for friendliness. The student's name is ${user.name}.`,
-      messages: history.slice(-AI_MAX_HISTORY),
-    });
+        },
+      });
+      reply = response.text || 'Sorry, could not generate response.';
+    } catch (aiErr) {
+      console.error('Gemini API error:', aiErr);
+      return res.status(502).json({ success: false, message: 'AI se abhi jawab nahi mil paaya, thodi der baad try karein.' });
+    }
 
-    const reply = response.content[0]?.text || 'Sorry, could not generate response.';
-    history.push({ role: 'assistant', content: reply });
+    history.push({ role: 'model', parts: [{ text: reply }] });
 
     // Keep only last N messages to prevent memory leak
     if (history.length > AI_MAX_HISTORY + 2) history.splice(0, 2);
@@ -375,6 +402,7 @@ app.delete('/api/feedback/:id', async (req, res) => {
 app.use('/api/auth',    require('./routes/auth'));
 app.use('/api/history', require('./routes/history'));
 app.use('/api/typing',  require('./routes/typing'));
+app.use('/api/premium', require('./routes/premium'));
 app.use('/api/game',    require('./routes/game'));
 app.use('/api/users',   require('./routes/users'));
 app.use('/api/messages',require('./routes/messages'));

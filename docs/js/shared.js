@@ -26,3 +26,11 @@ function escapeHtml(s) {
     .replace(/'/g, '&#39;');
 }
 window.escapeHtml = escapeHtml;
+
+// FEATURE (naya): premium user ke naam ke bagal diamond badge - profile.js
+// aur social.js dono isi ek jagah se lete hain, taaki design kabhi
+// alag-alag na ho jaaye do jagah.
+function premiumBadgeHtml(isPremium) {
+  return isPremium ? '<span title="Premium Member" style="margin-left:6px;font-size:.85em">💎</span>' : '';
+}
+window.premiumBadgeHtml = premiumBadgeHtml;

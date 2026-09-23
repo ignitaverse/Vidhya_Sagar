@@ -472,7 +472,7 @@
               <div class="ph-avatar" id="ph-avatar" onclick="openEmojiPicker()">🎓</div>
               <div class="ph-edit-dot" onclick="openEmojiPicker()">✏️</div>
             </div>
-            <div class="ph-name" id="ph-name">User</div>
+            <div class="ph-name" id="ph-name"><span id="ph-name-text">User</span><span id="ph-premium-badge" class="hidden" title="Premium Member" style="margin-left:6px;font-size:.85em">💎</span></div>
             <div class="ph-username" id="ph-username"></div>
             <div class="ph-joined" id="ph-joined">Member since —</div>
             <div class="ph-bio" id="ph-bio"></div>
@@ -596,6 +596,19 @@
               <div class="settings-row" onclick="openSubScreen('screen-delete-account')">
                 <div class="sr-icon" style="background:rgba(244,63,94,.12)">🗑️</div>
                 <div class="sr-text"><div class="sr-label" style="color:#f43f5e">Delete Account</div><div class="sr-sub">Permanent</div></div>
+                <span class="sr-arrow">›</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- OWNER PANEL entry (naya) — regular users ke liye bhi
+               dikhta hai (secret ke bina koi nuksan nahi), tap karne par
+               password poochta hai; galat secret par kuchh nahi khulta. -->
+          <div class="settings-section">
+            <div class="settings-list">
+              <div class="settings-row" onclick="OwnerModule.openPanel()">
+                <div class="sr-icon" style="background:rgba(100,116,139,.15)">🔐</div>
+                <div class="sr-text"><div class="sr-label">Owner Panel</div><div class="sr-sub">Admin only</div></div>
                 <span class="sr-arrow">›</span>
               </div>
             </div>
@@ -924,7 +937,7 @@
       <div class="chat-list-pad">
         <div class="chat-type-card" onclick="openAIChat()">
           <div class="ctc-icon ai">🤖</div>
-          <div class="ctc-info"><div class="ctc-name">AI Study Buddy</div><div class="ctc-desc">Ask anything — Claude AI powered</div></div>
+          <div class="ctc-info"><div class="ctc-name">AI Study Buddy</div><div class="ctc-desc">Ask anything — Gemini AI powered</div></div>
           <span class="ctc-arrow">›</span>
         </div>
         <div class="chat-type-card" onclick="openGroupChat()">
@@ -935,6 +948,17 @@
         <div class="chat-type-card" onclick="openDMInbox()">
           <div class="ctc-icon" style="background:linear-gradient(135deg,#ec4899,#8b5cf6)">💌</div>
           <div class="ctc-info"><div class="ctc-name">Messages</div><div class="ctc-desc">Friends से 1:1 बात करें</div></div>
+          <span class="ctc-arrow">›</span>
+        </div>
+        <!-- FEATURE (naya): "Owner se baat karo" - Premium code lene ke
+             liye ya koi bhi doosra sawaal poochne ke liye. Backend ke
+             DM system ko hi reuse karta hai (dekho openOwnerChat neeche
+             app.js mein) - isliye textarea/auto-resize/Enter-to-send sab
+             wahi pehle se sahi kaam kar rahi cheezein yahan bhi milti
+             hain, bina kuch naya likhe. -->
+        <div class="chat-type-card" onclick="openOwnerChat()">
+          <div class="ctc-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706)">👑</div>
+          <div class="ctc-info"><div class="ctc-name">Chat with Owner</div><div class="ctc-desc">Premium ke liye ya koi bhi sawaal</div></div>
           <span class="ctc-arrow">›</span>
         </div>
       </div>
@@ -1011,7 +1035,17 @@
         </div>
       </div>
       <div class="ai-inp-bar">
-        <input class="ai-inp" id="ai-inp" placeholder="कोई भी question पूछें…" maxlength="500">
+        <!-- FIX (real bug - "typing box bhar nahi aata, kya type ho raha
+             hai dikhta nahi"): ye pehle ek single-line <input> tha - jaise
+             hi text box ki width se lamba ho jaata, purana likha hua text
+             LEFT taraf se scroll ho ke gayab ho jaata (sirf cursor ke
+             aas-paas ka hissa dikhta). DM aur Group chat mein ye pehle se
+             hi sahi <textarea> se ban chuka hai (dekho .chat-ta) - AI
+             chat isi pattern se chhoot gaya tha. Ab yahan bhi textarea
+             hai jo WhatsApp jaisa upar ki taraf badhta hai jab tak text
+             lamba hota jaaye.
+        -->
+        <textarea class="ai-inp" id="ai-inp" placeholder="कोई भी question पूछें…" maxlength="500" rows="1"></textarea>
         <button class="ai-send-btn" id="ai-send-btn">➤</button>
       </div>
     </div>
@@ -1211,6 +1245,97 @@
     </div>
 
 
+    <!-- OWNER PANEL (naya) — exam/paragraph add, premium code generate/
+         cancel. Sab kuch x-admin-secret se gated hai (backend); yahan
+         locked/unlocked dikhna sirf UX ke liye hai, asli security backend
+         mein hai. -->
+    <div class="sub-screen" id="screen-owner-panel">
+      <div class="ss-header">
+        <button class="ss-back" onclick="closeSubScreen('screen-owner-panel')">←</button>
+        <div class="ss-title">🔐 Owner Panel</div>
+      </div>
+
+      <div id="owner-locked-view" style="padding:40px 24px;text-align:center">
+        <div style="font-size:2.6rem;margin-bottom:10px">🔒</div>
+        <p style="color:var(--text2);font-size:.86rem;margin-bottom:18px">Ye area sirf Owner ke liye hai. Secret enter karein.</p>
+        <button class="btn-primary w100" onclick="OwnerModule.unlock()">Secret Enter Karein</button>
+      </div>
+
+      <div id="owner-unlocked-view" class="hidden" style="padding:14px">
+
+        <div class="settings-section">
+          <div class="settings-section-title">➕ Naya Exam Banayein</div>
+          <div class="field"><label>Exam ID (unique, jaise "ssc-cgl-2026")</label>
+            <input type="text" id="own-exam-id" placeholder="ssc-cgl-2026"></div>
+          <div class="field"><label>Exam Name</label>
+            <input type="text" id="own-exam-name" placeholder="SSC CGL 2026"></div>
+          <div class="field"><label>Category</label>
+            <select id="own-exam-category">
+              <option value="central">Central Govt</option>
+              <option value="state">State Govt</option>
+              <option value="banking">Banking</option>
+              <option value="police">Police / Defence</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:16px;margin:8px 0">
+            <label style="display:flex;align-items:center;gap:6px;font-size:.84rem"><input type="checkbox" id="own-exam-lang-en" checked> English</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:.84rem"><input type="checkbox" id="own-exam-lang-hi"> Hindi</label>
+          </div>
+          <button class="btn-primary w100" onclick="OwnerModule.createExam()">Exam Banayein</button>
+          <div id="own-exam-result" style="font-size:.8rem;margin-top:8px"></div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">📝 Paragraph(s) Add Karein</div>
+          <p style="font-size:.76rem;color:var(--text3);margin-bottom:8px">Exam ID daalein, aur neeche jitne paragraph daalne hain, sab EK saath paste kar dein — bas har paragraph ke beech EK KHAALI LINE chhodein. Har paragraph apne aap alag ban jaayega.</p>
+          <div class="field"><label>Exam ID</label>
+            <input type="text" id="own-para-exam-id" placeholder="ssc-cgl-2026"></div>
+          <div style="display:flex;gap:16px;margin:8px 0">
+            <label style="display:flex;align-items:center;gap:6px;font-size:.84rem"><input type="radio" name="own-para-lang" value="english" checked> English</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:.84rem"><input type="radio" name="own-para-lang" value="hindi"> Hindi</label>
+          </div>
+          <div class="field"><label>Paragraph Text (ek ya kai, khaali line se alag)</label>
+            <textarea id="own-para-text" rows="8" placeholder="Pehla paragraph yahan...&#10;&#10;Doosra paragraph yahan (agar hai to)..."></textarea></div>
+          <button class="btn-primary w100" onclick="OwnerModule.addParagraphs()">Paragraph(s) Save Karein</button>
+          <div id="own-para-result" style="font-size:.8rem;margin-top:8px"></div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">💎 Premium Code Generate Karein</div>
+          <div class="field"><label>Kitne din ka subscription?</label>
+            <input type="number" id="own-code-days" placeholder="30" value="30"></div>
+          <div class="field"><label>Note (sirf aapke liye - kis user ke liye hai)</label>
+            <input type="text" id="own-code-note" placeholder="jaise: Rahul - 200rs UPI"></div>
+          <button class="btn-primary w100" onclick="OwnerModule.generateCode()">Code Generate Karein</button>
+          <div id="own-code-result" style="font-size:.9rem;margin-top:10px;text-align:center"></div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">🚫 Subscription Cancel Karein</div>
+          <div class="field"><label>User ka email ya username</label>
+            <input type="text" id="own-cancel-user" placeholder="username ya email"></div>
+          <button class="btn-primary w100" style="background:var(--rose)" onclick="OwnerModule.cancelSubscription()">Cancel Karein</button>
+          <div id="own-cancel-result" style="font-size:.8rem;margin-top:8px"></div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">📋 Recent Codes</div>
+          <button class="btn-ghost w100" onclick="OwnerModule.loadCodes()">Refresh List</button>
+          <div id="own-codes-list" style="margin-top:10px"></div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">💬 User Chats (Owner Inbox)</div>
+          <button class="btn-ghost w100" onclick="OwnerModule.loadOwnerChats()">Refresh Chats</button>
+          <div id="own-chats-list" style="margin-top:10px"></div>
+        </div>
+
+        <button class="btn-ghost w100" style="margin-top:6px" onclick="OwnerModule.lock()">🔒 Lock Panel</button>
+      </div>
+    </div>
+
+
     <!-- ════ ONLINE GAME ROOM ════ -->
     <div class="sub-screen no-bot" id="screen-online-game" style="display:flex;flex-direction:column">
       <!-- Header -->
@@ -1334,7 +1459,25 @@
 
 </div><!-- /app -->
 
-<!-- AUTH MODAL -->
+<!-- GENERIC CONFIRM MODAL (naya, reusable) — language-warning (typing tab)
+     jaise "batao aur Continue/Cancel do" waale saare cases ke liye ek hi
+     jagah; showConfirm() (app.js) isse control karta hai. -->
+<div class="modal-ov hidden" id="confirm-modal" onclick="if(event.target===this) _confirmModalCancel()">
+  <div class="modal-sheet" style="max-width:380px;text-align:center;padding-bottom:20px">
+    <div class="sheet-handle"></div>
+    <div id="confirm-modal-icon" style="font-size:2.4rem;margin:6px 0 10px"></div>
+    <div id="confirm-modal-title" style="font-weight:800;font-size:1.04rem;margin-bottom:8px"></div>
+    <div id="confirm-modal-body" style="color:var(--text2);font-size:.86rem;line-height:1.55;margin-bottom:20px"></div>
+    <div style="display:flex;gap:10px">
+      <button id="confirm-modal-cancel-btn"
+        style="flex:1;background:var(--bg2);color:var(--text);border:1.5px solid var(--border);border-radius:10px;padding:11px 0;font-size:.88rem;font-weight:700;cursor:pointer"
+        onclick="_confirmModalCancel()">Cancel</button>
+      <button id="confirm-modal-ok-btn"
+        style="flex:1;background:#1a56db;color:#fff;border:none;border-radius:10px;padding:11px 0;font-size:.88rem;font-weight:700;cursor:pointer;box-shadow:0 3px 12px rgba(26,86,219,.4)"
+        onclick="_confirmModalOk()">Continue</button>
+    </div>
+  </div>
+</div>
 <div class="modal-ov hidden" id="auth-modal">
   <div class="modal-sheet">
     <div class="sheet-handle"></div>
@@ -1440,6 +1583,7 @@
 <script src="js/shared.js?v=20260901"></script>
 <script src="js/config.js?v=20260901"></script>
 <script src="js/app.js?v=20260901"></script>
+<script src="js/owner.js?v=20260901"></script>
 <script src="js/quiz.js?v=20260901"></script>
 <script src="js/typing.js?v=20260901"></script>
 <script src="js/chat.js?v=20260901"></script>

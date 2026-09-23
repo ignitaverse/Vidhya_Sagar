@@ -208,6 +208,24 @@ document.addEventListener('keydown', e => {
 
 function openChatList() { openSubScreen('screen-chat-list'); }
 
+// FEATURE (naya): owner ke saath DM thread kholta hai - premium code
+// maangne ya koi bhi sawaal poochne ke liye. `/api/messages/owner-info`
+// batata hai ki owner ne apna OWNER_USER_ID set kiya hai ya nahi; agar
+// nahi kiya, to saaf message dikhta hai (broken link ki jagah).
+async function openOwnerChat() {
+  if (!token || !userData) { openAuth('login'); return; }
+  try {
+    const d = await apiFetch('/api/messages/owner-info');
+    if (!d.configured) {
+      showToast('Owner chat abhi set up nahi hui hai', 'info');
+      return;
+    }
+    if (typeof SocialModule !== 'undefined') SocialModule.openDMThread(d.owner.id, d.owner);
+  } catch (e) {
+    showToast(e.message || 'Kuch gadbad hui', 'error');
+  }
+}
+
 /* ══════════════════════════════════════
    AUTH UI
 ══════════════════════════════════════ */
@@ -233,6 +251,43 @@ function openAuth(tab = 'login') {
   if (tab === 'signup') setTimeout(initGhibliScene, 100);
 }
 function closeAuth() { document.getElementById('auth-modal').classList.add('hidden'); }
+
+/* ── Generic confirm modal (naya) ──────────────────────────────────────
+   showConfirm({icon, title, body, okText, cancelText, danger}) -> Promise<boolean>
+   true = user ne OK/Continue dabaya, false = Cancel ya backdrop-click ya
+   koi doosra showConfirm() call aa gaya (purana apne aap cancel ho jaata
+   hai). Ek baar mein sirf EK confirm modal khula rehta hai. */
+let _confirmModalResolve = null;
+function showConfirm({ icon = '❓', title = '', body = '', okText = 'Continue', cancelText = 'Cancel', danger = false } = {}) {
+  if (_confirmModalResolve) _confirmModalResolve(false); // purana pending call cancel
+  const modal = document.getElementById('confirm-modal');
+  if (!modal) return Promise.resolve(false);
+  _el2('confirm-modal-icon', icon);
+  _el2('confirm-modal-title', title);
+  _el2('confirm-modal-body', body);
+  const okBtn = document.getElementById('confirm-modal-ok-btn');
+  const cancelBtn = document.getElementById('confirm-modal-cancel-btn');
+  if (okBtn) {
+    okBtn.textContent = okText;
+    okBtn.style.background = danger ? '#ef4444' : '#1a56db';
+    okBtn.style.boxShadow = danger ? '0 3px 12px rgba(239,68,68,.4)' : '0 3px 12px rgba(26,86,219,.4)';
+  }
+  if (cancelBtn) cancelBtn.textContent = cancelText;
+  modal.classList.remove('hidden');
+  return new Promise(resolve => { _confirmModalResolve = resolve; });
+}
+function _el2(id, html) { const e = document.getElementById(id); if (e) e.innerHTML = html; }
+function _confirmModalOk() {
+  document.getElementById('confirm-modal')?.classList.add('hidden');
+  if (_confirmModalResolve) { _confirmModalResolve(true); _confirmModalResolve = null; }
+}
+function _confirmModalCancel() {
+  document.getElementById('confirm-modal')?.classList.add('hidden');
+  if (_confirmModalResolve) { _confirmModalResolve(false); _confirmModalResolve = null; }
+}
+window.showConfirm = showConfirm;
+window._confirmModalOk = _confirmModalOk;
+window._confirmModalCancel = _confirmModalCancel;
 function switchAuthTab(tab) {
   document.getElementById('login-panel').classList.toggle('hidden', tab !== 'login');
   document.getElementById('signup-panel').classList.toggle('hidden', tab !== 'signup');

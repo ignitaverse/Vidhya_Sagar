@@ -183,7 +183,9 @@ const ProfileModule = (() => {
     });
 
     // Profile card
-    const nm = document.getElementById('ph-name'); if (nm) nm.textContent = userData.name || 'User';
+    const nm = document.getElementById('ph-name-text'); if (nm) nm.textContent = userData.name || 'User';
+    // FEATURE (naya): premium user ke naam ke bagal diamond badge.
+    document.getElementById('ph-premium-badge')?.classList.toggle('hidden', !userData.isPremium);
     const em = document.getElementById('ph-email'); if (em) em.textContent = userData.email || '';
     const jn = document.getElementById('ph-joined');
     if (jn && userData.joinedAt)
