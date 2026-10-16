@@ -388,6 +388,118 @@ const PlayerModule = (() => {
     pctEl.textContent = percent + '%';
   }
 
+  /* ══════════════════════════════════════════════════════════════
+     FEATURE (naya): YouTube-jaisa smooth playback ke liye helpers
+     1) Seek-bar par "buffered" hissa dikhana (kitna aage ka data aa chuka)
+     2) Stall watchdog - agar connection chup-chaap atak jaaye (na error,
+        na data), to wahi se (currentTime se) stream dobara kholna
+     3) Double-tap / arrow-key se +-10s skip, jo seek ko debounce karta
+        hai (1 hi Range request, har tap par nahi)
+  ══════════════════════════════════════════════════════════════ */
+  const SKIP_SECONDS = 10;
+  const STALL_RECOVER_MS = 12000;  // itni der na time badhe na buffer -> reconnect
+  const MAX_AUTO_RECOVER = 3;      // ek video mein max itni baar auto-reconnect
+
+  let _pendingSeekTarget = null;   // skip-taps ka jama hua target (abhi apply nahi hua)
+  let _seekCommitTimer = null;
+  let _seekAccum = 0;              // indicator ke liye: jama hue seconds (+/-)
+  let _watchdogTimer = null;
+  let _recoverCount = 0;
+  let _lastRecoverPos = 0;
+
+  function _resetSeekState() {
+    clearTimeout(_seekCommitTimer);
+    _seekCommitTimer = null;
+    _pendingSeekTarget = null;
+    _seekAccum = 0;
+    document.getElementById('pl-seek-left')?.classList.remove('show');
+    document.getElementById('pl-seek-right')?.classList.remove('show');
+  }
+
+  function _bufferedEndAt(video, t) {
+    const b = video.buffered;
+    for (let i = 0; i < b.length; i++) {
+      if (t >= b.start(i) - 0.1 && t <= b.end(i)) return b.end(i);
+    }
+    return 0;
+  }
+
+  function _paintSeekBar() {
+    const video = document.getElementById('pl-video');
+    const seek = document.getElementById('pl-ctrl-seek');
+    if (!video || !seek) return;
+    const dur = video.duration;
+    if (!isFinite(dur) || dur <= 0) return;
+    const t = _pendingSeekTarget != null ? _pendingSeekTarget : video.currentTime;
+    const played = Math.max(0, Math.min(100, (t / dur) * 100));
+    const buffered = Math.max(played, Math.min(100, (_bufferedEndAt(video, video.currentTime) / dur) * 100));
+    seek.style.background =
+      `linear-gradient(to right, var(--blue2) 0%, var(--blue2) ${played}%, ` +
+      `rgba(255,255,255,.55) ${played}%, rgba(255,255,255,.55) ${buffered}%, ` +
+      `rgba(255,255,255,.22) ${buffered}%, rgba(255,255,255,.22) 100%)`;
+  }
+
+  function _stopStallWatchdog() {
+    if (_watchdogTimer) { clearInterval(_watchdogTimer); _watchdogTimer = null; }
+  }
+
+  // Stream ko usi jagah se dobara kholta hai jahan atka tha (fresh Range
+  // request). Kab kaam aata hai: Render/Telegram ka idle connection chup-
+  // chaap drop ho jaye to browser bina error diye hamesha ke liye ruka
+  // rehta hai.
+  function _recoverStream() {
+    const video = document.getElementById('pl-video');
+    const loadingEl = document.getElementById('pl-video-loading');
+    if (!video || !_currentStreamUrl || _recoverCount >= MAX_AUTO_RECOVER) return false;
+    _recoverCount++;
+    const resumeAt = _pendingSeekTarget != null ? _pendingSeekTarget : video.currentTime;
+    const rate = video.playbackRate; // load() playbackRate reset kar deta hai
+    _lastRecoverPos = resumeAt;
+    _resetSeekState();
+    if (loadingEl) { loadingEl.classList.add('pl-loading-inline'); loadingEl.classList.remove('hidden'); }
+    _toast('Connection atak gaya tha - wahin se dobara jod raha hoon…', 'info');
+    const onMeta = () => {
+      video.removeEventListener('loadedmetadata', onMeta);
+      try { video.currentTime = resumeAt; } catch (e) { /* ignore */ }
+      video.playbackRate = rate;
+      video.play().catch(() => {});
+    };
+    video.addEventListener('loadedmetadata', onMeta);
+    video.src = _currentStreamUrl;
+    video.load();
+    return true;
+  }
+
+  function _startStallWatchdog(video) {
+    _stopStallWatchdog();
+    const TICK = 3000;
+    let lastTime = video.currentTime, lastBufEnd = -1, stuckMs = 0;
+    _watchdogTimer = setInterval(() => {
+      if (!_currentStreamUrl || video.paused || video.ended || video.seeking) {
+        stuckMs = 0; lastTime = video.currentTime; return;
+      }
+      const bufEnd = video.buffered.length ? video.buffered.end(video.buffered.length - 1) : 0;
+      // Pehla frame abhi aaya hi nahi (cold-start) - uske liye 20s wala
+      // alag warning hai, yahan reload karna ulta nuksaan karega.
+      if (video.currentTime < 0.5 && bufEnd === 0) { stuckMs = 0; return; }
+      const progressed = video.currentTime > lastTime + 0.05 || bufEnd > lastBufEnd + 0.05;
+      lastTime = video.currentTime; lastBufEnd = bufEnd;
+      if (progressed || video.readyState >= 3) { stuckMs = 0; return; }
+      stuckMs += TICK;
+      if (stuckMs >= STALL_RECOVER_MS) {
+        stuckMs = 0;
+        if (!_recoverStream()) {
+          _stopStallWatchdog();
+          const warnEl = document.getElementById('pl-video-warning');
+          if (warnEl) {
+            warnEl.textContent = '⚠️ Connection baar-baar atak raha hai. Android par VLC/MX Player button se ya Download karke dekhein.';
+            warnEl.classList.remove('hidden');
+          }
+        }
+      }
+    }, TICK);
+  }
+
   function _openPlayer(streamUrl, title, fileSizeBytes) {
     const modal = document.getElementById('pl-modal');
     const video = document.getElementById('pl-video');
@@ -419,6 +531,10 @@ const PlayerModule = (() => {
     _resetPlayerVisualSettings(); // FEATURE (naya): speed/aspect/flip/subtitle-offset sab 1 video se dusre video mein carry NAHI hone chahiye
     _resetSmartBuffering(); // FEATURE (naya) - dekho comment neeche
     _clearLoadTimeout();
+    _stopStallWatchdog();
+    _resetSeekState();
+    _recoverCount = 0; _lastRecoverPos = 0;
+    document.getElementById('pl-ctrl-seek')?.style.removeProperty('background');
 
     // FIX (real bug): pehle video khulte hi turant `video.src` set karke
     // `.play()` call ho jaata tha - koi thumbnail/poster ka mauka hi
@@ -451,6 +567,9 @@ const PlayerModule = (() => {
     video.onerror = () => {
       _clearLoadTimeout();
       const err = video.error;
+      // Beech-playback network error (code 2) - seedha error dikhane ki
+      // jagah pehle wahin se auto-reconnect try karo.
+      if (err && err.code === 2 && video.currentTime > 1 && _recoverStream()) return;
       const detail = err ? (_MEDIA_ERROR_TEXT[err.code] || `Unknown error code ${err.code}`) : 'Unknown error';
       console.error('[Player] video playback error:', err, '| src:', _currentStreamUrl);
       if (loadingEl) loadingEl.classList.add('hidden');
@@ -464,7 +583,7 @@ const PlayerModule = (() => {
     // hai ki load ho raha hai.
     video.onloadeddata = () => { _clearLoadTimeout(); if (loadingEl) loadingEl.classList.add('hidden'); };
     video.onplaying = () => _runDiagnostics(video, warnEl);
-    video.onprogress = () => _updateLoadingPercent(video);
+    video.onprogress = () => { _updateLoadingPercent(video); _paintSeekBar(); };
 
     // FEATURE (naya): agar pehla frame hi kaafi der (20 second) mein na
     // aaye - na error, na data - to user ko andhere mein mat rakho,
@@ -477,9 +596,11 @@ const PlayerModule = (() => {
       }
     }, 20000);
 
+    _recoverCount = 0; _lastRecoverPos = 0;
     video.src = _currentStreamUrl;
     video.load();
     video.play().catch(() => { /* autoplay block ho sakta hai - controls se chala sakte hain */ });
+    _startStallWatchdog(video);
   }
 
   /* ── Language variants (agar isi title ki alag-alag language mein
@@ -778,6 +899,21 @@ const PlayerModule = (() => {
       if (loadingEl) loadingEl.classList.add('hidden');
       wrap?.classList.remove('pl-buffering');
     });
+    // FEATURE (naya): seek/skip aisi jagah par jahan data abhi buffer nahi
+    // hua - pehle koi indicator nahi dikhta tha (waiting event seeking me
+    // ignore hota hai), user ko lagta tha video atak gayi.
+    video.addEventListener('seeking', () => {
+      if (!loadingEl || !video.currentTime || _bufferedEndAt(video, video.currentTime)) return;
+      loadingEl.classList.add('pl-loading-inline');
+      loadingEl.classList.remove('hidden');
+    });
+    video.addEventListener('seeked', () => {
+      if (loadingEl && video.readyState >= 3) loadingEl.classList.add('hidden');
+      _paintSeekBar();
+    });
+    video.addEventListener('canplay', () => {
+      if (loadingEl && !video.seeking) loadingEl.classList.add('hidden');
+    });
     // Video khud pause/ended ho (user ne button dabaya, ya khatam hui) to
     // bhi buffering-indicator hata do - warna paused video par bhi
     // "buffering" dikhta reh sakta hai.
@@ -899,6 +1035,8 @@ const PlayerModule = (() => {
     const loadingEl = document.getElementById('pl-video-loading');
     clearTimeout(_diagTimer);
     _clearLoadTimeout(); // FEATURE (naya) - stale timer agli baar modal khulne se pehle na chal jaaye
+    _stopStallWatchdog();
+    _resetSeekState();
     if (video) {
       video.pause();
       video.removeAttribute('src');
@@ -994,10 +1132,113 @@ const PlayerModule = (() => {
     // se PEHLE hi resume ho jaata, aur turant dobara ruk jaata (yahi
     // "play aur stop dono" wala flicker tha). Ab tap sirf controls
     // dikhata/chhupata hai - play/pause SIRF dedicated button se.
-    wrap.addEventListener('click', (e) => {
-      if (e.target.closest('.pl-controls, .pl-ctrl-center, .pl-pick-panel, .pl-modal-close')) return;
-      if (wrap.classList.contains('pl-not-started')) return; // poster state mein tap sirf play-button se hi kaam kare
+    /* FEATURE (naya): YouTube-style DOUBLE-TAP skip.
+       - Left 35% double-tap  -> 10 sec peeche
+       - Right 35% double-tap -> 10 sec aage
+       - Skip-mode mein (aakhri skip ke 0.8s tak) har agla single tap bhi
+         skip karta hai, aur seconds jama hote jaate hain (10 -> 20 -> 30 sec).
+       - Beech ka hissa double-tap par kuch NAHI karta (purani complaint:
+         tap se galti se play/pause nahi hona chahiye) - single tap sirf
+         controls dikhata/chhupata hai.
+       - Rotate mode mein video 90deg ghoomi hoti hai, isliye wahan
+         screen ka UPAR = peeche, NEECHE = aage. */
+    const DOUBLE_TAP_MS = 280;
+    const SKIP_MODE_MS = 800;
+    const indLeft = document.getElementById('pl-seek-left');
+    const indRight = document.getElementById('pl-seek-right');
+    let _tapTimer = null, _lastTapAt = 0, _lastZone = null, _skipModeUntil = 0, _indTimer = null;
+
+    function _tapZone(e) {
+      const r = wrap.getBoundingClientRect();
+      const rotated = wrap.classList.contains('pl-rotated');
+      const frac = rotated ? (e.clientY - r.top) / (r.height || 1) : (e.clientX - r.left) / (r.width || 1);
+      return frac < 0.35 ? 'back' : (frac > 0.65 ? 'fwd' : 'center');
+    }
+
+    function _flashSkipIndicator(zone) {
+      const on = zone === 'fwd' ? indRight : indLeft;
+      const off = zone === 'fwd' ? indLeft : indRight;
+      off?.classList.remove('show');
+      if (!on) return;
+      const txt = on.querySelector('.pl-seek-txt');
+      if (txt) txt.textContent = Math.abs(_seekAccum) + ' sec';
+      on.classList.add('show');
+      clearTimeout(_indTimer);
+      _indTimer = setTimeout(() => on.classList.remove('show'), 650);
+    }
+
+    function skipBy(delta) {
+      const dur = video.duration;
+      if (!isFinite(dur) || dur <= 0 || !video.src) return; // metadata abhi aayi hi nahi
+      const base = _pendingSeekTarget != null ? _pendingSeekTarget : video.currentTime;
+      _pendingSeekTarget = Math.max(0, Math.min(dur - 0.25, base + delta));
+      // Direction badle to indicator ka count fir se shuru
+      if ((_seekAccum > 0) !== (delta > 0)) _seekAccum = 0;
+      _seekAccum += delta;
+      _flashSkipIndicator(delta > 0 ? 'fwd' : 'back');
+      // UI turant naye target par dikhao...
+      if (seek) seek.value = String((_pendingSeekTarget / dur) * 1000);
+      if (timeEl) timeEl.textContent = _formatTime(_pendingSeekTarget) + ' / ' + _formatTime(dur);
+      _paintSeekBar();
+      // ...lekin asli seek sirf EK baar, taps ruk jaane ke baad - taaki har
+      // tap par naya Range request na jaaye (yahi buffering badhata hai).
+      clearTimeout(_seekCommitTimer);
+      _seekCommitTimer = setTimeout(() => {
+        const target = _pendingSeekTarget;
+        _pendingSeekTarget = null;
+        _seekAccum = 0;
+        if (target != null) video.currentTime = target;
+      }, 350);
       showControls();
+    }
+
+    wrap.addEventListener('click', (e) => {
+      if (e.target.closest('.pl-controls, .pl-ctrl-center, .pl-pick-panel, .pl-modal-close, .pl-video-error, .pl-video-warning')) return;
+      if (wrap.classList.contains('pl-not-started')) return; // poster state mein tap sirf play-button se hi kaam kare
+      const zone = _tapZone(e);
+      const now = Date.now();
+      const isDouble = _lastZone === zone && (now - _lastTapAt) < DOUBLE_TAP_MS;
+      const inSkipMode = now < _skipModeUntil;
+      _lastTapAt = now; _lastZone = zone;
+      clearTimeout(_tapTimer);
+
+      if (zone !== 'center' && (isDouble || inSkipMode)) {
+        _skipModeUntil = now + SKIP_MODE_MS;
+        skipBy(zone === 'fwd' ? SKIP_SECONDS : -SKIP_SECONDS);
+        return;
+      }
+      // Single tap: controls toggle (thoda ruk ke, taaki double-tap ka
+      // pehla tap controls ko flicker na kare)
+      _tapTimer = setTimeout(() => {
+        if (wrap.classList.contains('pl-ctrls-visible') && !video.paused) {
+          clearTimeout(_hideTimer);
+          wrap.classList.remove('pl-ctrls-visible');
+        } else {
+          showControls();
+        }
+      }, DOUBLE_TAP_MS);
+    });
+
+    // Desktop keyboard: <- / -> = 10s skip, J / L bhi, Space/K = play-pause,
+    // F = fullscreen, M = mute. Modal band ho ya koi input focus mein ho
+    // to kuch nahi karta.
+    document.addEventListener('keydown', (e) => {
+      const modal = document.getElementById('pl-modal');
+      if (!modal || modal.classList.contains('hidden') || wrap.classList.contains('pl-not-started')) return;
+      const tag = (e.target && e.target.tagName) || '';
+      const isRange = tag === 'INPUT' && e.target.type === 'range';
+      if ((tag === 'INPUT' && !isRange) || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      const k = e.key;
+      if (k === 'ArrowLeft' || k === 'j' || k === 'J') { e.preventDefault(); skipBy(-SKIP_SECONDS); }
+      else if (k === 'ArrowRight' || k === 'l' || k === 'L') { e.preventDefault(); skipBy(SKIP_SECONDS); }
+      else if ((k === ' ' && tag !== 'BUTTON') || k === 'k' || k === 'K') {
+        e.preventDefault();
+        if (video.paused) video.play().catch(() => {}); else video.pause();
+        showControls();
+      }
+      else if (k === 'f' || k === 'F') { fsBtn?.click(); }
+      else if (k === 'm' || k === 'M') { volBtn?.click(); }
     });
 
     // FIX (real bug - complaint: "video ke neeche player ke buttons nahi
@@ -1027,9 +1268,12 @@ const PlayerModule = (() => {
 
     video.addEventListener('loadedmetadata', () => {
       if (timeEl) timeEl.textContent = _formatTime(0) + ' / ' + _formatTime(video.duration || 0);
+      _paintSeekBar();
     });
     video.addEventListener('timeupdate', () => {
-      if (_scrubbing) return;
+      if (_recoverCount > 0 && video.currentTime - _lastRecoverPos > 30) _recoverCount = 0; // stable chal raha hai - retry-budget wapas
+      if (_scrubbing || _pendingSeekTarget != null) return;
+      _paintSeekBar();
       const dur = video.duration || 0;
       if (seek) seek.value = dur ? String((video.currentTime / dur) * 1000) : '0';
       if (timeEl) timeEl.textContent = _formatTime(video.currentTime) + ' / ' + _formatTime(dur);
