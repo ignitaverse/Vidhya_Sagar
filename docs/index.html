@@ -6,6 +6,8 @@
 <meta name="theme-color" content="#04080f">
 <meta name="description" content="VidyaSagar — India's Premier Quiz, Typing & AI Learning Platform for Govt Exam aspirants">
 <title>VidyaSagar — Quiz · Typing · Games</title>
+<!-- Player: stream/catalog server se pehle hi DNS+TLS connection taiyaar (video jaldi shuru hoti hai) -->
+<link rel="preconnect" href="https://clevra-bot.onrender.com">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
@@ -391,6 +393,9 @@
             <div class="pl-spinner"></div>
             <div id="pl-video-loading-pct" class="pl-video-loading-pct"></div>
           </div>
+          <!-- Double-tap skip indicators (+/-10 sec) -->
+          <div id="pl-seek-left" class="pl-seek-ind pl-seek-left" aria-hidden="true"><span class="pl-seek-ico">⏪</span><span class="pl-seek-txt">10 sec</span></div>
+          <div id="pl-seek-right" class="pl-seek-ind pl-seek-right" aria-hidden="true"><span class="pl-seek-ico">⏩</span><span class="pl-seek-txt">10 sec</span></div>
           <div id="pl-video-error" class="pl-video-error hidden"></div>
           <div id="pl-video-warning" class="pl-video-warning hidden"></div>
 
