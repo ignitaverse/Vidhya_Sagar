@@ -232,6 +232,33 @@
 #pl-video-wrap.pl-not-started .pl-controls,
 #pl-video-wrap.pl-not-started .pl-video-loading { display: none; }
 
+/* FEATURE (naya): double-tap skip - browser ka double-tap-zoom/text-select
+   band, taaki gesture bina rukawat ke chale; indicator YouTube jaisa
+   aadha-gola jo tapped side par dikhta hai (+/-10 sec). */
+#pl-video-wrap {
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none; user-select: none;
+}
+.pl-seek-ind {
+  position: absolute; top: 0; bottom: 0; width: 38%; z-index: 2;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  color: #fff; font-weight: 800; font-size: .82rem; letter-spacing: .02em;
+  background: rgba(255,255,255,.16); backdrop-filter: blur(2px);
+  opacity: 0; transition: opacity .18s ease; pointer-events: none;
+}
+.pl-seek-ind .pl-seek-ico { font-size: 1.5rem; line-height: 1; }
+.pl-seek-ind.show { opacity: 1; }
+.pl-seek-left  { left: 0;  border-radius: 0 100% 100% 0 / 0 50% 50% 0; }
+.pl-seek-right { right: 0; border-radius: 100% 0 0 100% / 50% 0 0 50%; }
+/* Rotate mode: video 90deg ghoomi hoti hai, to peeche = screen ka upar,
+   aage = screen ka neeche; text bhi ghuma dete hain taaki seedha dikhe. */
+#pl-video-wrap.pl-rotated .pl-seek-ind {
+  top: auto; bottom: auto; left: 0; right: 0; width: auto; height: 38%;
+}
+#pl-video-wrap.pl-rotated .pl-seek-ind > * { transform: rotate(90deg); }
+#pl-video-wrap.pl-rotated .pl-seek-left  { top: 0;    border-radius: 0 0 50% 50% / 0 0 100% 100%; }
+#pl-video-wrap.pl-rotated .pl-seek-right { bottom: 0; border-radius: 50% 50% 0 0 / 100% 100% 0 0; }
+
 .pl-video-error {
   position: absolute; left: 10px; right: 10px; bottom: 66px; z-index: 4;
   background: rgba(239,68,68,.92); border: 1.5px solid rgba(252,165,165,.5);
