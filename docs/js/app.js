@@ -44,6 +44,46 @@ const INACTIVE_LIMIT = 10 * 24 * 60 * 60 * 1000;
     localStorage.setItem('vs_session_expired', '1');
   }
 })();
+/* ── FEATURE (naya, maanga gaya): video ke bytes browser mein 2 ghante
+   tak cache karta hai (dekho sw.js) - taaki poori video dekh chuke ke
+   baad beech mein seek karne par phir se buffering na ho. Jaldi register
+   karte hain (yahan, app load hote hi) taaki pehli video khulne tak
+   Service Worker active ho chuka ho. */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {
+      // Best-effort - register fail ho (bahut purana browser, private-
+      // mode restriction, waghera) to bas cache feature nahi milega,
+      // video normal hi chalti rahegi (player.js mein hamesha-kaam-
+      // karne-wala fallback already hai).
+    });
+  });
+}
+
+/* ── FIX (real bug - maanga gaya): "Chat tab mein keyboard aane par
+   message box nahi dikhta". iOS Safari par keyboard khulne par page ka
+   LAYOUT size nahi badalta (sirf upar se overlay hota hai) - isliye
+   neeche fixed message-bar keyboard ke PEECHE chhup jaati thi. Ye
+   visualViewport (jo keyboard khulne par SAHI se chhota hota hai) se
+   "kitna keyboard ne screen khaaya" nikaal ke, sirf chat/AI input-bars
+   ko utna upar khiska deta hai (dekho style_additions.css ka
+   .chat-inp-bar/.ai-inp-bar margin-bottom rule). Android par layout
+   khud hi shrink hota hai, isliye wahan gap ~0 aata hai aur ye kuch
+   nahi badalta (harmless no-op). */
+(function () {
+  if (!window.visualViewport) return;
+  const vv = window.visualViewport;
+  function syncKeyboardInset() {
+    const gap = window.innerHeight - vv.height - vv.offsetTop;
+    // Chhote gaps (address-bar show/hide, rounding) ko keyboard nahi
+    // maante - sirf asli keyboard jaisa bada gap (>60px) par hi hilte hain.
+    document.documentElement.style.setProperty('--kb-inset', (gap > 60 ? gap : 0) + 'px');
+  }
+  vv.addEventListener('resize', syncKeyboardInset);
+  vv.addEventListener('scroll', syncKeyboardInset);
+  syncKeyboardInset();
+})();
+
 function touchActivity() {
   if (token) localStorage.setItem('vs_last_active', String(Date.now()));
 }

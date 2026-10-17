@@ -406,6 +406,7 @@ const PlayerModule = (() => {
   let _watchdogTimer = null;
   let _recoverCount = 0;
   let _lastRecoverPos = 0;
+  let _corsFallbackTried = false; // FEATURE (naya) - dekho _startPlayback() mein crossOrigin comment
 
   function _resetSeekState() {
     clearTimeout(_seekCommitTimer);
@@ -567,6 +568,25 @@ const PlayerModule = (() => {
     video.onerror = () => {
       _clearLoadTimeout();
       const err = video.error;
+      // FIX (safety-net): naya `crossOrigin="anonymous"` (neeche) - 2-ghante
+      // client-side cache feature ke liye chahiye (dekho sw.js) - agar
+      // kisi wajah se CORS reject ho jaaye (server-config badal jaaye,
+      // deployment-origin match na khaaye, waghera), to browser load
+      // SHURU hi nahi karta, turant (bina kisi data ke) error aa jaata
+      // hai. Aisi situation (readyState/currentTime dono abhi 0 hain,
+      // matlab kabhi kuch load hi nahi hua) mein EK hi baar seedhe
+      // (bina crossOrigin) wale, HAMESHA-se-kaam-karne-wale tareeke par
+      // fall back karte hain - taaki is naye feature ki wajah se video
+      // playback KABHI na toote (feature bas silently off ho jaata hai,
+      // cache nahi milega par video chalegi).
+      if (!_corsFallbackTried && video.crossOrigin && video.currentTime === 0 && video.readyState === 0) {
+        _corsFallbackTried = true;
+        video.crossOrigin = null;
+        video.src = _currentStreamUrl;
+        video.load();
+        video.play().catch(() => {});
+        return;
+      }
       // Beech-playback network error (code 2) - seedha error dikhane ki
       // jagah pehle wahin se auto-reconnect try karo.
       if (err && err.code === 2 && video.currentTime > 1 && _recoverStream()) return;
@@ -597,6 +617,13 @@ const PlayerModule = (() => {
     }, 20000);
 
     _recoverCount = 0; _lastRecoverPos = 0;
+    _corsFallbackTried = false;
+    // FEATURE (naya): Service Worker (sw.js) ko response ke bytes PADHNE
+    // (slice/cache karne) ke liye CORS-mode request chahiye - warna
+    // response "opaque" hoti hai aur SW uska data access hi nahi kar
+    // sakta. Fallback upar video.onerror mein hai agar ye kabhi CORS
+    // fail kare.
+    video.crossOrigin = 'anonymous';
     video.src = _currentStreamUrl;
     video.load();
     video.play().catch(() => { /* autoplay block ho sakta hai - controls se chala sakte hain */ });
