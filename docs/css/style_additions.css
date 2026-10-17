@@ -214,6 +214,13 @@
 .chat-inp-bar {
   flex-shrink: 0 !important;
   width: 100% !important;
+  /* FIX (real bug - maanga gaya): keyboard khulne par is bar ko utna hi
+     upar khiska dete hain jitna keyboard ne screen "khaaya" hai (JS se
+     set hota hai, dekho app.js ka visualViewport comment) - taaki
+     message box keyboard ke PEECHE kabhi na chhupe. Koi keyboard na ho
+     to --kb-inset 0 hi rehta hai, kuch nahi badalta. */
+  margin-bottom: var(--kb-inset, 0px) !important;
+  transition: margin-bottom .15s ease-out;
 }
 .swipe-hint-bar, #reply-preview-bar { flex-shrink: 0 !important; }
 
@@ -223,7 +230,12 @@
   min-height: 0 !important;
   overflow-y: auto !important;
 }
-.ai-inp-bar { flex-shrink: 0 !important; width: 100% !important; }
+.ai-inp-bar {
+  flex-shrink: 0 !important;
+  width: 100% !important;
+  margin-bottom: var(--kb-inset, 0px) !important; /* dekho .chat-inp-bar ka comment upar */
+  transition: margin-bottom .15s ease-out;
+}
 
 /* ══════════════════════════════════════
    FIX #6 — TAB SCREEN (properly hidden)
