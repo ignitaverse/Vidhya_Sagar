@@ -60,28 +60,69 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-/* ── FIX (real bug - maanga gaya): "Chat tab mein keyboard aane par
-   message box nahi dikhta". iOS Safari par keyboard khulne par page ka
-   LAYOUT size nahi badalta (sirf upar se overlay hota hai) - isliye
-   neeche fixed message-bar keyboard ke PEECHE chhup jaati thi. Ye
-   visualViewport (jo keyboard khulne par SAHI se chhota hota hai) se
-   "kitna keyboard ne screen khaaya" nikaal ke, sirf chat/AI input-bars
-   ko utna upar khiska deta hai (dekho style_additions.css ka
-   .chat-inp-bar/.ai-inp-bar margin-bottom rule). Android par layout
-   khud hi shrink hota hai, isliye wahan gap ~0 aata hai aur ye kuch
-   nahi badalta (harmless no-op). */
+/* ── FIX (real bug - maanga gaya, round 2): "Chat mein keyboard aane par
+   message box nahi dikhta, WhatsApp jaisa keyboard ke upar chipka hona
+   chahiye". iOS Safari par keyboard khulne par page ka LAYOUT size nahi
+   badalta (sirf upar se overlay hota hai) - isliye neeche fixed
+   message-bar keyboard ke PEECHE chhup jaati thi.
+   Round 1 mein sirf visualViewport resize/scroll events par bharosa kiya
+   tha - lekin kayi embedded/in-app browsers (jaise Telegram ka apna
+   WebView) mein ya to visualViewport hai hi nahi, ya uske events keyboard
+   ki animation ke saath theek se fire nahi hote. Isliye ab DO independent
+   tareeke ek saath: (1) visualViewport se "kitna keyboard ne screen
+   khaaya" nikaal ke input-bar ko utna upar khisकाना (jahan ye API kaam
+   kare), AUR (2) jis textarea par TAP ho wahi turant khud apne aap ko
+   scrollIntoView se upar la de - ye dusra tareeka visualViewport ke
+   bina bhi, lagbhag har browser mein kaam karta hai. Keyboard ki
+   animation ka time device-se-device alag hota hai, isliye focus hote
+   hi kuch dafa (0/120/300/600ms par) dobara check karte hain, taaki
+   chahe keyboard jaldi khule ya der se, aakhir mein sahi jagah par aa
+   jaaye. */
 (function () {
-  if (!window.visualViewport) return;
   const vv = window.visualViewport;
+
   function syncKeyboardInset() {
+    if (!vv) { document.documentElement.style.setProperty('--kb-inset', '0px'); return; }
     const gap = window.innerHeight - vv.height - vv.offsetTop;
     // Chhote gaps (address-bar show/hide, rounding) ko keyboard nahi
     // maante - sirf asli keyboard jaisa bada gap (>60px) par hi hilte hain.
     document.documentElement.style.setProperty('--kb-inset', (gap > 60 ? gap : 0) + 'px');
   }
-  vv.addEventListener('resize', syncKeyboardInset);
-  vv.addEventListener('scroll', syncKeyboardInset);
+  if (vv) {
+    vv.addEventListener('resize', syncKeyboardInset);
+    vv.addEventListener('scroll', syncKeyboardInset);
+  }
+  // FIX (naya): visualViewport na ho/uske events na chalein, tab bhi
+  // window ka apna resize event kaafi baar keyboard khulne par fire
+  // hota hai - ek aur safety-net.
+  window.addEventListener('resize', syncKeyboardInset);
   syncKeyboardInset();
+
+  // FIX (naya): chat/AI textarea par focus hote hi, visualViewport ke
+  // bharose baithne ki bajaye seedha khud ko upar scroll kar lete hain -
+  // isse Telegram jaise in-app browsers mein bhi (jahan visualViewport
+  // kaam na kare) box dikhta hi rehta hai, WhatsApp jaisa.
+  function wireKeyboardAwareInput(inputId) {
+    const el = document.getElementById(inputId);
+    if (!el) return;
+    const bar = el.closest('.chat-inp-bar, .ai-inp-bar') || el;
+    function nudge() {
+      syncKeyboardInset();
+      bar.scrollIntoView({ block: 'end', behavior: 'smooth' });
+    }
+    el.addEventListener('focus', function () {
+      // Keyboard animation ka time har device/browser par alag hota hai -
+      // isliye ek single check ki bajaye chaar alag-alag waqt par check
+      // karte hain, taaki jab bhi keyboard poori khule, usi ke turant
+      // baad sahi jagah set ho jaaye.
+      nudge();
+      [120, 300, 600].forEach((ms) => setTimeout(nudge, ms));
+    });
+    el.addEventListener('blur', function () {
+      setTimeout(syncKeyboardInset, 50);
+    });
+  }
+  ['dm-inp', 'group-inp', 'ai-inp'].forEach(wireKeyboardAwareInput);
 })();
 
 function touchActivity() {
